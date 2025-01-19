@@ -99,3 +99,18 @@ def test_create_user(client):
         response = client.post("/register", json=data)
         assert response.status_code == 422
         assert "Too many invalid inputs" in str(response.content)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as SC:
+        yield SC
+
+        def test_generate_wallet_endpoint(client):
+            response = client.get("/wallet/BTC/1")
+            assert response.status_code == 200
+            data = response.json()
+            assert "Address" in data

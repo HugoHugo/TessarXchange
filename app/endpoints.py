@@ -113,3 +113,30 @@ class UserIn(BaseModel):
         class Token(BaseModel):
             access_token: str
             token_type: str
+from fastapi import FastAPI, HTTPException
+from pybitcoin import Bitcoin
+import random
+
+app = FastAPI()
+
+
+def generate_wallet_address(currency: str, user_id: int):
+    bitcoin = Bitcoin()
+    if currency == "BTC":
+        balance = bitcoin.get_balance(user_id)
+        if not balance:
+            raise HTTPException(status_code=400, detail="No balance found for the user")
+            address = bitcoin.generate_new_address(user_id)
+        elif currency == "ETH":
+            # Implement Ethereum wallet generation logic
+            pass
+        else:
+            raise HTTPException(
+                status_code=400, detail=f"Unsupported currency: {currency}"
+            )
+            return address
+
+        @app.get("/wallet/{currency}/{user_id}")
+        def wallet_endpoint(currency: str, user_id: int):
+            wallet_address = generate_wallet_address(currency, user_id)
+            return {"Address": wallet_address}
