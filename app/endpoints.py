@@ -140,3 +140,26 @@ def generate_wallet_address(currency: str, user_id: int):
         def wallet_endpoint(currency: str, user_id: int):
             wallet_address = generate_wallet_address(currency, user_id)
             return {"Address": wallet_address}
+from fastapi import FastAPI, HTTPException
+from pycoin.payment.address import Address
+from typing import Optional
+
+app = FastAPI()
+
+
+class WalletAddressGenerator:
+    def __init__(self, currency: str):
+        self.currency = currency
+
+        async def generate_address(self) -> str:
+            if not self.currency:
+                raise HTTPException(status_code=400, detail="Currency is required")
+                address = Address.new_from_private_key(
+                    f"{self.currency.lower()}mainnet"
+                )
+                return address.to_string()
+
+            @app.get("/wallet-address/{currency}", response_model=str)
+            async def get_wallet_address(currency: str):
+                wallet_address_generator = WalletAddressGenerator(currency)
+                return await wallet_address_generator.generate_address()

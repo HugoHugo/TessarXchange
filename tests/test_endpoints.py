@@ -114,3 +114,24 @@ def client():
             assert response.status_code == 200
             data = response.json()
             assert "Address" in data
+from fastapi.testclient import TestClient
+import pytest
+from main import app, get_wallet_address
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as TC:
+        yield TC
+
+        def test_currency_required():
+            response = get_wallet_address.as_view()(request=pytest.app.request)
+            assert request.path == "/wallet-address/{currency}"
+            assert response.status_code == 400
+            assert "Currency is required" in str(response.content)
+
+            def test_generate_wallet_address(client):
+                response = client.get("/wallet-address/usd")
+                data = response.json()
+                assert response.status_code == 200
+                assert data == "bT1pK4w3z"
