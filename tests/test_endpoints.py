@@ -77,3 +77,25 @@ def test_register_user(client: TestClient):
     def test_register_user_invalid(client: TestClient):
         response = client.post("/register", json={"email": "", "password": ""})
         assert response.status_code == 400
+from fastapi.testclient import TestClient
+import pytest
+from main import app, UserIn, UserOut
+
+
+@pytest.fixture
+def client():
+    client = TestClient(app)
+    return client
+
+
+def test_create_user(client):
+    data = {"email": "testuser@example.com", "password": "password123"}
+    response = client.post("/register", json=data)
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+
+    def test_invalid_email_format(client):
+        data = {"email": "invalid-email-format", "password": "password123"}
+        response = client.post("/register", json=data)
+        assert response.status_code == 422
+        assert "Too many invalid inputs" in str(response.content)
