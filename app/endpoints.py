@@ -61,3 +61,30 @@ class UserIn(BaseModel):
         class Token(BaseModel):
             access_token: str
             token_type: str
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordCreate
+from pydantic import BaseModel
+from jose import JWTError, jwt
+import time
+
+app = FastAPI()
+
+
+# Pydantic models
+class User(BaseModel):
+    email: str
+    password: str
+    first_name: str
+    last_name: str
+    created_at: float = time.time()
+
+    class UserIn(BaseModel):
+        email: str
+        password: str
+        oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+        class JWTSecret:
+            def __init__(self, secret_key: str, algorithm: str = "HS256"):
+                self.secret_key = secret_key
+                self.algorithm = algorithm
+                secret = JWTSecret("my_secret_key", algorithm="HS256")
