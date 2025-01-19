@@ -36,3 +36,28 @@ class User(BaseModel):
                 self.secret_key = secret_key
                 self.algorithm = algorithm
                 secret = JWTSecret("my_secret_key", algorithm="HS256")
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
+from pydantic import EmailStr, PasswordMinLength
+from typing import Optional
+import jwt
+from datetime import datetime
+
+SECRET_KEY = "your_secret_key"
+ALGORITHM = "HS256"
+router = APIRouter()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+class UserIn(BaseModel):
+    email: EmailStr
+    password: PasswordMinLength(min=8)
+
+    class UserOut(BaseModel):
+        user_id: str
+        email: EmailStr
+        created_at: datetime
+
+        class Token(BaseModel):
+            access_token: str
+            token_type: str
