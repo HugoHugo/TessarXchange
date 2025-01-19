@@ -135,3 +135,49 @@ def client():
                 data = response.json()
                 assert response.status_code == 200
                 assert data == "bT1pK4w3z"
+from fastapi.testclient import TestClient
+import pytest
+from main import app, WalletAddress
+
+
+def test_generate_address_with_valid_data():
+    client = TestClient(app)
+    # Set up test data
+    currency = "BTC"
+    user_id = "user123"
+    response = client.get("/generate")
+    assert response.status_code == 200
+    result = response.json()
+    assert isinstance(result, WalletAddress)
+    assert result.currency == currency
+    assert result.user_id == user_id
+    assert result.address is not None
+
+    def test_generate_address_with_invalid_currency():
+        client = TestClient(app)
+        # Set up test data with invalid currency
+        currency = ""
+        user_id = "user123"
+        response = client.get("/generate")
+        assert response.status_code == 400
+        content = response.content
+        assert b"Currency and User ID are required." in content
+
+        def test_generate_address_with_invalid_user_id():
+            client = TestClient(app)
+            # Set up test data with invalid user_id
+            currency = "BTC"
+            user_id = ""  # Empty string as user id
+            response = client.get("/generate")
+            assert response.status_code == 400
+            content = response.content
+            assert b"Currency and User ID are required." in content
+
+            def test_generate_address():
+                client = TestClient(app)
+                response = client.get("/generate")
+                result = response.json()
+                assert isinstance(result, WalletAddress)
+                wallet_address = WalletAddress(currency="BTC", user_id="user123")
+                assert result.currency == wallet_address.currency
+                assert result.user_id == wallet_address.user_id

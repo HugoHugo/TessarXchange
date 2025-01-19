@@ -163,3 +163,38 @@ class WalletAddressGenerator:
             async def get_wallet_address(currency: str):
                 wallet_address_generator = WalletAddressGenerator(currency)
                 return await wallet_address_generator.generate_address()
+from fastapi import FastAPI, HTTPException
+from pycoin.wallet.newaddress import NewAddress
+import hashlib
+
+app = FastAPI()
+
+
+class WalletAddress:
+    def __init__(self, currency: str, user_id: str):
+        self.currency = currency
+        self.user_id = user_id
+
+        async def generate(self):
+            if not self.currency or not self.user_id:
+                raise HTTPException(
+                    status_code=400, detail="Currency and User ID are required."
+                )
+                new_address = NewAddress()
+                address = new_address.newaddress(currency=new_address.CURR_BTC)
+                # Calculate the user ID hash
+                user_id_hash = hashlib.sha256(self.user_id.encode()).hexdigest()
+                return WalletAddressResponse(
+                    currency=self.currency,
+                    user_id=self.user_id,
+                    address=address,
+                    user_id_hash=user_id_hash,
+                )
+
+            class WalletAddressResponse:
+                def __init__(self, **data):
+                    self.currency = data["currency"]
+                    self.user_id = data["user_id"]
+                    self.address = data["address"]
+                    self.user_id_hash = data["user_id_hash"]
+                    app.include_in_schema(False)
