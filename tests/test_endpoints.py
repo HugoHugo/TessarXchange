@@ -23,3 +23,19 @@ async def test_time_endpoint():
         assert response.json().get("time") == datetime.strptime(
             input_string, "%Y-%m-%dT%H:%M:%S%Z"
         )
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_register_user(client: TestClient):
+    response = client.post(
+        "/register", json={"email": "test@test.com", "password": "testpass"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+
+    def test_register_user_invalid(client: TestClient):
+        response = client.post("/register", json={"email": "", "password": ""})
+        assert response.status_code == 400
