@@ -198,3 +198,39 @@ class WalletAddress:
                     self.address = data["address"]
                     self.user_id_hash = data["user_id_hash"]
                     app.include_in_schema(False)
+from fastapi import FastAPI, HTTPException
+from pywallet import Bitcoin, Wallet
+
+app = FastAPI()
+
+
+class CryptoWallet:
+    def __init__(self, currency: str):
+        if not currency in ["BTC", "ETH"]:
+            raise HTTPException(status_code=400, detail="Unsupported cryptocurrency.")
+            self.currency = currency
+            self.wallet = None
+
+            async def generate_wallet(self):
+                if self.currency == "BTC":
+                    network = Bitcoin()
+                    wallet = Wallet()
+                elif self.currency == "ETH":
+                    # For Ethereum, you may need to use a library like web3.py
+                    pass
+                    self.wallet = wallet
+                    return {
+                        "currency": self.currency,
+                        "wallet_address": self.wallet.address(),
+                    }
+
+                @app.get("/wallet/{currency}")
+                def get_wallet(currency: str):
+                    if not Wallet:
+                        raise HTTPException(
+                            status_code=500,
+                            detail="Failed to initialize the cryptocurrency wallet.",
+                        )
+                        wallet = CryptoWallet(currency)
+                        result = wallet.generate_wallet()
+                        return result

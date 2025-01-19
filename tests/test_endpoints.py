@@ -181,3 +181,32 @@ def test_generate_address_with_valid_data():
                 wallet_address = WalletAddress(currency="BTC", user_id="user123")
                 assert result.currency == wallet_address.currency
                 assert result.user_id == wallet_address.user_id
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _:
+        yield _
+
+        def test_get_wallet(client):
+            response = client.get("/wallet/BTC")
+            assert response.status_code == 200
+            result = response.json()
+            assert "currency" in result
+            assert "wallet_address" in result
+
+            def test_invalid_currency(client):
+                with pytest.raises(HTTPException):
+                    response = client.get("/wallet/INVALID_CURRENCY")
+
+                    def test_wallet_initialization_error():
+                        wallet = CryptoWallet("BTC")
+                        with pytest.raises(HTTPException) as error:
+                            wallet.generate_wallet()
+                            assert (
+                                "Failed to initialize the cryptocurrency wallet."
+                                == str(error.value)
+                            )
