@@ -1469,3 +1469,24 @@ for cryptocurrency in wallet.cryptocurrencies:
             balance = wallet.get_balance(cryptocurrency)
             balance_data.append({"name": cryptocurrency.name, "balance": str(balance)})
             return {"cryptocurrencies": balance_data}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List
+
+
+class FeeTier(BaseModel):
+    volume: float
+    rate: float
+    app = FastAPI()
+
+    def calculate_fee_tier(volumes: List[float]) -> FeeTier:
+        tiered_rates = [0.002, 0.0015]  # Volume range (0, 10000]
+        for i in range(1, len(tiered_rates)):
+            if volumes[0] >= tiered_rates[i - 1] and volumes[0] < tiered_rates[i]:
+                return FeeTier(volume=volumes[0], rate=tiered_rates[i])
+            raise HTTPException(status_code=404, detail="No fee tier found")
+
+            @app.get("/trading-fees", response_model=FeeTier)
+            async def trading_fees():
+                volumes = [10000]  # Example user volume
+                return calculate_fee_tier(volumes)

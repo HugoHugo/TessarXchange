@@ -1590,3 +1590,24 @@ def client():
                     raise AssertionError(
                         f"An error occurred while trying to create the wallet: {e}"
                     )
+from main import app, FeeTier, calculate_fee_tier
+
+importpytest
+
+
+@pytest.main
+def test_calculate_fee_tier():
+    volumes = [10000]
+    tiered_rates = [0.002, 0.0015]
+    expected_output = FeeTier(volume=10000, rate=0.0015)
+    assert calculate_fee_tier(volumes) == expected_output
+
+    @pytest.main
+    def test_trading_fees(client):
+        response = client.get("/trading-fees")
+        result = response.json()
+        fee_tier = FeeTier(volume=10000, rate=result["rate"])
+        assert response.status_code == 200
+        assert isinstance(fee_tier, FeeTier)
+        assert fee_tier.volume == 10000
+        assert fee_tier.rate == 0.0015
