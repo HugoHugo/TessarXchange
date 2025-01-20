@@ -1579,3 +1579,21 @@ class MarginHealthNotification:
                     await send_notification(
                         websocket=WebSocket.client(self), notification=notification
                     )
+from typing import List
+from datetime import datetime
+
+
+class Trade:
+    def __init__(
+        self,
+        symbol: str,
+        account_id: int,
+        trade_time: datetime,
+        quantity: int,
+        price: float,
+    ):
+        self.symbol = symbol
+        self.account_id = account_id
+        self.trade_time = trade_time
+        self.quantity = quantity
+        self.price = price

@@ -1725,3 +1725,33 @@ def test_margin_health_websocket():
             assert response.status_code == 101
             assert response.headers["Upgrade"] == "websocket"
             assert response.headers["Connection"] == "upgrade"
+import pytest
+from datetime import datetime
+
+
+def test_trade_creation():
+    trade = Trade(
+        symbol="AAPL",
+        account_id=1,
+        trade_time=datetime(2022, 4, 5, 10, 0),
+        quantity=100,
+        price=150.0,
+    )
+    assert trade.symbol == "AAPL"
+    assert trade.account_id == 1
+    assert trade.trade_time == datetime(2022, 4, 5, 10, 0)
+    assert trade.quantity == 100
+    assert trade.price == 150.0
+
+    def test_trade_to_string():
+        trade = Trade(
+            symbol="AAPL",
+            account_id=1,
+            trade_time=datetime(2022, 4, 5, 10, 0),
+            quantity=100,
+            price=150.0,
+        )
+        assert (
+            str(trade)
+            == "Trade(symbol='AAPL', account_id=1, trade_time=datetime(2022, 4, 5, 10, 0), quantity=100, price=150.0)"
+        )
