@@ -463,3 +463,49 @@ class CryptocurrencyWallet:
                             self.currency
                         )
                         return self.wallet_address
+from fastapi import FastAPI, HTTPException
+from typing import Optional
+import secrets
+
+app = FastAPI()
+
+
+class WalletAddress:
+    def __init__(self, currency: str, user_id: int):
+        self.currency = currency
+        self.user_id = user_id
+
+        def generate_wallet_address(self) -> str:
+            if not (self.currency and self.user_id > 0):
+                raise HTTPException(
+                    status_code=400, detail="Invalid currency or user ID."
+                )
+                wallet_prefix = f"{self.currency.upper()}_"
+                base58_chars = (
+                    "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+                )
+                wallet_address = ""
+                prefix_len = len(wallet_prefix)
+                for i in range(prefix_len):
+                    if wallet_prefix[i] == "1":
+                        bits = 0
+                    else:
+                        bits_str = "".join(c for c in wallet_prefix[i:] if c != "_")
+                        bits_str, _ = secrets.splitbits(int(bits_str, 16), 8)
+                        bits = int(bits_str, 2)
+                        wallet_address += base58_chars[bits]
+                        wallet_address += base58_chars[0]
+                        return WalletAddress(
+                            currency=self.currency,
+                            user_id=self.user_id,
+                            address=wallet_address,
+                        )
+
+                    @app.get("/generate-wallet-address")
+                    def generate_wallet_address(
+                        currency: str, user_id: Optional[int] = None
+                    ):
+                        if not user_id:
+                            user_id = secrets.randbits(64)
+                            wallet = WalletAddress(currency=currency, user_id=user_id)
+                            return wallet.generate_wallet_address()

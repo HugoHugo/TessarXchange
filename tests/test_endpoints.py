@@ -456,3 +456,30 @@ def test_generate_wallet_address_btc():
                 wallet = CryptocurrencyWallet("XRP")
                 response = client.get("/wallet/xrp")
                 assert response.status_code == 400
+import pytest
+from fastapi.testclient import TestClient
+from main import app, WalletAddress
+
+
+@pytest.fixture()
+def wallet_address():
+    def _wallet_address(currency: str, user_id: Optional[int] = None):
+        if not user_id:
+            user_id = secrets.randbits(64)
+            return WalletAddress(currency=currency, user_id=user_id)
+        wallet = _wallet_address(currency=currency, user_id=user_id)
+        return wallet.generate_wallet_address()
+
+    return _wallet_address
+
+
+def test_generate_wallet_address(wallet_address):
+    response = wallet_address("BTC", None)
+    assert isinstance(response, WalletAddress)
+    address = response.address
+    assert len(address) == 34
+
+    def test_invalid_currency_or_user_id():
+        app.dependency_overrides[WalletAddress.generate_wallet_address] = wallet_address
+        with pytest.raises(HTTPException):
+            response = app.test_client().get("/generate-wallet-address")
