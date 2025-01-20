@@ -1755,3 +1755,35 @@ def test_trade_creation():
             str(trade)
             == "Trade(symbol='AAPL', account_id=1, trade_time=datetime(2022, 4, 5, 10, 0), quantity=100, price=150.0)"
         )
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _app:
+        yield _app
+
+        def test_calculate_dynamic_fee(client):
+            base_rate = 1.0
+            rate_increase_per_packet = 2.5
+            initial_congestion_level = 0.8
+            network_congestion = NetworkCongestion()
+            response = client.get("/calculate_dynamic_fee")
+            expected_congestion_level = network_congestion.congestion_level + 0.02
+            assert response.status_code == 200
+            assert response.json() == {
+                "dynamic_fees": float(
+                    network_congestion.calculate_dynamic_fee(
+                        network_congestion, base_rate, rate_increase_per_packet
+                    )
+                )
+            }
+            assert (
+                round(expected_congestion_level - initial_congestion_level, 2) == 0.02
+            )
+
+            def test_calculate_dynamic_fee_invalid_client():
+                with pytest.raises(HTTPException):
+                    calculate_dynamic_fee(None, 1.0, 2.5)

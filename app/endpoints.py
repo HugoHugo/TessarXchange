@@ -1597,3 +1597,39 @@ class Trade:
         self.trade_time = trade_time
         self.quantity = quantity
         self.price = price
+from fastapi import FastAPI, HTTPException
+import random
+
+app = FastAPI()
+
+
+class NetworkCongestion:
+    def __init__(self):
+        self.congestion_level = 0.0  # Between 0 and 1
+
+        @property
+        def is_critical(self) -> bool:
+            return self.congestion_level > 0.95
+
+        def calculate_dynamic_fee(
+            network_congestion: NetworkCongestion,
+            base_rate: float,
+            rate_increase_per_packet: float,
+        ) -> float:
+            if not isinstance(network_congestion, NetworkCongestion):
+                raise HTTPException(
+                    status_code=400, detail="Invalid NetworkCongestion instance."
+                )
+                base_fee = base_rate
+                packet_count = random.randint(
+                    1, 1000
+                )  # Randomly generated packet count
+                congestion_level_adjustment = (packet_count / 1000) * 0.01
+                if congestion_level_adjustment > 0.02:
+                    base_fee += (
+                        base_fee
+                        * congestion_level_adjustment
+                        * rate_increase_per_packet
+                    )
+                    self.congestion_level += congestion_level_adjustment
+                    return base_fee
