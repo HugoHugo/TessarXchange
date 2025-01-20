@@ -2210,3 +2210,20 @@ def client():
                 snapshot: LiquiditySnapshot = response.json()
                 assert isinstance(snapshot, LiquiditySnapshot)
                 assert "detail" in snapshot
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as test_client:
+        yield test_client
+
+        def test_bulk_user_permission_update_endpoint(client):
+            response = client.get("/bulk-user-permission-update")
+            assert response.status_code == 200
+            assert (
+                "user_id" in response.json()
+                and "action" in response.json()
+                and "resource" in response.json()
+            )

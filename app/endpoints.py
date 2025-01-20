@@ -2089,3 +2089,37 @@ class LiquiditySnapshot:
                     raise HTTPException(
                         status_code=500, detail="An internal server error occurred"
                     )
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import random
+
+app = FastAPI()
+
+
+# Pydantic Models
+class UserPermissionUpdate(BaseModel):
+    user_id: int
+    action: str  # "add" or "remove"
+    resource: str
+
+    def generate_random_user_id():
+        return random.randint(1000, 9999)
+
+    def update_user_permission(user_id: int, update: UserPermissionUpdate):
+        if update.action not in ["add", "remove"]:
+            raise HTTPException(
+                status_code=400, detail="Invalid action. Must be 'add' or 'remove'."
+            )
+            current_action = "add" if update.action == "add" else "remove"
+            resource_accessed = f"{update.resource} access"
+            print(
+                f"[{datetime.now()}] Updating user {user_id}'s permission on {resource_accessed}"
+            )
+            # Add your logic to handle the actual permission updates
+            if current_action == "add":
+                # Perform 'add' operation for the specified resource
+                pass
+            elif current_action == "remove":
+                # Perform 'remove' operation for the specified resource
+                pass
+                return {"message": f"User {user_id}'s permission has been updated."}
