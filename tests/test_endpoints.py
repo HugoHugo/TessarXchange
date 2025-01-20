@@ -260,3 +260,21 @@ def test_get_wallet():
                                 "address": "bc1q8v5gk7f4tjz3c9h2w8",
                             }
                             assert response.json() == expected_data
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.main
+def test_generate_wallet_address():
+    client = TestClient(app)
+    # Test with valid currency and user
+    response = client.post("/wallet/Bitcoin/user1")
+    assert response.status_code == 200
+    data = response.json()
+    assert "address" in data
+    assert "currency" in data
+    # Test with invalid currency
+    response = client.post("/wallet/Ethereum/user2")
+    assert response.status_code == 400
+    assert response.content.decode() == "Unsupported currency"

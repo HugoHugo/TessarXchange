@@ -271,3 +271,16 @@ class Wallet:
                                 "path": wallet_obj.path,
                                 "address": address,
                             }
+from fastapi import FastAPI, HTTPException
+from pybitcoin import BitcoinAddress
+
+app = FastAPI()
+
+
+@app.post("/wallet/{currency}/{user}")
+def generate_wallet_address(currency: str, user: str):
+    if currency.lower() != "bitcoin":
+        raise HTTPException(status_code=400, detail="Unsupported currency")
+        bitcoin_address_generator = BitcoinAddress()
+        address = bitcoin_address_generator.generate_address(user)
+        return {"address": address, "currency": currency}
