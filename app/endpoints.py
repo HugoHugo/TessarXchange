@@ -1550,3 +1550,32 @@ class AMMPair(BaseModel):
                 liquidity_maxed_out_per_block=200,
             ),
         ]
+from fastapi import FastAPI, WebSocket
+import asyncio
+
+app = FastAPI()
+
+
+class MarginHealthNotification:
+    def __init__(self, message):
+        self.message = message
+
+        async def send_notification(
+            websocket: WebSocket, notification: MarginHealthNotification
+        ):
+            await websocket.send_json(
+                {"type": "notification", "message": notification.message}
+            )
+
+            @app.websocket("/ws/margin-health")
+            async def margin_health_websocket():
+                await WebSocket.accept_and_send(
+                    Event="open", content={"message": "Connection established"}
+                )
+                async for msg in WebSocket.receive():
+                    if msg.type == WebSocketEventType.CLOSED:
+                        return
+                    notification = MarginHealthNotification(msg.json())
+                    await send_notification(
+                        websocket=WebSocket.client(self), notification=notification
+                    )

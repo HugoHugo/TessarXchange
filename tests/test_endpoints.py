@@ -1697,3 +1697,31 @@ def test_add_amm_pair(client, test_amm_pair):
         assert len(response.json()) == 2
         for pair in response.json():
             assert isinstance(pair, AMMPair)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_margin_health_websocket():
+    client = TestClient(app)
+
+    @pytest.mark.asyncio
+    async def test():
+        response = await client.get("/ws/margin-health")
+        # Check if the websocket endpoint is opened
+        assert b'Event="open"' in response.content
+        # Assert that a WebSocket accept_and_send() event is returned
+        await asyncio.sleep(1)
+        ws = await response.automate()
+        # Close the connection to simulate a closed state
+        await ws.close()
+        # Check if a 'message' with a specific content is received
+        assert b"Connection established" in response.content
+        test()
+
+        def test_margin_health_websocket_response():
+            client = TestClient(app)
+            response = client.get("/ws/margin-health")
+            assert response.status_code == 101
+            assert response.headers["Upgrade"] == "websocket"
+            assert response.headers["Connection"] == "upgrade"
