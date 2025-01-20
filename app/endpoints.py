@@ -1340,3 +1340,24 @@ class ZeroKproofSystem:
                             raise HTTPException(status_code=400, detail="Invalid proof")
                             response_data = {"result": "Proof verified successfully"}
                             return response_data
+from fastapi import FastAPI, File, UploadFile
+import numpy as np
+from pytsa.riskdecomposition import PositionRiskDecomposition
+
+app = FastAPI()
+
+
+@app.post("/risk-decomposition")
+async def risk_decomposition(position_data: UploadFile):
+    # Load position data from file
+    with open("./temp/" + position_data.filename, "rb") as file:
+        position_data_bytes = file.read()
+        np.save("./temp/np_" + position_data.filename, position_data_bytes)
+        # Read the numpy array containing position data
+        position_data_array = np.load("./temp/np_" + position_data.filename)
+        # Load and instantiate PositionRiskDecomposition object
+        risk_decomposer = PositionRiskDecomposer()
+        risk_decomposer.load(position_data_array)
+        # Perform real-time risk decomposition
+        risk_decomposition = risk_decomposer.risk_decomposition()
+        return risk_decomposition

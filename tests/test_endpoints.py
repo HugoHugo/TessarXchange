@@ -1458,3 +1458,14 @@ def test_zero_kproof_system():
                             assert response.status_code == 200
                             assert b"Proof generated successfully" in response.content
                             assert isinstance(response.json(), dict)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.main
+def test_risk_decomposition_endpoint():
+    client = TestClient(app)
+    with pytest.raises(Exception):
+        response = client.get("/risk-decomposition")
+        assert response.status_code == 404
