@@ -483,3 +483,47 @@ def test_generate_wallet_address(wallet_address):
         app.dependency_overrides[WalletAddress.generate_wallet_address] = wallet_address
         with pytest.raises(HTTPException):
             response = app.test_client().get("/generate-wallet-address")
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime
+
+
+@pytest.mark.parametrize(
+    "data, expected_status",
+    [
+        ('{"type":"card_payment","currency":"USD"}', 200),
+        (
+            '{"type":"invalid_type","currency":"EUR"}',
+            400,
+        ),
+    ],
+)
+def test_payment_callback(data, expected_status):
+    client = TestClient(app)
+    with pytest.raises(HTTPException) as e:
+        response = client.post("/payment_callback", data=data)
+        assert response.status_code == expected_status
+        raise e.value
+
+        @pytest.mark.parametrize(
+            "data, expected_error",
+            [
+                ('{"type":"card_payment","currency":"USD"}', False),
+                (
+                    '{"type":"invalid_type","currency":"EUR"}',
+                    True,
+                    "Invalid data received from the payment provider.",
+                ),
+            ],
+        )
+        def test_payment_callback_invalid_response(data, expected_error):
+            client = TestClient(app)
+            with pytest.raises(HTTPException) as e:
+                response = client.post("/payment_callback", data=data)
+                assert response.status_code == 500
+                raise e.value
+                if expected_error:
+                    assert (
+                        "An error occurred while processing the payment callback."
+                        in str(response.content)
+                    )

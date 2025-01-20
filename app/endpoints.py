@@ -509,3 +509,26 @@ class WalletAddress:
                             user_id = secrets.randbits(64)
                             wallet = WalletAddress(currency=currency, user_id=user_id)
                             return wallet.generate_wallet_address()
+from fastapi import FastAPI, HTTPException
+from typing import Optional
+import json
+
+app = FastAPI()
+
+
+@app.post("/payment_callback")
+async def payment_callback(data: str):
+    try:
+        callback_data = json.loads(data)
+        if "type" not in callback_data or "currency" not in callback_data:
+            raise ValueError("Invalid data received from the payment provider.")
+            # Perform business logic based on the callback data
+            return {
+                "result": f"{callback_data['type']} payment processed successfully."
+            }
+    except Exception as e:
+        print(f"Error processing payment callback: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while processing the payment callback.",
+        )
