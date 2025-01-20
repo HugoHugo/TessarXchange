@@ -1824,3 +1824,21 @@ def client():
                     assert "Invalid or unknown decentralized identifier" in str(
                         response.content
                     )
+import pytest
+from main import app, LiquidityData
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_add_liquidity(client):
+            response = client.post(
+                "/liquidity",
+                json={"symbol": "BTC-USD", "amount": 100},
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert isinstance(data, dict)
+            assert "message" in data

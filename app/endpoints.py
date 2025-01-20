@@ -1660,3 +1660,23 @@ def integrate_did(did: str):
     def update_did_status(did: str):
         # This function would ideally interact with the DID's storage or database and update its status.
         raise NotImplementedError("Implement logic to update DID status")
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class LiquidityData(BaseModel):
+    symbol: str
+    amount: float
+
+    @app.post("/liquidity")
+    def add_liquidity(liquidity_data: LiquidityData):
+        # Assuming there's a function to calculate and store liquidity
+        if not calculate_and_store_liquidity(
+            liquidity_data.symbol, liquidity_data.amount
+        ):
+            raise HTTPException(
+                status_code=400, detail="Failed to calculate or store liquidity"
+            )
+            return {"message": "Liquidity added successfully"}
