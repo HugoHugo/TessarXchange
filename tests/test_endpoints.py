@@ -2083,3 +2083,28 @@ def client():
                     b"Invalid JSON payload received for delta hedging."
                     in response.content
                 )
+from main import generate_wallet_address, BitcoinAddress
+import pytest
+from datetime import datetime
+import re
+
+
+def test_generate_wallet_address():
+    # Test with unsupported currency
+    with pytest.raises(HTTPException):
+        generate_wallet_address(currency="unsupported", user_id=1)
+        # Test with valid currency
+        response = generate_wallet_address(currency="bitcoin", user_id=1)
+        assert isinstance(response, dict)
+        assert "currency" in response
+        assert "user_id" in response
+        assert "wallet_address" in response
+
+        def test_bitcoin_address_creation():
+            wallet = BitcoinAddress()
+            address = wallet.create_address(123)
+            # Test that the created address is a valid bitcoin address.
+            if not re.match(r"^[13][a-km-uptk-z1-9]{27,34}$", str(address)):
+                raise AssertionError(
+                    "The generated BitcoinAddress is not in the correct format."
+                )

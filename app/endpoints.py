@@ -1890,3 +1890,16 @@ def delta_hedge(data: File, file: UploadFile):
             position_delta = float(position_data["positionDelta"])
             hedged_value = calculate_hedged_value(position_delta)
             return {"Hedged Value": hedged_value}
+from fastapi import FastAPI, HTTPException
+from pybitcoin import BitcoinAddress
+
+app = FastAPI()
+
+
+@app.post("/wallet-address")
+def generate_wallet_address(currency: str, user_id: int):
+    if currency.lower() not in BitcoinAddress.supported_currencies:
+        raise HTTPException(status_code=400, detail="Unsupported currency")
+        wallet = BitcoinAddress()
+        address = wallet.create_address(user_id)
+        return {"currency": currency, "user_id": user_id, "wallet_address": address}
