@@ -1562,3 +1562,31 @@ def test_load_portfolio_data():
             with pytest.raises(HTTPException):
                 response = client.get("/scenario/XOM/20.00")
                 assert response.status_code == 404
+from main import app, wallet
+import pytest
+
+
+@pytest.fixture()
+def client():
+    yield TestClient(app)
+
+    def test_current_balance(client):
+        response = client.get("/current-balance")
+        assert response.status_code == 200
+        result_data = response.json()
+        assert isinstance(result_data, dict)
+        assert "cryptocurrencies" in result_data
+        for data in result_data["cryptocurrencies"]:
+            assert "name" in data
+            assert "balance" in data
+
+            def test_wallet_creation():
+                try:
+                    wallet: BitcoinWallet = BitcoinWallet()
+                    assert (
+                        wallet.cryptocurrencies
+                    ), "Expected a list of cryptocurrencies"
+                except Exception as e:
+                    raise AssertionError(
+                        f"An error occurred while trying to create the wallet: {e}"
+                    )

@@ -1454,3 +1454,18 @@ async def scenario_analysis(symbol: str, return_rate: float):
             "scenario_return": f"{return_rate:.2f}%",
             "portfolio_value": scenario_portfolio.portfolio_value,
         }
+from fastapi import FastAPI
+from pybitcoin import BitcoinWallet, Cryptocurrency
+
+app = FastAPI()
+wallet: BitcoinWallet = BitcoinWallet()
+for cryptocurrency in wallet.cryptocurrencies:
+    app.include_in_schema(cryptocurrency)
+
+    @app.get("/current-balance")
+    def current_balance():
+        balance_data = []
+        for cryptocurrency in wallet.cryptocurrencies:
+            balance = wallet.get_balance(cryptocurrency)
+            balance_data.append({"name": cryptocurrency.name, "balance": str(balance)})
+            return {"cryptocurrencies": balance_data}
