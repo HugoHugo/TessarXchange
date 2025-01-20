@@ -2063,3 +2063,23 @@ def test_create_account():
         "currency": account_data.currency,
         "status": account_data.status,
     }
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_endpoint(client):
+            response = client.get("/delta_hedge")
+            assert response.status_code == 200
+
+            def test_invalid_json_payload(client):
+                response = client.post("/delta_hedge", data={"invalid": "key"})
+                assert response.status_code == 400
+                assert (
+                    b"Invalid JSON payload received for delta hedging."
+                    in response.content
+                )

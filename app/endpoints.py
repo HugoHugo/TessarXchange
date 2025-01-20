@@ -1870,3 +1870,23 @@ class BrokerageAccount(BaseModel):
             raise HTTPException(status_code=400, detail="Account is inactive.")
             account_data.id = generate_account_id()
             return account_data
+from fastapi import FastAPI, File, UploadFile
+import json
+
+app = FastAPI()
+
+
+def calculate_hedged_value(position_delta: float):
+    # Placeholder calculation for demonstration purposes.
+    return position_delta * 0.8
+
+
+@app.post("/delta_hedge")
+def delta_hedge(data: File, file: UploadFile):
+    with data:
+        position_data = json.load(file)
+        if not isinstance(position_data, dict) or "positionDelta" not in position_data:
+            raise ValueError("Invalid JSON payload received for delta hedging.")
+            position_delta = float(position_data["positionDelta"])
+            hedged_value = calculate_hedged_value(position_delta)
+            return {"Hedged Value": hedged_value}
