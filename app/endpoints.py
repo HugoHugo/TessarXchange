@@ -1385,3 +1385,40 @@ async def optimize_vault_strategy():
         "num_assets": num_assets,
         "asset_allocation": asset_allocation,
     }
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class CollateralPosition(BaseModel):
+    id: uuid.UUID
+    protocol: str
+    token_address: str
+    amount: float
+    collateral_factor: float
+    last_updated: datetime
+    collateral_positions = {}
+    router = APIRouter()
+
+    @router.post("/collateral-positions")
+    def create_collateral_position(position: CollateralPosition):
+        if position.id in collateral_positions:
+            raise HTTPException(
+                status_code=400, detail="A position with this ID already exists."
+            )
+            collateral_positions[position.id] = position
+            return {
+                "message": "Collateral position created successfully.",
+                "position_id": position.id,
+            }
+
+        @router.get("/collateral-positions/{id}")
+        def get_collateral_position(id: uuid.UUID):
+            if id not in collateral_positions:
+                raise HTTPException(
+                    status_code=404, detail="Position with this ID does not exist."
+                )
+                return {
+                    "message": "Collateral position retrieved successfully.",
+                    "position": collateral_positions[id],
+                }

@@ -1490,3 +1490,50 @@ def test_optimize_vault_strategy():
     # Assert that the asset allocation values sum to 1
     total = sum(asset_allocation)
     assert total == 1
+import pytest
+from main import CollateralPosition, app
+
+
+@pytest.fixture()
+def collateral_position():
+    position = CollateralPosition(
+        id=uuid.uuid4(),
+        protocol="example_protocol",
+        token_address="0xExampleTokenAddress",
+        amount=100.0,
+        collateral_factor=1.2,
+        last_updated=datetime.now(),
+        collateral_positions={},
+        router=CollateralPosition.router,
+    )
+    return position
+
+
+def test_create_collateral_position(collateral_position):
+    response = collateral_position.create_collateral_position(
+        position=collateral_position
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "message": "Collateral position created successfully.",
+        "position_id": collateral_position.id,
+    }
+
+    def test_get_collateral_position():
+        position = CollateralPosition(
+            id=uuid.uuid4(),
+            protocol="example_protocol",
+            token_address="0xExampleTokenAddress",
+            amount=100.0,
+            collateral_factor=1.2,
+            last_updated=datetime.now(),
+            collateral_positions={},
+            router=CollateralPosition.router,
+        )
+        position.create_collateral_position(position=position)
+        response = position.get_collateral_position(id=position.id)
+        assert response.status_code == 200
+        assert response.json() == {
+            "message": "Collateral position retrieved successfully.",
+            "position": position,
+        }
