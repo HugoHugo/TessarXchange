@@ -710,3 +710,34 @@ async def test_get_gas_optimization_strategies():
                 assert response.status_code == 200
                 assert "message" in response.json()
                 assert "strategy_id" in response.json()
+import pytest
+from main import CrossChainState, StateVerificationError, CrossChainStateService
+
+
+@pytest.fixture
+def state():
+    chain_id = "test_chain"
+    state_data = {"key": "value"}
+    return CrossChainState(chain_id, state_data)
+
+
+def test_state_verification_success(state):
+    state.verified = True
+    assert state.verify_state() == True
+
+    def test_state_verification_failure(state):
+        with pytest.raises(StateVerificationError):
+            state.verify_state()
+
+            @pytest.fixture
+            def service():
+                app = FastAPI()
+                return CrossChainStateService()
+
+            def test_service_add_state_verification(service, state):
+                state.chain_id = "test_chain"
+                service.add_state_verification(state)
+                assert len(service.all_state_verifications) == 1
+
+                def test_service_all_state_verifications_empty(service):
+                    assert len(service.all_state_verifications) == 0
