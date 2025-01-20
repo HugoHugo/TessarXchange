@@ -342,3 +342,34 @@ def generate_wallet_address(currency: str, user: str) -> str:
         private_key = os.urndom().bytes(32)
         address = Address.for_private_key(private_key, network)
         return {"currency": currency, "user": user, "address": str(address)}
+from fastapi import FastAPI, HTTPException
+from typing import Optional
+import hashlib
+
+app = FastAPI()
+
+
+class CryptoWallet:
+    def __init__(self, currency: str):
+        self.currency = currency
+        if not self.is_valid_currency(currency):
+            raise HTTPException(status_code=400, detail="Invalid currency")
+
+            @staticmethod
+            def is_valid_currency(currency: str) -> bool:
+                valid_currencies = ["BTC", "ETH"]
+                return currency.upper() in valid_currencies
+
+            @app.post("/wallet")
+            def generate_wallet(
+                wallet_address: Optional[str] = None, currency: str = ...
+            ):
+                if wallet_address and not self._is_valid_address(wallet_address):
+                    raise HTTPException(
+                        status_code=400, detail="Invalid wallet address"
+                    )
+                    crypto_wallet = CryptoWallet(currency=currency)
+                    # Generate a random 64-bit hexadecimal number
+                    hex_bytes = os.urandom(32)
+                    hex_number = hashlib.sha256(hex_bytes).hexdigest()
+                    return {"wallet_address": hex_number, "currency": currency}

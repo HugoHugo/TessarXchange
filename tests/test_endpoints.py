@@ -350,3 +350,30 @@ def test_generate_wallet_address():
         address = generate_wallet_address("eth", "jane")
         assert result == {"currency": "eth", "user": "jane", "address": str(address)}
         del os.environ["PRIVATE_KEY"]
+import os
+import pytest
+from fastapi.testclient import TestClient
+from main import app, CryptoWallet
+
+
+def test_valid_currency():
+    crypto_wallet = CryptoWallet("BTC")
+    assert crypto_wallet.currency == "BTC"
+
+    def test_invalid_currency():
+        with pytest.raises(HTTPException):
+            crypto_wallet = CryptoWallet("XRP")
+
+            def test_generate_wallet():
+                client = TestClient(app)
+                response = client.post("/wallet", json={"currency": "BTC"})
+                assert response.status_code == 200
+                assert response.json() == {"wallet_address": result, "currency": "BTC"}
+
+                @pytest.mark.parametrize("address_length", [32, 64])
+                def test_valid_wallet_address(address_length):
+                    crypto_wallet = CryptoWallet(currency="BTC")
+                    hex_bytes = os.urandom(32)
+                    hex_number = hashlib.sha256(hex_bytes).hexdigest()
+                    wallet_address = crypto_wallet._convert_to_address(hex_number)
+                    assert len(wallet_address) == address_length
