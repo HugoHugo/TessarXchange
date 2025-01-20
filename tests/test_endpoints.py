@@ -429,3 +429,30 @@ def client():
                     "detail" in error_data
                     and error_data["detail"] == "Currency not supported"
                 )
+from fastapi.testclient import TestClient
+import pytest
+from main import app, CryptocurrencyWallet
+
+
+def test_generate_wallet_address_btc():
+    client = TestClient(app)
+    wallet = CryptocurrencyWallet("BTC")
+    response = client.get("/wallet/btc")
+    assert response.status_code == 200
+    expected_address = "your_bitcoin_address"
+    assert wallet.wallet_address == expected_address
+
+    def test_generate_wallet_address_eth():
+        client = TestClient(app)
+        wallet = CryptocurrencyWallet("ETH")
+        response = client.get("/wallet/eth")
+        assert response.status_code == 200
+        expected_address = "your_ethereum_address"
+        assert wallet.wallet_address == expected_address
+
+        def test_invalid_currency_raises_http_exception():
+            client = TestClient(app)
+            with pytest.raises(HTTPException):
+                wallet = CryptocurrencyWallet("XRP")
+                response = client.get("/wallet/xrp")
+                assert response.status_code == 400

@@ -426,3 +426,40 @@ def generate_wallet_address(currency: str, user: str):
             status_code=500,
             detail="An error occurred while generating the wallet address",
         )
+from fastapi import FastAPI, HTTPException
+from pycoin.payment.addresses import Address
+from pycoin.util import b2a
+from pycoin.payment import bitcoin_satoshi_to_target_value
+from eth_account import Account
+
+app = FastAPI()
+
+
+class CryptocurrencyWallet:
+    def __init__(self, currency: str):
+        if currency not in ["BTC", "ETH"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid currency. Supported currencies are BTC and ETH.",
+            )
+            self.currency = currency
+            self.wallet_address = ""
+
+            @staticmethod
+            def generate_wallet_address(currency: str) -> Address:
+                if currency == "BTC":
+                    btc_config = {"target_value": 21000000, "satoshis_per_byte": 4}
+                    address = bitcoin_satoshi_to_target_value(1, btc_config)
+                elif currency == "ETH":
+                    account = Account.create_from_key(
+                        private_key="your_private_key_here", passphrase=""
+                    )
+                    address = b2a(account.addresses[0])
+                    return address
+
+                def get_wallet_address(self) -> str:
+                    if not self.wallet_address:
+                        self.wallet_address = self.generate_wallet_address(
+                            self.currency
+                        )
+                        return self.wallet_address
