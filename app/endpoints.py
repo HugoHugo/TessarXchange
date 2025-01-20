@@ -284,3 +284,24 @@ def generate_wallet_address(currency: str, user: str):
         bitcoin_address_generator = BitcoinAddress()
         address = bitcoin_address_generator.generate_address(user)
         return {"address": address, "currency": currency}
+from fastapi import FastAPI, HTTPException
+from pycoin.wallet import Wallet, PrivateKey
+from string import ascii_letters, digits
+
+app = FastAPI()
+
+
+class CryptoWalletError(Exception):
+    pass
+
+    @app.post("/wallet")
+    def generate_wallet(currency: str, user_id: int):
+        if currency.lower() not in ["btc", "eth"]:
+            raise CryptoWalletError("Unsupported currency")
+            private_key = PrivateKey.random()
+            wallet_address = Wallet.from_private_key(private_key).address()
+            return {
+                "currency": currency,
+                "user_id": user_id,
+                "wallet_address": wallet_address,
+            }

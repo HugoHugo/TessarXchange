@@ -278,3 +278,28 @@ def test_generate_wallet_address():
     response = client.post("/wallet/Ethereum/user2")
     assert response.status_code == 400
     assert response.content.decode() == "Unsupported currency"
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as TC:
+        yield TC
+
+        def test_generate_wallet(client):
+            response = client.post(
+                "/wallet",
+                json={
+                    "currency": "Btc",
+                    "user_id": 1,
+                },
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert "currency" in data
+            assert "user_id" in data
+            assert "wallet_address" in data
+            private_key = PrivateKey.random()
+            wallet_address = Wallet.from_private_key(private_key).address()
+            assert data["wallet_address"] == wallet_address
