@@ -944,3 +944,19 @@ def client():
                                                                                             ex.value
                                                                                         )
                                                                                     )
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    yield TestClient(app)
+
+    def test_correlation_analysis(client):
+        response = client.get("/correlation")
+        assert response.status_code == 200
+        data = response.json()
+        assert "correlation_matrix" in data
+        corr_matrix = data["correlation_matrix"]
+        # Add assertions for the correlation matrix

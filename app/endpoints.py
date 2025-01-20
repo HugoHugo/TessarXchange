@@ -818,3 +818,34 @@ class ComplianceAttestation(BaseModel):
                     )
                     attested_data = compliance_service.attestation(attestation)
                     return attested_data
+from fastapi import FastAPI, HTTPException
+from pycorrelate import PortfolioCorrelation
+
+app = FastAPI()
+
+
+def get_portfolio_correlations(portfolios: list):
+    if len(portfolios) < 2:
+        raise HTTPException(
+            status_code=400, detail="Number of portfolios must be at least 2."
+        )
+        correlator = PortfolioCorrelation()
+        return correlator.portfolio_correlation_matrix(*portfolios)
+
+    @app.get("/correlation")
+    def correlation_analysis():
+        try:
+            portfolios_str = request.querys_params.get("portfolios", "")
+            if not portfolios_str:
+                raise HTTPException(
+                    status_code=400, detail="Portfolios parameter must be provided."
+                )
+                portfolios = [int(i) for i in portfolios_str.split(",")]
+                corr_matrix = get_portfolio_correlations(portfolios)
+                return {"correlation_matrix": corr_matrix.tolist()}
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=500,
+                detail="An error occurred while processing the request.",
+            )
