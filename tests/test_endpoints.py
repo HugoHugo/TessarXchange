@@ -2318,3 +2318,54 @@ def test_atomic_swap(sender_amount, receiver_amount, expected_status):
                     )
                     assert response.status_code == 400
                     assert ex_info.value.detail == exception_message
+import pytest
+from main import app, DIDsManager
+
+
+@pytest.fixture()
+def manager():
+    yield DIDsManager()
+
+    def test_create_did(manager):
+        identifier = "test-did"
+        with pytest.raises(HTTPException) as exc:
+            response = manager.create_did(identifier=identifier)
+            assert response.status_code == 400
+            assert str(exc.value) == "Identifier already exists."
+            response = manager.create_did(identifier=identifier)
+            did = response["did"]
+            assert response["result"] == "DID created successfully."
+            assert type(did) is str
+
+            def test_read_did(manager):
+                identifier = "test-did"
+                with pytest.raises(HTTPException) as exc:
+                    response = manager.read_did(identifier=identifier)
+                    assert response.status_code == 404
+                    assert str(exc.value) == "Identifier not found."
+                    response = manager.read_did(identifier=identifier)
+                    did = response["did"]
+                    assert response["result"] == "DID retrieved successfully."
+                    assert type(did) is str
+
+                    def test_update_did(manager):
+                        identifier = "test-did"
+                        with pytest.raises(HTTPException) as exc:
+                            response = manager.update_did(identifier=identifier)
+                            assert response.status_code == 404
+                            assert str(exc.value) == "Identifier not found."
+                            response = manager.create_did(identifier=identifier)
+                            did = response["did"]
+                            with pytest.raises(HTTPException) as exc:
+                                updated_did = stratum.update_DID(
+                                    did, new_data="new data"
+                                )
+                                response = manager.update_did(
+                                    identifier=identifier, did=str(updated_did)
+                                )
+                                assert response.status_code == 404
+                                assert str(exc.value) == "Identifier not found."
+                                response = manager.update_did(identifier=identifier)
+                                updated_did = response["did"]
+                                assert response["result"] == "DID updated successfully."
+                                assert type(updated_did) is str

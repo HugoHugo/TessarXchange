@@ -2221,3 +2221,52 @@ class AtomicSwapRequest(BaseModel):
                 )
                 # Additional validation or logic can be added here
                 return {"message": "Atomic swap transaction initiated."}
+from fastapi import FastAPI, HTTPException
+import stratum
+
+app = FastAPI()
+
+
+class DIDsManager:
+    def __init__(self):
+        self.dids = {}
+
+        @app.post("/dids")
+        async def create_did(self, identifier: str):
+            if identifier in self.dids:
+                raise HTTPException(
+                    status_code=400, detail="Identifier already exists."
+                )
+                did = stratum.DID(identifier)
+                self.dids[identifier] = did
+                return {"result": "DID created successfully."}
+
+            @app.get("/dids/{identifier}")
+            async def read_did(self, identifier: str):
+                if identifier not in self.dids:
+                    raise HTTPException(status_code=404, detail="Identifier not found.")
+                    did = self.dids[identifier]
+                    return {"result": "DID retrieved successfully.", "did": str(did)}
+
+                @app.put("/dids/{identifier}")
+                async def update_did(self, identifier: str):
+                    if identifier not in self.dids:
+                        raise HTTPException(
+                            status_code=404, detail="Identifier not found."
+                        )
+                        did = self.dids[identifier]
+                        # Update the DID using your implementation
+                        updated_did = stratum.update_DID(did)
+                        return {
+                            "result": "DID updated successfully.",
+                            "did": str(updated_did),
+                        }
+
+                    @app.delete("/dids/{identifier}")
+                    async def delete_did(self, identifier: str):
+                        if identifier not in self.dids:
+                            raise HTTPException(
+                                status_code=404, detail="Identifier not found."
+                            )
+                            del self.dids[identifier]
+                            return {"result": "DID deleted successfully."}
