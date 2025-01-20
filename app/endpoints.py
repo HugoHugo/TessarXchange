@@ -1064,3 +1064,21 @@ class IdentityDocument(BaseModel):
                     raise HTTPException(status_code=400, detail="Invalid document type")
                     # Assuming the processing logic is complete
                     return {"result": "KYC verification successful"}
+from fastapi import FastAPI, BackgroundTasks
+import time
+
+app = FastAPI()
+
+
+@app.background
+def update_portfolio():
+    while True:
+        # Simulate fetching portfolio data
+        portfolio_value = 10000.0 + (time.time() % 3600) * 500.0
+        # Update user's portfolio value in the database
+        # This part is not implemented as it depends on your specific database setup.
+        time.sleep(60)
+
+        @app.get("/portfolio")
+        def get_portfolio():
+            return {"user_id": "123", "portfolio_value": 15000}

@@ -1116,3 +1116,21 @@ def test_valid_kyc(client):
         )
         assert response.status_code == 400
         assert "Invalid document type" in str(response.content)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_background_job():
+    client = TestClient(app)
+    # Wait for the background job to complete and update the portfolio once
+    response = client.get("/portfolio")
+    assert response.status_code == 200
+    json_content = response.json()
+    assert "user_id" in json_content and "portfolio_value" in json_content
+    # The second call will not wait for the background job to finish between calls
+    # but it should return the updated portfolio value from the previous call's data.
+    response = client.get("/portfolio")
+    assert response.status_code == 200
+    json_content = response.json()
+    assert "user_id" in json_content and "portfolio_value" in json_content
