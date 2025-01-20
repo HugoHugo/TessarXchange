@@ -1006,3 +1006,16 @@ def client():
                         with pytest.raises(HTTPException):
                             response = client.get("/bot/999")
                             assert response.status_code == 404
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as FastAPIClient:
+        yield FastAPIClient
+
+        def test_market_maker_profitability_endpoint(client):
+            response = client.get("/market_makers/profitability")
+            assert response.status_code == 200

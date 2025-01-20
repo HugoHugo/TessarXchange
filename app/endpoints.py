@@ -919,3 +919,60 @@ class Bot(BaseModel):
             async def get_bot(bot_id: int):
                 bot = get_bot_by_id(bot_id)
                 return {"bot": bot}
+from fastapi import FastAPI, HTTPException
+import models
+from database import SessionLocal
+from typing import List
+import datetime
+
+app = FastAPI()
+models.Base.metadata.create_all(bind=SessionLocal())
+
+
+def get_db():
+    try:
+        db = SessionLocal()
+        yield db
+    finally:
+        db.close()
+
+        @app.get("/market_makers", dependencies=[get_db()])
+        async def market_maker_profitability(db: SessionLocal):
+            market_makers = db.query(models.MarketMaker).all()
+            if not market_makers:
+                raise HTTPException(status_code=404, detail="Market makers not found.")
+                profitability_data = []
+                for maker in market_makers:
+                    transactions = (
+                        db.query(models.Transaction)
+                        .filter(models.Transaction.maker_id == maker.id)
+                        .all()
+                    )
+                    total_traded_volume = 0
+                    total_profit = 0
+                    for transaction in transactions:
+                        if transaction.transaction_type == "buy":
+                            total_traded_volume += transaction.quantity
+                        else:
+                            total_profit += transaction.price * transaction.quantity
+                            profitability_data.append(
+                                {
+                                    "maker_id": maker.id,
+                                    "profitability_percentage": (
+                                        (total_profit / total_traded_volume) * 100
+                                    ),
+                                    "last_updated": str(datetime.datetime.now()),
+                                }
+                            )
+                            return profitability_data
+
+                        @app.post("/market_makers", dependencies=[get_db()])
+                        async def create_market_maker(
+                            maker: models.MarketMaker, db: SessionLocal
+                        ):
+                            maker_dict = maker.dict()
+                            new_maker = models.MarketMaker(**maker_dict)
+                            db.add(new_maker)
+                            db.commit()
+                            db.refresh(new_maker)
+                            return new_maker
