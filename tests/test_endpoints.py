@@ -1877,3 +1877,21 @@ def test_calculate_optimized_marking_curve():
         response = await client.get("/optimal_marking_curve")
         assert response.status_code == 200
         assert isinstance(response.json(), pvector)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.mark.parametrize(
+    "input_data,expected_output",
+    [
+        ({"user_id": "user123"}, {}),
+        ({"user_id": "user456"}, {"message": "KYC registration successful"}),
+        # Add more test cases for error handling.
+    ],
+)
+def test_kyc_endpoint(client, input_data, expected_output):
+    response = client.post("/kyc", json=input_data)
+    assert response.status_code == 200
+    assert response.json() == expected_output
+    # Note: More test cases should be added to cover error handling scenarios such as when the user is not found.

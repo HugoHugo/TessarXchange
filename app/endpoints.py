@@ -1717,3 +1717,30 @@ def calculate_optimized_marking_curve():
 async def get_optimal_marking_curve():
     optimized_curve = calculate_optimal_marking_curve()
     return optimized_curve
+from fastapi import FastAPI, HTTPException
+import uuid
+
+app = FastAPI()
+
+
+class KYC:
+    def __init__(self, user_id: str):
+        self.user_id = user_id
+        self.kyc_data = {}
+        # In-memory storage. Replace with a database when needed.
+        kyc_storage = {}
+
+        @app.post("/kyc")
+        async def register_kyc(user_id: str):
+            if user_id in kyc_storage:
+                raise HTTPException(status_code=400, detail="User already registered.")
+                new_kyc = KYC(user_id)
+                kyc_storage[user_id] = new_kyc
+                return {"message": "KYC registration successful"}
+
+            @app.get("/verify/{user_id}")
+            async def verify_kyc(user_id: str):
+                if user_id not in kyc_storage:
+                    raise HTTPException(status_code=404, detail="User not found")
+                    kyc_instance = kyc_storage[user_id]
+                    return kyc_instance.kyc_data
