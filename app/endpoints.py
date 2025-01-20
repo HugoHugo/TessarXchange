@@ -882,3 +882,40 @@ class SmartContract:
                             # Replace 'your_contract_address' with the actual address of your smart contract
                             contract = SmartContract("your_contract_address")
                             monitor_smart_contract(contract)
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List
+import datetime
+
+app = FastAPI()
+
+
+class Bot(BaseModel):
+    id: int
+    name: str
+    last_active_at: datetime.datetime
+    BOTS = [
+        Bot(
+            id=1,
+            name="LiquidatorBot",
+            last_active_at=datetime.datetime(2023, 6, 8, 10, 0, 123456),
+        ),
+        Bot(id=2, name="AuditBot", last_active_at=None),
+    ]
+
+    def get_bot_by_id(bot_id: int) -> Bot:
+        for bot in BOTS:
+            if bot.id == bot_id:
+                return bot
+            raise HTTPException(status_code=404, detail="Bot not found")
+
+            @app.get("/bots")
+            async def list_bots():
+                bots = BOTS
+                sorted_bots = sorted(bots, key=lambda x: x.last_active_at)
+                return {"bots": sorted_bots}
+
+            @app.get("/bot/{bot_id}")
+            async def get_bot(bot_id: int):
+                bot = get_bot_by_id(bot_id)
+                return {"bot": bot}

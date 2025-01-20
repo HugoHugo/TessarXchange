@@ -972,3 +972,37 @@ def test_monitor_smart_contract():
         "field2": "value2",
     }
     assert contract.current_state == expected_state
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as FastAPIClient:
+        yield FastAPIClient
+
+        def test_list_bots(client):
+            response = client.get("/bots")
+            assert response.status_code == 200
+            assert "bots" in response.json()
+            bots = response.json()["bots"]
+            for bot in bots:
+                assert isinstance(bot, dict)
+                assert "id" in bot
+                assert "name" in bot
+                assert "last_active_at" in bot
+
+                def test_get_bot(client):
+                    response = client.get("/bot/1")
+                    assert response.status_code == 200
+                    assert "bot" in response.json()
+                    bot = response.json()["bot"]
+                    assert isinstance(bot, dict)
+                    assert "id" in bot
+                    assert "name" in bot
+                    assert "last_active_at" in bot
+
+                    def test_get_bot_invalid_id(client):
+                        with pytest.raises(HTTPException):
+                            response = client.get("/bot/999")
+                            assert response.status_code == 404
