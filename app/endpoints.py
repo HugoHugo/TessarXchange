@@ -532,3 +532,39 @@ async def payment_callback(data: str):
             status_code=500,
             detail="An error occurred while processing the payment callback.",
         )
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class TradingPair(BaseModel):
+    id: uuid.UUID
+    base_currency: str
+    quote_currency: str
+
+    class MarginTradingPairManager:
+        trading_pairs = {}
+
+        def create_trading_pair(self, pair: TradingPair):
+            if pair.id in self.trading_pairs:
+                raise HTTPException(
+                    status_code=400,
+                    detail="ID already exists for an existing trading pair.",
+                )
+                self.trading_pairs[pair.id] = pair
+                return pair
+
+            def get_trading_pair_by_id(pair_id: uuid.UUID) -> TradingPair or None:
+                if pair_id not in MarginTradingPairManager.trading_pairs:
+                    raise HTTPException(
+                        status_code=404,
+                        detail="The requested trading pair was not found.",
+                    )
+                    return MarginTradingPairManager.trading_pairs[pair_id]
+
+                @app.post("/trading-pairs")
+                def create_trading_pair(pair_data: TradingPair):
+                    manager = MarginTradingPairManager()
+                    return manager.create_trading_pair(pair_data)

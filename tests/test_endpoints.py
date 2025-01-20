@@ -527,3 +527,51 @@ def test_payment_callback(data, expected_status):
                         "An error occurred while processing the payment callback."
                         in str(response.content)
                     )
+import pytest
+from unittest import mock
+
+
+@pytest.fixture
+def margin_trading_pair_manager():
+    manager = MarginTradingPairManager()
+    return manager
+
+
+@pytest.mark.parametrize(
+    "error_status_code, error_message",
+    [
+        (400, "ID already exists for an existing trading pair."),
+        (404, "The requested trading pair was not found."),
+    ],
+)
+def test_get_trading_pair_by_id(
+    margin_trading_pair_manager, error_status_code, error_message
+):
+    with pytest.raises(HTTPException) as exc_info:
+        MarginTradingPairManager.get_trading_pair_by_id(uuid.uuid4())
+        assert exc_info.value.status_code == error_status_code
+        assert exc_info.value.detail == error_message
+
+        def test_create_trading_pair(margin_trading_pair_manager):
+            new_pair = TradingPair(
+                id=uuid.uuid4(), base_currency="BTC", quote_currency="USD"
+            )
+            with mock.patch.object(
+                MarginTradingPairManager, "trading_pairs", new=new_pair.id
+            ):
+                created_pair = margin_trading_pair_manager.create_trading_pair(new_pair)
+                assert created_pair == new_pair
+
+                def test_create_trading_pair_with_duplicate_id(
+                    margin_trading_pair_manager,
+                ):
+                    duplicate_pair = TradingPair(
+                        id=uuid.uuid4(), base_currency="BTC", quote_currency="USD"
+                    )
+                    with pytest.raises(HTTPException) as exc_info:
+                        margin_trading_pair_manager.create_trading_pair(duplicate_pair)
+                        assert exc_info.value.status_code == 400
+                        assert (
+                            exc_info.value.detail
+                            == "ID already exists for an existing trading pair."
+                        )
