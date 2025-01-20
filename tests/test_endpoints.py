@@ -1469,3 +1469,24 @@ def test_risk_decomposition_endpoint():
     with pytest.raises(Exception):
         response = client.get("/risk-decomposition")
         assert response.status_code == 404
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.main
+def test_optimize_vault_strategy():
+    client = TestClient(app)
+    response = client.post("/optimize_strategy")
+    assert response.status_code == 200
+    data = response.json()
+    strategy_id = data["strategy_id"]
+    num_assets = data["num_assets"]
+    asset_allocation = data["asset_allocation"]
+    # Ensure generated random string is of correct length
+    assert len(strategy_id) == 8
+    # Assert that the returned number of assets matches the randomly generated value
+    assert num_assets >= 5 and num_assets <= 10
+    # Assert that the asset allocation values sum to 1
+    total = sum(asset_allocation)
+    assert total == 1

@@ -1361,3 +1361,27 @@ async def risk_decomposition(position_data: UploadFile):
         # Perform real-time risk decomposition
         risk_decomposition = risk_decomposer.risk_decomposition()
         return risk_decomposition
+from fastapi import FastAPI, HTTPException
+import random
+import string
+
+app = FastAPI()
+
+
+def generate_random_string(length):
+    letters = string.ascii_lowercase
+    result_str = "".join(random.choice(letters) for _ in range(length))
+    return result_str
+
+
+@app.post("/optimize_strategy")
+async def optimize_vault_strategy():
+    # Randomly generated parameters for optimization
+    num_assets = random.randint(5, 10)
+    asset_allocation = [random.uniform(0.1, 0.9) for _ in range(num_assets)]
+    strategy_id = generate_random_string(length=8)
+    return {
+        "strategy_id": strategy_id,
+        "num_assets": num_assets,
+        "asset_allocation": asset_allocation,
+    }
