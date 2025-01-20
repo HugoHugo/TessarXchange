@@ -2108,3 +2108,22 @@ def test_generate_wallet_address():
                 raise AssertionError(
                     "The generated BitcoinAddress is not in the correct format."
                 )
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+def test_batch_orders():
+    client = TestClient(app)
+    trading_pairs = ["BTC-USDT", "ETH-USD"]
+    quantity = 0.01
+    price = 50000
+    response = client.post(
+        "/orders/batch",
+        json={"trading_pairs": trading_pairs, "quantity": quantity, "price": price},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["trading_pairs"]) == 2
+    assert data["status"] == "success"
+    assert "batch_id" in data.keys()

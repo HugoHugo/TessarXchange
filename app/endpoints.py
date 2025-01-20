@@ -1903,3 +1903,53 @@ def generate_wallet_address(currency: str, user_id: int):
         wallet = BitcoinAddress()
         address = wallet.create_address(user_id)
         return {"currency": currency, "user_id": user_id, "wallet_address": address}
+from fastapi import APIRouter, HTTPException
+from typing import List
+from datetime import datetime
+from pytrader.order import MarketOrder
+from pytrader.exchange import BinanceExchange
+
+exchange = BinanceExchange(
+    api_key="your_api_key_here", secret_key="your_secret_key_here"
+)
+router = APIRouter()
+
+
+@router.post("/orders/batch")
+async def batch_orders(trading_pairs: List[str], quantity: float, price: float):
+    if len(trading_pairs) == 0:
+        raise HTTPException(status_code=400, detail="Trading pairs cannot be empty.")
+        orders = []
+        for trading_pair in trading_pairs:
+            symbol = f"{trading_pair}_USDT"
+            order = MarketOrder(
+                exchange=exchange,
+                symbol=symbol,
+                quantity=quantity,
+                price=price,
+                type="market",
+                side=(
+                    "buy"
+                    if price < exchange.get_symbol_info(symbol)["min_price"]
+                    else "sell"
+                ),
+            )
+            orders.append(order)
+            success_count = 0
+            for order in orders:
+                try:
+                    order.execute()
+                    success_count += 1
+                except Exception as e:
+                    print(f"Failed to place order: {e}")
+                    if success_count == len(orders):
+                        return {
+                            "status": "success",
+                            "message": f"{success_count} out of {len(orders)} orders were successful.",
+                            "trading_pairs": trading_pairs,
+                            "batch_id": datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+                        }
+                else:
+                    raise HTTPException(
+                        status_code=500, detail="Some orders failed to place."
+                    )
