@@ -1411,3 +1411,50 @@ def client():
             assert response.status_code == 200
             data = response.json()
             assert "result" in data
+import pytest
+from fastapi.testclient import TestClient
+
+
+def test_zero_kproof_system():
+    zero_kproof_system = ZeroKproofSystem()
+    with pytest.raises(HTTPException) as e:
+        challenge = "TestChallenge"
+        response = zero_kproof_system.generate_proof(challenge=challenge)
+        assert str(e.value) == "Invalid challenge"
+        proof = zero_kproof_system.generated_proof
+        assert isinstance(proof, str)
+
+        def test_generate_proof():
+            zero_kproof_system = ZeroKproofSystem()
+            with pytest.raises(HTTPException) as e:
+                response = zero_kproof_system.generate_proof(challenge=None)
+                assert str(e.value) == "Invalid challenge"
+                challenge = "TestChallenge"
+                response = zero_kproof_system.generate_proof(challenge=challenge)
+                assert isinstance(response, dict)
+
+                def test_verify_proof():
+                    zero_kproof_system = ZeroKproofSystem()
+                    with pytest.raises(HTTPException) as e:
+                        proof = "invalid_proof"
+                        response = zero_kproof_system.verify_proof(proof=proof)
+                        assert str(e.value) == "Invalid proof"
+                        challenge = "TestChallenge"
+                        encoded_proof = zero_kproof_system.generate_proof(
+                            challenge=challenge
+                        )
+                        response = zero_kproof_system.verify_proof(proof=encoded_proof)
+                        assert isinstance(response, bool)
+
+                        def test_endpoint(client: TestClient):
+                            response = client.get("/generate-proof")
+                            assert response.status_code == 400
+                            assert b"Invalid challenge" in response.content
+                            response = client.post(
+                                "/generate-proof",
+                                content_type="application/json",
+                                data=json.dumps({"challenge": "TestChallenge"}),
+                            )
+                            assert response.status_code == 200
+                            assert b"Proof generated successfully" in response.content
+                            assert isinstance(response.json(), dict)
