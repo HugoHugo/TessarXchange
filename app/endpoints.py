@@ -1125,3 +1125,17 @@ class TradingStrategyParams(BaseModel):
     async def update_trading_strategy_params(params: TradingStrategyParams):
         # Update the trading strategy parameters in your application logic
         return {"message": "Trading strategy parameters updated successfully"}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from decimal_identities import DecentralizedIdentity
+
+app = FastAPI()
+
+
+class IdentityVerificationRequest(BaseModel):
+    identity_public_key: str
+    identity_address: str
+
+    class VerificationResult(BaseModel):
+        verified: bool
+        timestamp: datetime

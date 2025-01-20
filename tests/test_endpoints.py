@@ -1199,3 +1199,31 @@ class TradingStrategyParams(BaseModel):
                     with pytest.raises(HTTPException):
                         response = client.put("/trading-strategy-params", json=params)
                         assert response.status_code == 400
+import pytest
+from fastapi.testclient import TestClient
+from main import (
+    app,
+    DecentralizedIdentity,
+    IdentityVerificationRequest,
+    VerificationResult,
+)
+
+
+def create_test_client():
+    return TestClient(app)
+
+
+@pytest.mark.parametrize(
+    "identity_public_key, identity_address",
+    [("public_key_1", "address_1"), ("public_key_2", "address_2")],
+)
+def test_identity_verification(identity_public_key, identity_address):
+    client = create_test_client()
+    identity = DecentralizedIdentity(identity_public_key)
+    request = IdentityVerificationRequest(
+        identity_public_key=identity.public_key, identity_address=identity.address
+    )
+    response = client.post("/verify", json=request.dict())
+    assert response.status_code == 200
+    expected_result = VerificationResult(verified=True, timestamp=datetime.now())
+    assert response.json() == expected_result.dict()
