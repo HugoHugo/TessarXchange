@@ -1517,3 +1517,36 @@ class TradingStrategyParams(BaseModel):
                 "result": "Trading strategy parameters set successfully.",
                 "params": params.dict(),
             }
+from fastapi import APIRouter, Path, Query
+from pydantic import BaseModel
+from typing import List
+
+
+class AMMPair(BaseModel):
+    token0: str
+    token1: str
+    liquidity_mined_per_block: float
+    liquidity_maxed_out_per_block: float
+    ammpairs_router = APIRouter()
+
+    @app.post("/amm-pairs", response_model=List[AMMPair])
+    async def add_amm_pair(pair: AMMPair):
+        return [pair]
+
+    @app.get("/amm-pairs", response_model=List[AMMPair])
+    async def get_amm_pairs():
+        # Placeholder for retrieving AMM pairs from a database or other data source
+        return [
+            AMMPair(
+                token0="USD",
+                token1="BTC",
+                liquidity_mined_per_block=100,
+                liquidity_maxed_out_per_block=500,
+            ),
+            AMMPair(
+                token0="ETH",
+                token1="BNB",
+                liquidity_mined_per_block=50,
+                liquidity_maxed_out_per_block=200,
+            ),
+        ]

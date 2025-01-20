@@ -1672,3 +1672,28 @@ def test_endpoint(params: TradingStrategyParams, expected_status_code):
         with pytest.raises(expected_exception):
             response = client.post("/trading_strategy_params", json=params.json())
             assert False
+import pytest
+from main import AMMPair, ammpairs_router
+
+
+@pytest.fixture()
+def test_amm_pair():
+    return AMMPair(
+        token0="USD",
+        token1="BTC",
+        liquidity_mined_per_block=100,
+        liquidity_maxed_out_per_block=500,
+    )
+
+
+def test_add_amm_pair(client, test_amm_pair):
+    response = client.post("/amm-pairs", json=test_amm_pair)
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+
+    def test_get_amm_pairs(client, test_amm_pair):
+        response = client.get("/amm-pairs")
+        assert response.status_code == 200
+        assert len(response.json()) == 2
+        for pair in response.json():
+            assert isinstance(pair, AMMPair)
