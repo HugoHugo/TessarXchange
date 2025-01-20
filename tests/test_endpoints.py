@@ -404,3 +404,28 @@ def test_generate_btc_wallet_address(crypto_wallet):
             with pytest.raises(HTTPException):
                 wallet = CryptoWallet("XXX")
                 wallet.generate_wallet_address()
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as _client:
+        yield _client
+
+        def test_generate_wallet_address(client):
+            response = client.get("/wallet/BTC/user1")
+            assert response.status_code == 200
+            wallet_data = response.json()
+            assert "wallet_address" in wallet_data
+
+            def test_currency_not_supported_exception(client):
+                response = client.get("/wallet/BTS/user2")
+                assert response.status_code == 400
+                error_data = response.json()
+                assert (
+                    "detail" in error_data
+                    and error_data["detail"] == "Currency not supported"
+                )

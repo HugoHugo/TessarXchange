@@ -400,3 +400,29 @@ class CryptoWallet:
                 else:
                     raise HTTPException(status_code=400, detail="Invalid currency.")
                     return {"wallet_address": wallet_address}
+from fastapi import FastAPI, HTTPException
+from pycoin.wallet.PublicKeyAddress import PublicKeyAddress
+import random
+
+app = FastAPI()
+
+
+@app.get("/wallet/{currency}/{user}")
+def generate_wallet_address(currency: str, user: str):
+    try:
+        # Dummy implementation for currency and user mapping to wallet address
+        if currency == "BTC":
+            private_key = "x" + "".join(
+                [random.choice("0123456789") for i in range(32)]
+            )
+            public_key = PublicKeyAddress.from_private_key(private_key)
+            wallet_address = public_key.address()
+        else:
+            raise HTTPException(status_code=400, detail="Currency not supported")
+            return {"wallet_address": wallet_address}
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while generating the wallet address",
+        )
