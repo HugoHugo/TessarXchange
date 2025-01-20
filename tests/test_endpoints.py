@@ -1611,3 +1611,64 @@ def test_calculate_fee_tier():
         assert isinstance(fee_tier, FeeTier)
         assert fee_tier.volume == 10000
         assert fee_tier.rate == 0.0015
+import pytest
+from fastapi.testclient import TestClient
+from main import app, TradingStrategyParams
+
+
+@pytest.mark.parametrize(
+    "params,expected_status_code",
+    [
+        (
+            TradingStrategyParams(
+                entry_price=100,
+                stop_loss_percentage=10.0,
+                take_profit_percentage=20.0,
+                risk_per_trade=200,
+            ),
+            200,
+        ),
+        (
+            TradingStrategyParams(
+                entry_price=-1,
+                stop_loss_percentage=5.0,
+                take_profit_percentage=15.0,
+                risk_per_trade=-500,
+            ),
+            400,
+        ),
+    ],
+)
+def test_endpoint(params: TradingStrategyParams, expected_status_code):
+    client = TestClient(app)
+    response = client.post("/trading_strategy_params", json=params.json())
+    assert response.status_code == expected_status_code
+
+    @pytest.mark.parametrize(
+        "params,expected_exception",
+        [
+            (
+                TradingStrategyParams(
+                    entry_price=100,
+                    stop_loss_percentage=-20.0,
+                    take_profit_percentage=20.0,
+                    risk_per_trade=200,
+                ),
+                ValueError,
+            ),
+            (
+                TradingStrategyParams(
+                    entry_price=-1,
+                    stop_loss_percentage=5.0,
+                    take_profit_percentage=15.0,
+                    risk_per_trade=500,
+                ),
+                HTTPException,
+            ),
+        ],
+    )
+    def test_endpoint_invalid_params(params: TradingStrategyParams, expected_exception):
+        client = TestClient(app)
+        with pytest.raises(expected_exception):
+            response = client.post("/trading_strategy_params", json=params.json())
+            assert False

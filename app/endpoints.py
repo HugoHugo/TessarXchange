@@ -1490,3 +1490,30 @@ class FeeTier(BaseModel):
             async def trading_fees():
                 volumes = [10000]  # Example user volume
                 return calculate_fee_tier(volumes)
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class TradingStrategyParams(BaseModel):
+    entry_price: float
+    stop_loss_percentage: float
+    take_profit_percentage: float
+    risk_per_trade: float
+
+    @app.post("/trading_strategy_params")
+    async def set_trading_strategy_params(params: TradingStrategyParams):
+        if (
+            params.entry_price <= 0
+            or params.stop_loss_percentage <= 0
+            or params.take_profit_percentage <= 0
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid trading strategy parameters. Please ensure the entry price, stop loss percentage, and take profit percentage are all greater than zero.",
+            )
+            return {
+                "result": "Trading strategy parameters set successfully.",
+                "params": params.dict(),
+            }
