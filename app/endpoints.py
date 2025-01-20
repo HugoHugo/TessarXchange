@@ -1701,3 +1701,19 @@ def verify_identity(identity_hash):
     except Exception as e:
         print(f"An error occurred: {e}")
         return False
+from fastapi import FastAPI
+import numpy as np
+from pyrsistent import pvector, ps
+from quantfinance.optimal_marking_curve import optimize_marking_curve
+
+app = FastAPI()
+
+
+def calculate_optimized_marking_curve():
+    return optimize_marking_curve()
+
+
+@app.get("/optimal_marking_curve", response_model=ps)
+async def get_optimal_marking_curve():
+    optimized_curve = calculate_optimal_marking_curve()
+    return optimized_curve

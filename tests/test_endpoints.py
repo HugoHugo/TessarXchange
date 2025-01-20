@@ -1862,3 +1862,18 @@ async def test_verify_identity_valid():
             def test_endpoint():
                 response = app.test_client().get("/endpoint")
                 assert response.status_code == 404
+import pytest
+from fastapi.testclient import TestClient
+from main import app, calculate_optimized_marking_curve
+
+
+def test_calculate_optimized_marking_curve():
+    optimized_curve = calculate_optimized_marking_curve()
+    assert isinstance(optimized_curve, pvector)
+
+    @pytest.mark.asyncio
+    async def test_get_optimal_marking_curve():
+        client = TestClient(app)
+        response = await client.get("/optimal_marking_curve")
+        assert response.status_code == 200
+        assert isinstance(response.json(), pvector)
