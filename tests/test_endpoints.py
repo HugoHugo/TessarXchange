@@ -2187,3 +2187,26 @@ def test_create_margin_trading_position():
                                         params={"current_price": 50000, "leverage": 5},
                                     )
                                     assert response.status_code == 200
+import pytest
+from main import app, LiquiditySnapshot
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_get_liquidity_snapshot(client):
+            response = client.get("/liquidity-snapshot")
+            assert response.status_code == 200
+            liquidity_snapshot: LiquiditySnapshot = response.json()
+            assert isinstance(liquidity_snapshot, LiquiditySnapshot)
+            assert isinstance(liquidity_snapshot.block_timestamp, datetime)
+
+            def test_get_liquidity_snapshot_invalid_date(client):
+                client.get("/liquidity-snapshot?older_than=2")
+                response = client.current_response
+                assert response.status_code == 400
+                snapshot: LiquiditySnapshot = response.json()
+                assert isinstance(snapshot, LiquiditySnapshot)
+                assert "detail" in snapshot

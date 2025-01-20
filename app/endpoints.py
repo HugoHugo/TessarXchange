@@ -2043,3 +2043,49 @@ class MarginTradingPosition(BaseModel):
                                             ):
                                                 # Implement the logic to retrieve and return the liquidation thresholds for the specified symbol based on the given parameters
                                                 pass
+from fastapi import FastAPI, HTTPException
+from datetime import datetime
+
+app = FastAPI()
+
+
+class LiquiditySnapshot:
+    def __init__(self, block_timestamp: datetime):
+        self.block_timestamp = block_timestamp
+
+        # Assume other necessary fields are stored here
+        def fetch_liquidity_data():
+            # This function would be responsible for fetching
+            # the liquidity data from the blockchain network.
+            pass
+
+            def calculate_rewards(liquidity_data):
+                # Implement the logic to calculate rewards based on the provided liquidity data.
+                # This could involve calculating average liquidity, applying weights or any other relevant criteria.
+                # For simplicity, we will assume a flat reward distribution in this example.
+                return {
+                    "rewards": 1000000,  # Example flat reward amount
+                }
+
+            def generate_snapshot(liquidity_data):
+                snapshot = LiquiditySnapshot(datetime.now())
+                snapshot.liquidity_data = liquidity_data
+                return snapshot
+
+            @app.get("/liquidity-snapshot")
+            async def get_liquidity_snapshot():
+                try:
+                    liquidity_data = fetch_liquidity_data()
+                    # For simplicity, let's assume we have a fixed reward amount each day.
+                    daily_reward_amount = 1000000
+                    current_date = datetime.now().date()
+                    if (current_date - liquidity_data.block_timestamp.date()).days > 1:
+                        raise HTTPException(
+                            status_code=400, detail="Snapshot is older than one day"
+                        )
+                        return generate_snapshot(liquidity_data)
+                except Exception as e:
+                    print(e)
+                    raise HTTPException(
+                        status_code=500, detail="An internal server error occurred"
+                    )
