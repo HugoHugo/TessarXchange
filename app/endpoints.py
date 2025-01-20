@@ -1422,3 +1422,35 @@ class CollateralPosition(BaseModel):
                     "message": "Collateral position retrieved successfully.",
                     "position": collateral_positions[id],
                 }
+from fastapi import FastAPI, HTTPException
+import pandas as pd
+from pytsa import Portfolio
+
+app = FastAPI()
+# Load the investment universe data
+data_file_path = "investment_universe.csv"
+df = pd.read_csv(data_file_path)
+
+
+def load_portfolio_data():
+    # Construct a portfolio object with the loaded data
+    portfolio = Portfolio()
+    portfolio.load_data(df)
+    return portfolio
+
+
+portfolio_data = load_portfolio_data()
+
+
+@app.get("/scenario/{symbol}/{return_rate:.2f}")
+async def scenario_analysis(symbol: str, return_rate: float):
+    if symbol not in portfolio_data.symbol_map:
+        raise HTTPException(status_code=404, detail="Symbol not found")
+        index = portfolio_data.symbol_map[symbol]
+        scenario_return = return_rate
+        scenario_portfolio = portfolio_data.rebalance(index, scenario_return)
+        return {
+            "symbol": symbol,
+            "scenario_return": f"{return_rate:.2f}%",
+            "portfolio_value": scenario_portfolio.portfolio_value,
+        }

@@ -1537,3 +1537,28 @@ def test_create_collateral_position(collateral_position):
             "message": "Collateral position retrieved successfully.",
             "position": position,
         }
+import pytest
+from fastapi.testclient import TestClient
+
+
+def test_load_portfolio_data():
+    # This test assumes that load_portfolio_data function is working as expected
+    # It does not cover all possible outcomes but checks if data is loaded correctly.
+    portfolio = load_portfolio_data()
+    assert isinstance(portfolio, Portfolio)
+    assert "symbol_map" in dir(portfolio)
+
+    def test_scenario_analysis():
+        client = TestClient(app)
+        response = client.get("/scenario/AAPL/10.00")
+        assert response.status_code == 200
+        data = response.json()
+        assert "symbol" in data
+        assert "scenario_return" in data
+        assert "portfolio_value" in data
+
+        def test_scenario_analysis_invalid_symbol():
+            client = TestClient(app)
+            with pytest.raises(HTTPException):
+                response = client.get("/scenario/XOM/20.00")
+                assert response.status_code == 404
