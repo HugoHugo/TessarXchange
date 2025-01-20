@@ -2195,3 +2195,29 @@ def stress_test_portfolio(data: PortfolioData):
     # Dummy portfolio stress test method - replace with actual logic
     risk_metrics = calculate_risk_metrics(num_assets, weights, returns)
     return {"risk_metrics": risk_metrics}
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from datetime import datetime
+
+
+class AtomicSwapRequest(BaseModel):
+    sender_amount: float
+    receiver_amount: float
+    timestamp: datetime
+    router = APIRouter()
+
+    @router.post("/atomic_swap")
+    def perform_atomic_swap(request_data: AtomicSwapRequest):
+        # Validate request data
+        if not 1e-6 <= request_data.sender_amount <= 1e6:
+            raise HTTPException(
+                status_code=400,
+                detail="Sender amount must be between 0.000001 and 9999999.",
+            )
+            if not 1e-6 <= request_data.receiver_amount <= 1e6:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Receiver amount must be between 0.000001 and 9999999.",
+                )
+                # Additional validation or logic can be added here
+                return {"message": "Atomic swap transaction initiated."}

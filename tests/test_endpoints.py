@@ -2278,3 +2278,43 @@ def client():
 
         response = client.post("/stress_test", json=data)
         assert response.status_code == 200
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.mark.parametrize(
+    "sender_amount, receiver_amount, expected_status",
+    [
+        (0.000001, 0.000001, 200),
+        (9999999, 9999999, 200),
+        (-1, 10000000, 400),
+        (1e6, -1, 400),
+    ],
+)
+def test_atomic_swap(sender_amount, receiver_amount, expected_status):
+    with TestClient(app) as client:
+        response = client.get(
+            f"/atomic_swap?sender_amount={sender_amount}&receiver_amount={receiver_amount}"
+        )
+        assert response.status_code == expected_status
+
+        @pytest.mark.parametrize(
+            "sender_amount, receiver_amount, exception_message",
+            [
+                (0.0000001, 0.0000001, None),
+                (9999999999, 9999999999, None),
+                (-1, 10000000, "Sender amount must be between 0.000001 and 99999999."),
+                (1e6, -1, "Receiver amount must be between 0.000001 and 99999999."),
+            ],
+        )
+        def test_atomic_swap_invalid_data(
+            sender_amount, receiver_amount, exception_message
+        ):
+            with pytest.raises(HTTPException) as ex_info:
+                with TestClient(app) as client:
+                    response = client.get(
+                        f"/atomic_swap?sender_amount={sender_amount}&receiver_amount={receiver_amount}"
+                    )
+                    assert response.status_code == 400
+                    assert ex_info.value.detail == exception_message
