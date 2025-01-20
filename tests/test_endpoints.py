@@ -322,3 +322,31 @@ def client():
         data = response.json()
         assert "address" in data
         assert data["address"] == expected_response["address"]
+import os
+from fastapi.testclient import TestClient
+from main import app, generate_wallet_address
+
+
+def test_generate_wallet_address():
+    client = TestClient(app)
+    # Test with supported currency
+    response = client.get("/wallet?currency=eth&user=jane")
+    result = response.json()
+    assert result == {
+        "currency": "eth",
+        "user": "jane",
+        "address": "0x1234567890123456789012345678901234",
+    }
+    # Test with unsupported currency
+    response = client.get("/wallet?currency=btc&user=john")
+    assert response.status_code == 400
+
+    def test_generate_wallet_address_private_key():
+        os.environ["PRIVATE_KEY"] = "0xb9c5a3f7b1e2d3c4a5"
+        client = TestClient(app)
+        response = client.get("/wallet?currency=eth&user=jane")
+        result = response.json()
+        private_key = os.environ["PRIVATE_KEY"]
+        address = generate_wallet_address("eth", "jane")
+        assert result == {"currency": "eth", "user": "jane", "address": str(address)}
+        del os.environ["PRIVATE_KEY"]

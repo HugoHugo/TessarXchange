@@ -322,3 +322,23 @@ class WalletAddress:
             # This is a simplified example.
             # In practice, you would need to use a reliable cryptocurrency library or API for generating the wallet address.
             return f"{self.currency}-{uuid.uuid4()}"
+from fastapi import FastAPI, HTTPException
+from pycoin.payments.address import Address
+import os
+
+app = FastAPI()
+# Define supported currencies and their corresponding network parameters
+supported_currencies = {
+    "eth": {"network": "mainnet", "symbol": "ETH"},
+    "btc": {"network": "testnet", "symbol": "BTC"},
+}
+
+
+def generate_wallet_address(currency: str, user: str) -> str:
+    if currency not in supported_currencies:
+        raise HTTPException(status_code=400, detail="Unsupported currency")
+        network = supported_currencies[currency]["network"]
+        symbol = supported_currencies[currency]["symbol"]
+        private_key = os.urndom().bytes(32)
+        address = Address.for_private_key(private_key, network)
+        return {"currency": currency, "user": user, "address": str(address)}
