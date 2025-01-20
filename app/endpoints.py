@@ -1680,3 +1680,24 @@ class LiquidityData(BaseModel):
                 status_code=400, detail="Failed to calculate or store liquidity"
             )
             return {"message": "Liquidity added successfully"}
+from fastapi import FastAPI, HTTPException
+import hmac
+from hashlib import sha256
+
+app = FastAPI()
+# Example secret key
+SECRET_KEY = "your_secret_key_here"
+
+
+def verify_identity(identity_hash):
+    global SECRET_KEY
+    try:
+        identity_signature = hmac.new(
+            SECRET_KEY.encode(), str(identity_hash).encode(), digestmod=sha256
+        ).digest()
+        if not hmac.compare_digest(identity_signature, identity_hash):
+            raise ValueError("Invalid identity signature")
+            return True
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False

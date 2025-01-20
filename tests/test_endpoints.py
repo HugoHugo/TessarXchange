@@ -1842,3 +1842,23 @@ def client():
             data = response.json()
             assert isinstance(data, dict)
             assert "message" in data
+from fastapi import HTTPException
+import pytest
+from main import app, verify_identity
+
+
+@pytest.mark.anyio
+async def test_verify_identity_valid():
+    identity_hash = "identity_hash"
+    assert verify_identity(identity_hash) == True
+
+    @pytest.mark.anyio
+    async def test_verify_identity_invalid_signature():
+        identity_hash = "invalid_identity_hash"
+        with pytest.raises(ValueError):
+            assert verify_identity(identity_hash) == False
+
+            @pytest.mark.anyio
+            def test_endpoint():
+                response = app.test_client().get("/endpoint")
+                assert response.status_code == 404
