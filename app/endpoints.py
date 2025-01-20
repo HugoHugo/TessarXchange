@@ -628,3 +628,36 @@ class MarginPosition(models.MarginPosition):
                                     )
                                     del self.collateral_assets[asset_id]
                                     return {"status": "success"}
+from fastapi import FastAPI, HTTPException
+from typing import Optional
+
+app = FastAPI()
+
+
+class ProofOfReserves:
+    def __init__(self, total_assets: float, total_liabilities: float):
+        self.total_assets = total_assets
+        self.total_liabilities = total_liabilities
+
+        @property
+        def reserves(self) -> float:
+            return self.total_assets - self.total_liabilities
+
+        @app.post("/attestation")
+        def attestation(
+            proof_of_reserves: ProofOfReserves, signer: Optional[str] = None
+        ):
+            if not isinstance(proof_of_reserves, ProofOfReserves):
+                raise HTTPException(
+                    status_code=400, detail="Invalid proof of reserves object."
+                )
+                if signer is None:
+                    signer = "Anonymous Signer"
+                    attestation_text = f"""
+                    Proof of Reserves Attestation
+                    Signer: {signer}
+                    Assets: ${{proof_of_reserves.total_assets:.2f}}
+                    Liabilities: ${{proof_of_reserves.total_liabilities:.2f}}
+                    Attested On: {{datetime.now()}}
+                    """
+                    return {"attestation_text": attestation_text}

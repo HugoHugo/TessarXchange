@@ -621,3 +621,45 @@ def test_add_margin_position():
                 )
                 assert response.status_code == 200
                 assert response.json() == {"status": "success"}
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime
+
+app = FastAPI()
+
+
+def test_attestation():
+    proof_of_reserves = ProofOfReserves(1000, 500)
+    with pytest.raises(HTTPException) as e:
+        app.post(
+            "/attestation",
+            json={"proof_of_reserves": proof_of_reseres},
+            follow_redirects=True,
+        )
+        assert e.type == "http_exc"
+        assert e.value.status_code == 400
+
+        def test_attestation_success():
+            proof_of_reserves = ProofOfReserves(1000, 500)
+            attestation_response = app.post(
+                "/attestation",
+                json={"proof_of_reserves": proof_of_reserves},
+                follow_redirects=True,
+            )
+            assert attestation_response.status_code == 200
+            content = attestation_response.json()
+            assert "attestation_text" in content
+
+            def test_attestation_with_signer():
+                proof_of_reserves = ProofOfReserves(1000, 500)
+                signer = "Test Signer"
+                attestation_response = app.post(
+                    "/attestation",
+                    json={"proof_of_reserves": proof_of_reserves, "signer": signer},
+                    follow_redirects=True,
+                )
+                assert attestation_response.status_code == 200
+                content = attestation_response.json()
+                assert "attestation_text" in content
+                attestation_text = content["attestation_text"]
+                assert signer in attestation_text
