@@ -2420,3 +2420,59 @@ class TokenSwapRoute(BaseModel):
                 response = client.get("/list_token_swap_routes")
                 assert response.status_code == 200
                 assert len(response.json()["routes"]) == 2
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    yield TestClient(app)
+
+    def test_get_recovery_endpoint(client):
+        response = client.get("/recovery")
+        assert response.status_code == 200
+        assert "This endpoint is for identity recovery." in str(response.content)
+
+        def test_recover_identity_valid_email(client):
+            identity_response = {"id": "valid-email-id", "name": "Valid Name"}
+            recover_response = {
+                "message": "Identity has been successfully recovered. Please check your email for further instructions."
+            }
+            client.post(
+                "/recovery",
+                json={
+                    "identity_id": "invalid-email-id",
+                    "new_email": "test_new_email@example.com",
+                },
+            )
+            with pytest.raises(HTTPException):
+                response = client.get("/endpoint")
+                response = client.post(
+                    "/recovery",
+                    json={
+                        "identity_id": "valid-email-id",
+                        "new_email": "test_new_email@example.com",
+                    },
+                )
+                recovery_response = response.json()
+                assert recovery_response["status"] == "SUCCESS"
+                assert (
+                    recovery_response["message"]
+                    == "Identity has been successfully recovered. Please check your email for further instructions."
+                )
+                assert "valid-email-id" in str(response.content)
+
+                def test_recover_identity_invalid_email(client):
+                    with pytest.raises(HTTPException):
+                        response = client.post(
+                            "/recovery",
+                            json={
+                                "identity_id": "invalid-email-id",
+                                "new_email": "test_new_email@example.com",
+                            },
+                        )
+                        recovery_response = response.json()
+                        assert recovery_response["status"] == "ERROR"
+                        assert "The email address is already registered." in str(
+                            response.content
+                        )
