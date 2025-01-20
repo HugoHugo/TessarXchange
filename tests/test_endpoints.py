@@ -1158,3 +1158,44 @@ def test_tax_report_endpoint():
     assert response.status_code == 200
     assert response.json() == expected_response
     # Additional tests can be added to test edge cases, error handling, and other features.
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime
+
+app = FastAPI()
+
+
+class TradingStrategyParams(BaseModel):
+    risk_tolerance: float
+    investment_amount: float
+    expected_return_percentage: float
+    volatility_tolerance_percentage: float
+
+    def test_endpoint():
+        client = TestClient(app)
+        with pytest.raises(HTTPException):
+            response = client.get("/endpoint")
+            assert response.status_code == 404
+
+            def test_update_trading_strategy_params():
+                params = TradingStrategyParams(
+                    risk_tolerance=0.2,
+                    investment_amount=100000,
+                    expected_return_percentage=0.1,
+                    volatility_tolerance_percentage=0.15,
+                )
+                client = TestClient(app)
+                response = client.put("/trading-strategy-params", json=params)
+                assert response.status_code == 200
+
+                def test_update_trading_strategy_params_with_incorrect_data():
+                    params = TradingStrategyParams(
+                        risk_tolerance=-0.2,
+                        investment_amount="not a number",
+                        expected_return_percentage=0.1,
+                        volatility_tolerance_percentage=0.15,
+                    )
+                    client = TestClient(app)
+                    with pytest.raises(HTTPException):
+                        response = client.put("/trading-strategy-params", json=params)
+                        assert response.status_code == 400

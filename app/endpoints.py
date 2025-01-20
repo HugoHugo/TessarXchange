@@ -1109,3 +1109,19 @@ class TaxReportRequest(BaseModel):
             }
             tax_reports.append(tax_report)
             return {"tax_reports": tax_reports}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class TradingStrategyParams(BaseModel):
+    risk_tolerance: float
+    investment_amount: float
+    expected_return_percentage: float
+    volatility_tolerance_percentage: float
+
+    @app.put("/trading-strategy-params")
+    async def update_trading_strategy_params(params: TradingStrategyParams):
+        # Update the trading strategy parameters in your application logic
+        return {"message": "Trading strategy parameters updated successfully"}
