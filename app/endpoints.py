@@ -1082,3 +1082,30 @@ def update_portfolio():
         @app.get("/portfolio")
         def get_portfolio():
             return {"user_id": "123", "portfolio_value": 15000}
+from fastapi import FastAPI, Query
+from pydantic import BaseModel
+import datetime
+
+app = FastAPI()
+
+
+class TaxReportRequest(BaseModel):
+    start_date: str
+    end_date: str
+    REPORT_ENDPOINT = "/tax-report"
+
+    @app.get(REPORT_ENDPOINT)
+    async def generate_tax_report(request_data: TaxReportRequest = Query(...)):
+        start_date = datetime.datetime.strptime(request_data.start_date, "%Y-%m-%d")
+        end_date = datetime.datetime.strptime(request_data.end_date, "%Y-%m-%d")
+        tax_reports = []
+        for day in range((end_date - start_date).days + 1):
+            report_date = start_date + datetime.timedelta(days=day)
+            # Assume we have a function called get_tax_report that generates the reports
+            # For simplicity, this example assumes the tax report data is hardcoded.
+            tax_report = {
+                "report_date": str(report_date),
+                "tax_amount": 1000,
+            }
+            tax_reports.append(tax_report)
+            return {"tax_reports": tax_reports}

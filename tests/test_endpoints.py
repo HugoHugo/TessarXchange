@@ -1134,3 +1134,27 @@ def test_background_job():
     assert response.status_code == 200
     json_content = response.json()
     assert "user_id" in json_content and "portfolio_value" in json_content
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app, TaxReportRequest
+
+
+def test_tax_report_endpoint():
+    client = TestClient(app)
+    # Test that we receive a 404 error for an invalid endpoint.
+    response = client.get("/non_existent_path")
+    assert response.status_code == 404
+    # Test the tax report endpoint with valid date range parameters
+    response = client.get(
+        "/tax-report", params={"start_date": "2023-01-01", "end_date": "2023-02-01"}
+    )
+    expected_response = {
+        "tax_reports": [
+            {"report_date": "2023-01-01", "tax_amount": 1000},
+            # ... Add more tax reports as needed.
+        ]
+    }
+    assert response.status_code == 200
+    assert response.json() == expected_response
+    # Additional tests can be added to test edge cases, error handling, and other features.
