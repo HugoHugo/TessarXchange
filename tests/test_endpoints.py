@@ -210,3 +210,53 @@ def client():
                                 "Failed to initialize the cryptocurrency wallet."
                                 == str(error.value)
                             )
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app, Wallet
+
+
+def test_get_wallet():
+    client = TestClient(app)
+    with pytest.raises(HTTPException):
+        response = client.get("/wallet?currency=unsupported")
+        assert response.status_code == 400
+        with pytest.raises(HTTPException):
+            response = client.get("/wallet?path=invalid")
+            assert response.status_code == 400
+            with pytest.raises(HTTPException):
+                response = client.get("/wallet")
+                wallet_obj = Wallet(currency="Bitcoin", path=0)
+                expected_data = {
+                    "currency": "Bitcoin",
+                    "path": 0,
+                    "address": "bc1q8v5gk7f4tjz3c9h2w8",
+                }
+                assert response.json() == expected_data
+                with pytest.raises(HTTPException):
+                    response = client.get("/wallet?currency=Bitcoin&path=-1")
+                    wallet_obj = Wallet(currency="Bitcoin", path=0)
+                    expected_data = {
+                        "currency": "Bitcoin",
+                        "path": 0,
+                        "address": "bc1q8v5gk7f4tjz3c9h2w8",
+                    }
+                    assert response.json() == expected_data
+                    with pytest.raises(HTTPException):
+                        response = client.get("/wallet?currency=Bitcoin")
+                        wallet_obj = Wallet(currency="Bitcoin", path=0)
+                        expected_data = {
+                            "currency": "Bitcoin",
+                            "path": 0,
+                            "address": "bc1q8v5gk7f4tjz3c9h2w8",
+                        }
+                        assert response.json() == expected_data
+                        with pytest.raises(HTTPException):
+                            response = client.get("/wallet?path=0")
+                            wallet_obj = Wallet(currency="Bitcoin", path=0)
+                            expected_data = {
+                                "currency": "Bitcoin",
+                                "path": 0,
+                                "address": "bc1q8v5gk7f4tjz3c9h2w8",
+                            }
+                            assert response.json() == expected_data

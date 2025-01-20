@@ -234,3 +234,40 @@ class CryptoWallet:
                         wallet = CryptoWallet(currency)
                         result = wallet.generate_wallet()
                         return result
+from fastapi import FastAPI, HTTPException
+from pywallet import Bitcoin, BIP44
+import string
+import random
+
+app = FastAPI()
+
+
+class Wallet:
+    def __init__(self, currency: str, path: str):
+        self.currency = currency
+        self.path = path
+        if not isinstance(currency, str) or len(currency) == 0:
+            raise HTTPException(
+                status_code=400, detail="Currency must be a non-empty string."
+            )
+            if not isinstance(path, str) or len(path) == 0:
+                raise HTTPException(
+                    status_code=400, detail="Path must be a non-empty string."
+                )
+
+                @app.get("/wallet")
+                def get_wallet(currency: str = None, path: int = None):
+                    wallet_obj = Wallet(currency=currency, path=path)
+                    if wallet_obj.currency != "Bitcoin":
+                        raise HTTPException(
+                            status_code=409,
+                            detail=f"Unsupported currency. Only Bitcoin is supported.",
+                        )
+                        if not BIP44.is_valid_path(path):
+                            raise HTTPException(status_code=400, detail="Invalid path.")
+                            address = Bitcoin().get_address(wallet_obj.path)
+                            return {
+                                "currency": wallet_obj.currency,
+                                "path": wallet_obj.path,
+                                "address": address,
+                            }
