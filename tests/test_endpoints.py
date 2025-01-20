@@ -303,3 +303,22 @@ def client():
             private_key = PrivateKey.random()
             wallet_address = Wallet.from_private_key(private_key).address()
             assert data["wallet_address"] == wallet_address
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    yield TestClient(app)
+
+    def test_generate_wallet_address(client):
+        # Define expected response
+        expected_response = {"address": "BTC-123abc"}
+        # Send GET request to endpoint
+        response = client.get("/generate_wallet_address")
+        # Assert status code is 200 (OK)
+        assert response.status_code == 200
+        # Extract the data from response and compare it with the expected response
+        data = response.json()
+        assert "address" in data
+        assert data["address"] == expected_response["address"]
