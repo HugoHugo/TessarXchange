@@ -1227,3 +1227,36 @@ def test_identity_verification(identity_public_key, identity_address):
     assert response.status_code == 200
     expected_result = VerificationResult(verified=True, timestamp=datetime.now())
     assert response.json() == expected_result.dict()
+import pytest
+from fastapi import HTTPException
+from main import app, AtomicSwapRequest
+from fastapi.testclient import TestClient
+
+
+@pytest.fixture()
+def client():
+    return TestClient(app)
+
+
+def test_create_atomic_swap(client):
+    request_data = AtomicSwapRequest(
+        request_id="swap1",
+        sender_address="sender_address_1",
+        receiver_address="receiver_address_1",
+        amount=100,
+        expiry=datetime.now(),
+    )
+    response = client.post("/atomic-swap", json=request_data.dict())
+    assert response.status_code == 200
+    result = response.json()
+    assert "swap_id" in result and "status" in result and "transaction_hash" in result
+
+    def test_get_atomic_swap(client):
+        with pytest.raises(HTTPException):
+            response = client.get("/atomic-swap/swap1")
+            assert response.status_code == 404
+
+            def test_invalid_swap_id(client):
+                with pytest.raises(HTTPException):
+                    response = client.get("/atomic-swap/invalid_swap_id")
+                    assert response.status_code == 404
