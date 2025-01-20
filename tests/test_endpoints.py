@@ -1321,3 +1321,13 @@ def test_client():
                 # Test to ensure that deleting a non-existent collateral returns a 404 status code
                 response4 = test_client.delete(f"/collaterals/{new_collateral_data.id}")
                 assert response4.status_code == 404
+import pytest
+from main import app
+
+
+def test_get_volatility():
+    client = TestClient(app)
+    response = client.get("/volatility")
+    data = response.json()
+    assert response.status_code == 200
+    assert "volatility" in data.keys()

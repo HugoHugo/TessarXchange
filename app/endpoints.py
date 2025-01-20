@@ -1220,3 +1220,26 @@ class Collateral(BaseModel):
                     # This could involve deleting records from a database,
                     # or sending a deletion request to an external API.
                     pass
+from fastapi import FastAPI
+import numpy as np
+
+app = FastAPI()
+
+
+class Volatility:
+    def __init__(self, price_data):
+        self.price_data = price_data
+        self.n = len(price_data)
+
+        def calculate_volatility(self):
+            price_diffs = np.diff(self.price_data)
+            squared_diffs = np.square(price_diffs)
+            variance = np.mean(squared_diffs)
+            std_dev = variance**0.5
+            return std_dev
+
+        @app.get("/volatility")
+        def get_volatility():
+            price_data = [100, 102, 104, 105, 107, 108, 110]
+            volatility = Volatility(price_data).calculate_volatility()
+            return {"volatility": volatility}
