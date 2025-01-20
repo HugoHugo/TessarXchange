@@ -1396,3 +1396,18 @@ def test_create_validator_node():
                 assert node.id != deleted_node.id
                 with pytest.raises(HTTPException):
                     client.get(f"/sidechain/validator/node/{deleted_node.id}")
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as ac:
+        yield ac
+
+        def test_liquidate_auction_endpoint(client):
+            response = client.get("/liquidate")
+            assert response.status_code == 200
+            data = response.json()
+            assert "result" in data
