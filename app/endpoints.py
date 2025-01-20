@@ -1744,3 +1744,35 @@ class KYC:
                     raise HTTPException(status_code=404, detail="User not found")
                     kyc_instance = kyc_storage[user_id]
                     return kyc_instance.kyc_data
+from fastapi import FastAPI, HTTPException
+import asyncio
+from typing import List
+
+app = FastAPI()
+# Mock smart contract addresses and ABI
+contracts = [
+    {"address": "0xContract1", "abi": []},
+    {"address": "0xContract2", "abi": []},
+]
+
+
+async def monitor_contract(contract_address: str, abi: List) -> dict:
+    if not contract_address or not abi:
+        raise HTTPException(
+            status_code=400, detail="Invalid contract address and ABI provided."
+        )
+        # Mock function to simulate smart contract monitoring
+        return {"status": "monitoring", "contract_address": contract_address}
+
+    @app.get("/contracts/{contract_address}", response_model=dict)
+    async def get_contract_details(contract_address: str):
+        for contract in contracts:
+            if contract["address"] == contract_address:
+                return await monitor_contract(contract_address, contract["abi"])
+            raise HTTPException(status_code=404, detail="Contract not found.")
+
+            @app.post("/contracts/{contract_address}")
+            async def update_contract_status(contract_address: str):
+                # Mock function to simulate updating smart contract status
+                # Example: Update the deployment status of a smart contract
+                return {"status": "updated"}

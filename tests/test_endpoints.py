@@ -1895,3 +1895,25 @@ def test_kyc_endpoint(client, input_data, expected_output):
     assert response.status_code == 200
     assert response.json() == expected_output
     # Note: More test cases should be added to cover error handling scenarios such as when the user is not found.
+from fastapi import HTTPException
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    yield TestClient(app)
+
+    def test_get_contract_details(client):
+        contract_address = "0xContract1"
+        response = client.get(f"/contracts/{contract_address}")
+        assert response.status_code == 200
+        result = response.json()
+        assert "status" in result and result["status"] == "monitoring"
+
+        def test_update_contract_status(client):
+            contract_address = "0xContract1"
+            response = client.post(f"/contracts/{contract_address}")
+            assert response.status_code == 200
+            content = response.json()
+            assert "status" in content and content["status"] == "updated"
