@@ -2257,3 +2257,24 @@ async def test_create_lending_order_book():
                     assert response.status_code == 404
                     error_response = response.json()
                     assert "detail" in error_response
+import pytest
+from main import app, stress_test_portfolio
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as _client:
+        yield _
+
+        def test_stress_test_endpoint(client):
+            data = PortfolioData(
+                equity=100,
+                cash=50,
+                risk_free_rate=0.02,
+                num_assets=5,
+                weights=[0.2, 0.1, 0.3, 0.3, 0.1],
+                returns=[0.12, 0.15, 0.08, 0.10, 0.16],
+            )
+
+        response = client.post("/stress_test", json=data)
+        assert response.status_code == 200

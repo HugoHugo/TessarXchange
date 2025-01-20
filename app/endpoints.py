@@ -2168,3 +2168,30 @@ class LendingOrderBook(BaseModel):
                     updated_data = LendingOrderBook(order_id=order_id, **updated_data)
                     # Update order book data in the database using the updated_data values
                     return {"message": "Order book updated successfully"}
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import numpy as np
+
+
+class PortfolioData(BaseModel):
+    equity: float
+    cash: float
+    risk_free_rate: float
+    num_assets: int
+    weights: list
+    returns: list
+
+
+router = APIRouter()
+
+
+@app.post("/stress_test")
+def stress_test_portfolio(data: PortfolioData):
+    if data.equity <= 0 or data.cash <= 0:
+        raise HTTPException(status_code=400, detail="Equity and cash must be positive.")
+        num_assets = data.num_assets
+        weights = np.array(data.weights)
+        returns = np.array(data.returns)
+    # Dummy portfolio stress test method - replace with actual logic
+    risk_metrics = calculate_risk_metrics(num_assets, weights, returns)
+    return {"risk_metrics": risk_metrics}
