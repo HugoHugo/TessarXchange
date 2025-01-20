@@ -1776,3 +1776,51 @@ async def monitor_contract(contract_address: str, abi: List) -> dict:
                 # Mock function to simulate updating smart contract status
                 # Example: Update the deployment status of a smart contract
                 return {"status": "updated"}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class InsuranceClaim(BaseModel):
+    claim_id: str
+    policy_number: str
+    insured_name: str
+    incident_date: datetime
+    amount_claimed: float
+    claim_status: str = "PENDING"
+    app = FastAPI()
+
+    @app.post("/claims")
+    async def create_claim(claim_data: InsuranceClaim):
+        return claim_data
+
+    @app.get("/claims/{claim_id}")
+    async def get_claim(claim_id: str):
+        if not claim_id or not uuid.isuuid(claim_id):
+            raise HTTPException(status_code=404, detail="Claim not found")
+            claims = []
+            # Placeholder for a method to fetch and populate the claims list
+            with open("claims.txt", "r") as file:
+                lines = file.readlines()
+                for line in lines:
+                    claim = InsuranceClaim(**line.strip().split(","))
+                    claims.append(claim)
+                    return claims
+
+                @app.put("/claims/{claim_id}")
+                async def update_claim(
+                    claim_id: str, updated_claim_data: InsuranceClaim
+                ):
+                    if not claim_id or not uuid.isuuid(claim_id):
+                        raise HTTPException(status_code=404, detail="Claim not found")
+                        # Placeholder for a method to fetch and update the claims list
+                        pass
+
+                        @app.delete("/claims/{claim_id}")
+                        async def delete_claim(claim_id: str):
+                            if not claim_id or not uuid.isuuid(claim_id):
+                                raise HTTPException(
+                                    status_code=404, detail="Claim not found"
+                                )
+                                # Placeholder for a method to fetch and remove the claims list
+                                pass

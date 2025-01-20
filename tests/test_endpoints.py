@@ -1917,3 +1917,105 @@ def client():
             assert response.status_code == 200
             content = response.json()
             assert "status" in content and content["status"] == "updated"
+from main import app
+
+importpytest
+
+
+def test_create_claim():
+    client = TestClient(app)
+    response = client.post(
+        "/claims",
+        json={
+            "claim_id": str(uuid.uuid4()),
+            "policy_number": "A1234567",
+            "insured_name": "John Doe",
+            "incident_date": datetime(2023, 1, 15),
+            "amount_claimed": 10000.0,
+            "claim_status": "PENDING",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "claim_id": str(response.json()["claim_id"]),
+        "policy_number": "A1234567",
+        "insured_name": "John Doe",
+        "incident_date": datetime(2023, 1, 15),
+        "amount_claimed": 10000.0,
+        "claim_status": "PENDING",
+    }
+
+    def test_update_claim():
+        client = TestClient(app)
+        claim_id = str(uuid.uuid4())
+        updated_claim_data = InsuranceClaim(
+            claim_id=claim_id,
+            policy_number="A1234567",
+            insured_name="Jane Doe",
+            incident_date=datetime(2023, 1, 15),
+            amount_claimed=5000.0,
+            claim_status="PENDING",
+        )
+        response = client.put(f"/claims/{claim_id}", json=updated_claim_data)
+        assert response.status_code == 200
+        updated_claim = response.json()
+        expected_claim = InsuranceClaim(
+            claim_id=claim_id,
+            policy_number="A1234567",
+            insured_name="Jane Doe",
+            incident_date=datetime(2023, 1, 15),
+            amount_claimed=5000.0,
+            claim_status="PENDING",
+        )
+        assert updated_claim == expected_claim
+
+        def test_delete_claim():
+            client = TestClient(app)
+            claim_id = str(uuid.uuid4())
+            response = client.post(
+                "/claims",
+                json={
+                    "claim_id": claim_id,
+                    "policy_number": "A1234567",
+                    "insured_name": "John Doe",
+                    "incident_date": datetime(2023, 1, 15),
+                    "amount_claimed": 10000.0,
+                    "claim_status": "PENDING",
+                },
+            )
+            assert response.status_code == 200
+            claim = response.json()
+            updated_claim_id = str(uuid.uuid4())
+            response = client.delete(
+                f"/claims/{updated_claim_id}",
+            )
+            assert response.status_code == 200
+            assert response.text == "Claim not found"
+
+            def test_get_claim():
+                client = TestClient(app)
+                claim_id = str(uuid.uuid4())
+                response = client.post(
+                    "/claims",
+                    json={
+                        "claim_id": claim_id,
+                        "policy_number": "A1234567",
+                        "insured_name": "John Doe",
+                        "incident_date": datetime(2023, 1, 15),
+                        "amount_claimed": 10000.0,
+                        "claim_status": "PENDING",
+                    },
+                )
+                assert response.status_code == 200
+                claim = response.json()
+                updated_claim_id = str(uuid.uuid4())
+                response = client.get(f"/claims/{updated_claim_id}")
+                assert response.status_code == 200
+                assert response.json() == {
+                    "claim_id": updated_claim_id,
+                    "policy_number": "A1234567",
+                    "insured_name": "John Doe",
+                    "incident_date": datetime(2023, 1, 15),
+                    "amount_claimed": 10000.0,
+                    "claim_status": "PENDING",
+                }
