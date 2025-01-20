@@ -2019,3 +2019,25 @@ def test_create_claim():
                     "amount_claimed": 10000.0,
                     "claim_status": "PENDING",
                 }
+import pytest
+from fastapi.testclient import TestClient
+
+
+def test_endpoint():
+    client = TestClient(app)
+    response = client.get("/yields")
+    assert response.status_code == 200
+    data = response.json()
+    strategy = data["current_strategy"]
+    expected_strategies = [
+        "Buy low sell high",
+        "Dollar cost average",
+        "Rebalancing portfolio",
+    ]
+    assert strategy in expected_strategies
+
+    def test_yields():
+        client = TestClient(app)
+        response = client.get("/yields")
+        data = response.json()
+        assert data["current_strategy"] == "Buy low sell high"

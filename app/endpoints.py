@@ -1824,3 +1824,27 @@ class InsuranceClaim(BaseModel):
                                 )
                                 # Placeholder for a method to fetch and remove the claims list
                                 pass
+from fastapi import FastAPI
+from typing import List
+import random
+
+app = FastAPI()
+
+
+class YieldStrategy:
+    def __init__(self, strategies: List[str]):
+        self.strategies = strategies
+
+        def execute_strategy(self):
+            strategy = random.choice(self.strategies)
+            return strategy
+
+        @app.get("/yields")
+        def yield_endpoint():
+            strategies = [
+                "Buy low sell high",
+                "Dollar cost average",
+                "Rebalancing portfolio",
+            ]
+            current_strategy = YieldStrategy(strategies=strategies).execute_strategy()
+            return {"current_strategy": current_strategy}
