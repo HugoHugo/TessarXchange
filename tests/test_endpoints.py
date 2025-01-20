@@ -1260,3 +1260,64 @@ def test_create_atomic_swap(client):
                 with pytest.raises(HTTPException):
                     response = client.get("/atomic-swap/invalid_swap_id")
                     assert response.status_code == 404
+import pytest
+from main import app, Collateral
+
+
+# Define a test client to use with FastAPI
+@pytest.fixture
+def test_client():
+    with TestClient(app) as client:
+        yield client
+
+        def test_create_update_delete_collaterals(test_client):
+            response1 = test_client.get("/collaterals/{collateral_id}")
+            assert response1.status_code == 404
+            new_collateral_data = Collateral(
+                id=str(uuid.uuid4()), chain_id="test_chain", asset="BTC", amount=10
+            )
+            response2 = test_client.post("/collaterals", json=new_collateral_data)
+            assert response2.status_code == 200
+            assert response2.json() == new_collateral_data.dict()
+            response3 = test_client.get(f"/collaterals/{new_collateral_data.id}")
+            assert response3.status_code == 200
+            assert response3.json() == new_collateral_data.dict()
+            updated_collateral_data = Collateral(
+                id=new_collateral_data.id,
+                chain_id="updated_test_chain",
+                asset="ETH",
+                amount=15,
+            )
+            response4 = test_client.put(
+                f"/collaterals/{new_collateral_data.id}", json=updated_collateral_data
+            )
+            assert response4.status_code == 200
+            assert response4.json() == updated_collateral_data.dict()
+            response5 = test_client.delete(f"/collaterals/{updated_collateral_data.id}")
+            assert response5.status_code == 204
+
+            def test_get_update_delete_non_existent_collateral(test_client):
+                # Test to ensure that getting a non-existent collateral returns a 404 status code
+                response1 = test_client.get("/collaterals/{collateral_id}")
+                assert response1.status_code == 404
+                new_collateral_data = Collateral(
+                    id=str(uuid.uuid4()), chain_id="test_chain", asset="BTC", amount=10
+                )
+                response2 = test_client.post("/collaterals", json=new_collateral_data)
+                assert response2.status_code == 200
+                assert response2.json() == new_collateral_data.dict()
+                # Test to ensure that updating a non-existent collateral returns a 404 status code
+                updated_collateral_data = Collateral(
+                    id=str(uuid.uuid4()),
+                    chain_id="updated_test_chain",
+                    asset="ETH",
+                    amount=15,
+                )
+                response3 = test_client.put(
+                    f"/collaterals/{new_collateral_data.id}",
+                    json=updated_collateral_data,
+                )
+                assert response3.status_code == 404
+                # Test to ensure that deleting a non-existent collateral returns a 404 status code
+                response4 = test_client.delete(f"/collaterals/{new_collateral_data.id}")
+                assert response4.status_code == 404

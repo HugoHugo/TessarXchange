@@ -1180,3 +1180,43 @@ class AtomicSwapRequest(BaseModel):
                 )
                 # Placeholder for the actual logic to retrieve the atomic swap details
                 return {"swap_id": swap_id, "status": "available"}
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class Collateral(BaseModel):
+    id: str
+    chain_id: str
+    asset: str
+    amount: float
+    collaterals_router = APIRouter()
+
+    @app.post("/collaterals", response_model=Collateral)
+    async def create_collateral(collateral_data: Collateral):
+        if not collateral_data.id:
+            collateral_data.id = str(uuid.uuid4())
+            return collateral_data
+
+        @app.get("/collaterals/{collateral_id}", response_model=Collateral)
+        async def get_collateral(collateral_id: str):
+            # Implement the logic to fetch a collateral by its id
+            # This could involve querying from a database, making an API call,
+            # or reading from an in-memory data structure.
+            pass
+
+            @app.put("/collaterals/{collateral_id}", response_model=Collateral)
+            async def update_collateral(
+                collateral_id: str, updated_collateral_data: Collateral
+            ):
+                # Implement the logic to update a collateral by its id
+                # This could involve updating fields of the collateral object,
+                # or making an API call to update the underlying data structure.
+                pass
+
+                @app.delete("/collaterals/{collateral_id}")
+                async def delete_collateral(collateral_id: str):
+                    # Implement the logic to delete a collateral by its id
+                    # This could involve deleting records from a database,
+                    # or sending a deletion request to an external API.
+                    pass
