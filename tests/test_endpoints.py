@@ -1331,3 +1331,68 @@ def test_get_volatility():
     data = response.json()
     assert response.status_code == 200
     assert "volatility" in data.keys()
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app, SidechainValidatorNode
+
+
+def test_create_validator_node():
+    client = TestClient(app)
+    response = client.post("/sidechain/validator/node", json={"name": "Test Node"})
+    assert response.status_code == 200
+    data = response.json()
+    node: SidechainValidatorNode = data
+    assert isinstance(node, SidechainValidatorNode)
+
+    def test_get_validator_node():
+        client = TestClient(app)
+        # Create a validator node.
+        response = client.post("/sidechain/validator/node", json={"name": "Test Node"})
+        assert response.status_code == 200
+        data = response.json()
+        node: SidechainValidatorNode = data
+        response = client.get(f"/sidechain/validator/node/{node.id}")
+        assert response.status_code == 200
+        data = response.json()
+        retrieved_node: SidechainValidatorNode = data
+        assert isinstance(retrieved_node, SidechainValidatorNode)
+        assert node.name == retrieved_node.name
+
+        def test_update_validator_node():
+            client = TestClient(app)
+            # Create a validator node.
+            response = client.post(
+                "/sidechain/validator/node", json={"name": "Test Node"}
+            )
+            assert response.status_code == 200
+            data = response.json()
+            node: SidechainValidatorNode = data
+            new_name = "Updated Test Node"
+            # Update the validator node.
+            response = client.put(
+                f"/sidechain/validator/node/{node.id}", json={"name": new_name}
+            )
+            assert response.status_code == 200
+            data = response.json()
+            updated_node: SidechainValidatorNode = data
+            assert isinstance(updated_node, SidechainValidatorNode)
+            assert node.name != updated_node.name
+
+            def test_delete_validator_node():
+                client = TestClient(app)
+                # Create a validator node.
+                response = client.post(
+                    "/sidechain/validator/node", json={"name": "Test Node"}
+                )
+                assert response.status_code == 200
+                data = response.json()
+                node: SidechainValidatorNode = data
+                response = client.delete(f"/sidechain/validator/node/{node.id}")
+                assert response.status_code == 200
+                data = response.json()
+                deleted_node: SidechainValidatorNode = data
+                assert isinstance(deleted_node, SidechainValidatorNode)
+                assert node.id != deleted_node.id
+                with pytest.raises(HTTPException):
+                    client.get(f"/sidechain/validator/node/{deleted_node.id}")

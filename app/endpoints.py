@@ -1243,3 +1243,19 @@ class Volatility:
             price_data = [100, 102, 104, 105, 107, 108, 110]
             volatility = Volatility(price_data).calculate_volatility()
             return {"volatility": volatility}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class SidechainValidatorNode(BaseModel):
+    id: str
+    name: str
+    validators: list[str]
+
+    @classmethod
+    def create(cls, name: str) -> "SidechainValidatorNode":
+        new_id = str(uuid.uuid4())
+        return cls(id=new_id, name=name, validators=[])
