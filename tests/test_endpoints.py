@@ -2041,3 +2041,25 @@ def test_endpoint():
         response = client.get("/yields")
         data = response.json()
         assert data["current_strategy"] == "Buy low sell high"
+import pytest
+from main import app
+
+
+def test_create_account():
+    client = TestClient(app)
+    # Create an inactive account
+    account_data = BrokerageAccount(status="inactive")
+    response = client.post("/accounts/", json=account_data)
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Account is inactive."}
+    # Now create an active account
+    account_data.status = "active"
+    response = client.post("/accounts/", json=account_data)
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": str(account_data.id),
+        "account_number": account_data.account_number,
+        "client_name": account_data.client_name,
+        "currency": account_data.currency,
+        "status": account_data.status,
+    }

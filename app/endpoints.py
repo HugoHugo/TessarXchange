@@ -1848,3 +1848,25 @@ class YieldStrategy:
             ]
             current_strategy = YieldStrategy(strategies=strategies).execute_strategy()
             return {"current_strategy": current_strategy}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class BrokerageAccount(BaseModel):
+    id: str
+    account_number: int
+    client_name: str
+    currency: str
+    status: str
+    app = FastAPI()
+
+    def generate_account_id() -> str:
+        return str(uuid.uuid4())
+
+    @app.post("/accounts/")
+    async def create_account(account_data: BrokerageAccount):
+        if not account_data.status == "active":
+            raise HTTPException(status_code=400, detail="Account is inactive.")
+            account_data.id = generate_account_id()
+            return account_data
