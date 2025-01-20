@@ -1076,3 +1076,43 @@ def client():
                         }
                         response = client.post("/algorithm_executions", json=new_data)
                         assert response.status_code == 400
+import pytest
+from main import app
+from fastapi.testclient import TestClient
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_valid_kyc(client):
+    response = client.post(
+        "/kyc",
+        json={
+            "name": "John Doe",
+            "identity_documents": [
+                {"document_type": "Passport", "image": None},
+                {"document_type": "ID Card", "image": None},
+            ],
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {"result": "KYC verification successful"}
+
+    def test_invalid_document(client):
+        response = client.post(
+            "/kyc",
+            json={
+                "name": "John Doe",
+                "identity_documents": [
+                    {"document_type": "Passport", "image": None},
+                    {
+                        "document_type": "invalid_document",
+                        "image": File("path/to/image"),
+                    },
+                ],
+            },
+        )
+        assert response.status_code == 400
+        assert "Invalid document type" in str(response.content)
