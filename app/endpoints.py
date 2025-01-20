@@ -661,3 +661,68 @@ class ProofOfReserves:
                     Attested On: {{datetime.now()}}
                     """
                     return {"attestation_text": attestation_text}
+from fastapi import FastAPI, HTTPException
+import models
+
+app = FastAPI()
+
+
+class GasOptimization(models.BaseModel):
+    id: int
+    strategy_name: str
+    description: str
+    created_at: datetime
+    updated_at: datetime
+
+    @app.get("/optimization-strategies")
+    def get_gas_optimization_strategies():
+        strategies = [
+            GasOptimization(
+                id=1,
+                strategy_name="Smart Heating",
+                description="Adjusts heating based on occupancy.",
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+            ),
+            GasOptimization(
+                id=2,
+                strategy_name="Solar Power Generation",
+                description="Generates electricity using solar panels and adjusts gas usage accordingly.",
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+            ),
+        ]
+        return strategies
+
+    @app.get("/optimization-strategy/{strategy_id}")
+    def get_gas_optimization_strategy(strategy_id: int):
+        for strategy in models.Strategy.objects.all():
+            if strategy.id == strategy_id:
+                return strategy
+            raise HTTPException(status_code=404, detail="Strategy not found.")
+
+            @app.put("/optimization-strategy/{strategy_id}")
+            def update_gas_optimization_strategy(
+                strategy_id: int, updated_strategy: GasOptimization
+            ):
+                for strategy in models.Strategy.objects.all():
+                    if strategy.id == strategy_id:
+                        strategy.update(**updated_strategy.dict())
+                        return {
+                            "message": "Strategy updated successfully.",
+                            "updated_strategy": updated_strategy,
+                        }
+                    raise HTTPException(status_code=404, detail="Strategy not found.")
+
+                    @app.delete("/optimization-strategy/{strategy_id}")
+                    def delete_gas_optimization_strategy(strategy_id: int):
+                        for strategy in models.Strategy.objects.all():
+                            if strategy.id == strategy_id:
+                                strategy.delete()
+                                return {
+                                    "message": "Strategy deleted successfully.",
+                                    "strategy_id": strategy_id,
+                                }
+                            raise HTTPException(
+                                status_code=404, detail="Strategy not found."
+                            )

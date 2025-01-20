@@ -663,3 +663,50 @@ def test_attestation():
                 assert "attestation_text" in content
                 attestation_text = content["attestation_text"]
                 assert signer in attestation_text
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.mark.anyio
+async def test_get_gas_optimization_strategies():
+    client = TestClient(app)
+    response = await client.get("/optimization-strategies")
+    assert response.status_code == 200
+    assert len(response.json()) > 0
+
+    @pytest.mark.anyio
+    async def test_get_gas_optimization_strategy():
+        client = TestClient(app)
+        strategy_id = 1
+        response = await client.get(f"/optimization-strategy/{strategy_id}")
+        assert response.status_code == 200
+        assert response.content_type == "application/json"
+        assert isinstance(response.json()["strategy"], models.Strategy)
+
+        @pytest.mark.anyio
+        async def test_update_gas_optimization_strategy():
+            client = TestClient(app)
+            strategy_id = 1
+            updated_strategy = GasOptimization(
+                id=1,
+                strategy_name="Smart Heating (Updated)",
+                description="Adjusts heating based on occupancy.",
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+            )
+            response = await client.put(
+                f"/optimization-strategy/{strategy_id}", json=updated_strategy.dict()
+            )
+            assert response.status_code == 200
+            assert "message" in response.json()
+            assert "updated_strategy" in response.json()
+
+            @pytest.mark.anyio
+            async def test_delete_gas_optimization_strategy():
+                client = TestClient(app)
+                strategy_id = 1
+                response = await client.delete(f"/optimization-strategy/{strategy_id}")
+                assert response.status_code == 200
+                assert "message" in response.json()
+                assert "strategy_id" in response.json()
