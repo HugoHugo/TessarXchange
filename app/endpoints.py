@@ -778,3 +778,43 @@ class StateVerificationError(Exception):
                                             }
                                     except StateVerificationError as e:
                                         return {"error": str(e)}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import hashlib
+
+app = FastAPI()
+
+
+class ComplianceAttestation(BaseModel):
+    timestamp: str
+    organization_id: int
+    attesting_party_id: int
+    attested_status: bool
+
+    class DecentralizedComplianceAttestationService:
+        def __init__(self, db):
+            self.db = db
+
+            async def attestation(self, attestation: ComplianceAttestation):
+                if not attestation.attested_status:
+                    raise HTTPException(
+                        status_code=400, detail="Attestation already processed"
+                    )
+                    # Generate a hash of the attestation data
+                    hash_obj = hashlib.sha256()
+                    hash_obj.update(str(attestation).encode())
+                    # Save the hashed value into the database for tracking and verification
+                    hashed_attestation_id = self.db.save_hashed_attestation(
+                        attestation.dict(), hash_obj.hexdigest()
+                    )
+                    return {"attested_id": hashed_attestation_id}
+
+                @app.post("/compliance-attestation")
+                async def create_compliance_attestation(
+                    attestation: ComplianceAttestation,
+                ):
+                    compliance_service = DecentralizedComplianceAttestationService(
+                        db=None
+                    )
+                    attested_data = compliance_service.attestation(attestation)
+                    return attested_data

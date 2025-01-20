@@ -741,3 +741,206 @@ def test_state_verification_success(state):
 
                 def test_service_all_state_verifications_empty(service):
                     assert len(service.all_state_verifications) == 0
+import pytest
+from main import app, ComplianceAttestation, DecentralizedComplianceAttestationService
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as test_client:
+        yield test_client
+
+        def test_create_compliance_attestation(client):
+            attestation = ComplianceAttestation(
+                timestamp="2023-01-01T00:00:00Z",
+                organization_id=1,
+                attesting_party_id=2,
+                attested_status=True,
+            )
+            response = client.post("/compliance-attestation", json=attestation.dict())
+            assert response.status_code == 200
+
+            def test_create_compliance_attestation_invalid_client(client):
+                with pytest.raises(HTTPException) as ex:
+                    response = client.post("/compliance-attestation")
+                    print(response.text)
+                    assert "Attestation already processed" in str(ex.value)
+
+                    @pytest.mark.parametrize(
+                        "status, expected_status", [(True, 200), (False, 400)]
+                    )
+                    def test_create_compliance_attestation_valid_and_invalid(
+                        status, expected_status
+                    ):
+                        attestation = ComplianceAttestation(
+                            timestamp="2023-01-01T00:00:00Z",
+                            organization_id=1,
+                            attesting_party_id=2,
+                            attested_status=status,
+                        )
+                        response = client.post(
+                            "/compliance-attestation", json=attestation.dict()
+                        )
+                        assert response.status_code == expected_status
+
+                        def test_create_compliance_attestation_invalid_timestamp(
+                            client,
+                        ):
+                            attestation = ComplianceAttestation(
+                                timestamp="2023-01-32T00:00:00Z",  # Invalid date
+                                organization_id=1,
+                                attesting_party_id=2,
+                                attested_status=True,
+                            )
+                            with pytest.raises(HTTPException) as ex:
+                                response = client.post(
+                                    "/compliance-attestation", json=attestation.dict()
+                                )
+                                assert "Attestation already processed" in str(ex.value)
+
+                                def test_create_compliance_attestation_invalid_data(
+                                    client,
+                                ):
+                                    attestation = ComplianceAttestation(
+                                        timestamp="2023-01-01T00:00:00Z",
+                                        organization_id=-1,
+                                        attesting_party_id=2,
+                                        attested_status=True,
+                                    )
+                                    with pytest.raises(HTTPException) as ex:
+                                        response = client.post(
+                                            "/compliance-attestation",
+                                            json=attestation.dict(),
+                                        )
+                                        assert "Attestation already processed" in str(
+                                            ex.value
+                                        )
+
+                                        def test_create_compliance_attestation_invalid_organization_id(
+                                            client,
+                                        ):
+                                            attestation = ComplianceAttestation(
+                                                timestamp="2023-01-01T00:00:00Z",
+                                                organization_id=-1,
+                                                attesting_party_id=2,
+                                                attested_status=True,
+                                            )
+                                            with pytest.raises(HTTPException) as ex:
+                                                response = client.post(
+                                                    "/compliance-attestation",
+                                                    json=attestation.dict(),
+                                                )
+                                                assert (
+                                                    "Attestation already processed"
+                                                    in str(ex.value)
+                                                )
+
+                                                def test_create_compliance_attestation_invalid_attesting_party_id(
+                                                    client,
+                                                ):
+                                                    attestation = ComplianceAttestation(
+                                                        timestamp="2023-01-01T00:00:00Z",
+                                                        organization_id=1,
+                                                        attesting_party_id=-1,
+                                                        attested_status=True,
+                                                    )
+                                                    with pytest.raises(
+                                                        HTTPException
+                                                    ) as ex:
+                                                        response = client.post(
+                                                            "/compliance-attestation",
+                                                            json=attestation.dict(),
+                                                        )
+                                                        assert (
+                                                            "Attestation already processed"
+                                                            in str(ex.value)
+                                                        )
+
+                                                        @pytest.mark.parametrize(
+                                                            "status, expected_status",
+                                                            [(True, 200), (False, 400)],
+                                                        )
+                                                        def test_create_compliance_attestation_valid_and_invalid(
+                                                            status, expected_status
+                                                        ):
+                                                            attestation = ComplianceAttestation(
+                                                                timestamp="2023-01-01T00:00:00Z",
+                                                                organization_id=1,
+                                                                attesting_party_id=2,
+                                                                attested_status=status,
+                                                            )
+                                                            response = client.post(
+                                                                "/compliance-attestation",
+                                                                json=attestation.dict(),
+                                                            )
+                                                            assert (
+                                                                response.status_code
+                                                                == expected_status
+                                                            )
+
+                                                            def test_create_compliance_attestation_invalid_timestamp_and_response(
+                                                                client,
+                                                            ):
+                                                                attestation = ComplianceAttestation(
+                                                                    timestamp="2023-01-32T00:00:00Z",  # Invalid date
+                                                                    organization_id=1,
+                                                                    attesting_party_id=2,
+                                                                    attested_status=True,
+                                                                )
+                                                                with pytest.raises(
+                                                                    HTTPException
+                                                                ) as ex:
+                                                                    response = client.post(
+                                                                        "/compliance-attestation",
+                                                                        json=attestation.dict(),
+                                                                    )
+                                                                    assert (
+                                                                        "Attestation already processed"
+                                                                        in str(ex.value)
+                                                                    )
+
+                                                                    def test_create_compliance_attestation_invalid_data_and_response(
+                                                                        client,
+                                                                    ):
+                                                                        attestation = ComplianceAttestation(
+                                                                            timestamp="2023-01-01T00:00:00Z",
+                                                                            organization_id=-1,
+                                                                            attesting_party_id=2,
+                                                                            attested_status=True,
+                                                                        )
+                                                                        with pytest.raises(
+                                                                            HTTPException
+                                                                        ) as ex:
+                                                                            response = client.post(
+                                                                                "/compliance-attestation",
+                                                                                json=attestation.dict(),
+                                                                            )
+                                                                            assert (
+                                                                                "Attestation already processed"
+                                                                                in str(
+                                                                                    ex.value
+                                                                                )
+                                                                            )
+
+                                                                            def test_create_compliance_attestation_invalid_organization_id_and_response(
+                                                                                client,
+                                                                            ):
+                                                                                attestation = ComplianceAttestation(
+                                                                                    timestamp="2023-01-01T00:00:00Z",
+                                                                                    organization_id=-1,
+                                                                                    attesting_party_id=2,
+                                                                                    attested_status=True,
+                                                                                )
+                                                                                with pytest.raises(
+                                                                                    HTTPException
+                                                                                ) as ex:
+                                                                                    response = client.post(
+                                                                                        "/compliance-attestation",
+                                                                                        json=attestation.dict(),
+                                                                                    )
+                                                                                    assert (
+                                                                                        "Attestation already processed"
+                                                                                        in str(
+                                                                                            ex.value
+                                                                                        )
+                                                                                    )
