@@ -377,3 +377,30 @@ def test_valid_currency():
                     hex_number = hashlib.sha256(hex_bytes).hexdigest()
                     wallet_address = crypto_wallet._convert_to_address(hex_number)
                     assert len(wallet_address) == address_length
+from fastapi import HTTPException
+import pytest
+from main import app, CryptoWallet
+
+
+@pytest.fixture
+def crypto_wallet():
+    wallet = CryptoWallet("BTC")
+    return wallet
+
+
+def test_generate_btc_wallet_address(crypto_wallet):
+    wallet_address = crypto_wallet.generate_wallet_address()
+    assert isinstance(wallet_address, dict)
+    assert "wallet_address" in wallet_address
+    assert len(wallet_address["wallet_address"]) > 40
+
+    def test_generate_eth_wallet_address(crypto_wallet):
+        wallet_address = crypto_wallet.generate_wallet_address()
+        assert isinstance(wallet_address, dict)
+        assert "wallet_address" in wallet_address
+        assert len(wallet_address["wallet_address"]) > 42
+
+        def test_invalid_currency():
+            with pytest.raises(HTTPException):
+                wallet = CryptoWallet("XXX")
+                wallet.generate_wallet_address()

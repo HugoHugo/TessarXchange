@@ -373,3 +373,30 @@ class CryptoWallet:
                     hex_bytes = os.urandom(32)
                     hex_number = hashlib.sha256(hex_bytes).hexdigest()
                     return {"wallet_address": hex_number, "currency": currency}
+from fastapi import FastAPI, HTTPException
+from pycoin.crypto import privatekey_to_publickey
+from pycoinwallet.wallet import Wallet
+
+app = FastAPI()
+
+
+class CryptoWallet:
+    def __init__(self, currency: str):
+        if currency not in ["BTC", "ETH"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid currency. Supported currencies are BTC and ETH.",
+            )
+            self.currency = currency
+            self.wallet = Wallet()
+
+            async def generate_wallet_address(self):
+                private_key = self.wallet.new_private_key()
+                public_key = privatekey_to_publickey(private_key)
+                if self.currency == "BTC":
+                    wallet_address = public_key.public_key_to_address()
+                elif self.currency == "ETH":
+                    wallet_address = public_key.public_key_to_address(eth=True)
+                else:
+                    raise HTTPException(status_code=400, detail="Invalid currency.")
+                    return {"wallet_address": wallet_address}
