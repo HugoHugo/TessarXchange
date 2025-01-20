@@ -575,3 +575,49 @@ def test_get_trading_pair_by_id(
                             exc_info.value.detail
                             == "ID already exists for an existing trading pair."
                         )
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+def test_add_margin_position():
+    client = TestClient(app)
+    response = client.post("/add-margin-position", json={"symbol": "AAPL"})
+    assert response.status_code == 200
+    assert response.json() == {"symbol": "AAPL", "position": "LONG"}
+
+    def test_remove_margin_position():
+        client = TestClient(app)
+        client.post("/add-margin-position", json={"symbol": "AAPL", "position": "LONG"})
+        response = client.post("/remove-margin-position", json={"symbol": "AAPL"})
+        assert response.status_code == 200
+        assert response.json() == {"status": "success"}
+
+        def test_add_collateral_asset():
+            client = TestClient(app)
+            client.post(
+                "/add-margin-position", json={"symbol": "AAPL", "position": "LONG"}
+            )
+            response = client.post(
+                "/add-collateral-asset",
+                json={"asset_id": "USD", "collateral_asset": "USDC"},
+            )
+            assert response.status_code == 200
+            assert response.json() == {"asset_id": "USD", "collateral_asset": "USDC"}
+
+            def test_remove_collateral_asset():
+                client = TestClient(app)
+                client.post(
+                    "/add-margin-position", json={"symbol": "AAPL", "position": "LONG"}
+                )
+                response = client.post(
+                    "/add-collateral-asset",
+                    json={"asset_id": "USD", "collateral_asset": "USDC"},
+                )
+                assert response.status_code == 200
+                assert response.json() == {"status": "success"}
+                response = client.post(
+                    "/remove-collateral-asset", json={"asset_id": "USD"}
+                )
+                assert response.status_code == 200
+                assert response.json() == {"status": "success"}

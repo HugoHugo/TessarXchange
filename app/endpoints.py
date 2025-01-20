@@ -568,3 +568,63 @@ class TradingPair(BaseModel):
                 def create_trading_pair(pair_data: TradingPair):
                     manager = MarginTradingPairManager()
                     return manager.create_trading_pair(pair_data)
+from fastapi import FastAPI, HTTPException
+import models
+
+app = FastAPI()
+
+
+# Example models for demonstration purposes.
+# In practice, these should be replaced with your own domain-specific models.
+class MarginPosition(models.MarginPosition):
+    pass
+
+    class CollateralAsset(models.CollateralAsset):
+        pass
+
+        class Portfolio(models.Portfolio):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.margin_positions = {}
+                self.collateral_assets = {}
+
+                def add_margin_position(self, symbol: str, position: MarginPosition):
+                    if symbol in self.margin_positions:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Symbol already exists for this portfolio.",
+                        )
+                        self.margin_positions[symbol] = position
+                        return {"symbol": symbol, "position": position.value}
+
+                    def remove_margin_position(self, symbol: str):
+                        if symbol not in self.margin_positions:
+                            raise HTTPException(
+                                status_code=404,
+                                detail=f"Margin position with symbol '{symbol}' does not exist.",
+                            )
+                            del self.margin_positions[symbol]
+                            return {"status": "success"}
+
+                        def add_collateral_asset(
+                            self, asset_id: str, collateral_asset: CollateralAsset
+                        ):
+                            if asset_id in self.collateral_assets:
+                                raise HTTPException(
+                                    status_code=400,
+                                    detail="Collateral asset with asset_id already exists for this portfolio.",
+                                )
+                                self.collateral_assets[asset_id] = collateral_asset
+                                return {
+                                    "asset_id": asset_id,
+                                    "collateral_asset": collateral_asset.value,
+                                }
+
+                            def remove_collateral_asset(self, asset_id: str):
+                                if asset_id not in self.collateral_assets:
+                                    raise HTTPException(
+                                        status_code=404,
+                                        detail=f"Collateral asset with asset_id '{asset_id}' does not exist.",
+                                    )
+                                    del self.collateral_assets[asset_id]
+                                    return {"status": "success"}
