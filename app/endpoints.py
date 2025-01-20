@@ -2270,3 +2270,28 @@ class DIDsManager:
                             )
                             del self.dids[identifier]
                             return {"result": "DID deleted successfully."}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class TokenSwapRoute(BaseModel):
+    id: uuid.UUID
+    from_token: str
+    to_token: str
+    hops: list[str]
+    SWAP_ROUTES = {}
+
+    @app.post("/token_swap_route")
+    def create_token_swap_route(route: TokenSwapRoute):
+        if route.id in SWAP_ROUTES:
+            raise HTTPException(status_code=400, detail="Route already exists.")
+            SWAP_ROUTES[route.id] = route
+            return route
+
+        @app.get("/token_swap_routes")
+        def list_token_swap_routes():
+            routes = [SWAP_ROUTES[id_] for id_ in sorted(SWAP_ROutes)]
+            return {"routes": routes}

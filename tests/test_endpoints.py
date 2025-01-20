@@ -2369,3 +2369,54 @@ def manager():
                                 updated_did = response["did"]
                                 assert response["result"] == "DID updated successfully."
                                 assert type(updated_did) is str
+import pytest
+from fastapi.testclient import TestClient
+
+app = FastAPI()
+
+
+class TokenSwapRoute(BaseModel):
+    id: uuid.UUID
+    from_token: str
+    to_token: str
+    hops: list[str]
+    SWAP_ROUTES = {}
+
+    @pytest.fixture
+    def create_route():
+        def _create_route(route: TokenSwapRoute):
+            if route.id in app.state.SWAP_ROUTES:
+                raise HTTPException(status_code=400, detail="Route already exists.")
+                app.state.SWAP_ROUTES[route.id] = route
+                return route
+            return _create_route
+
+        def test_create_token_swap_route(create_route):
+            new_route = TokenSwapRoute(
+                id=uuid.uuid4(),
+                from_token="Token A",
+                to_token="Token B",
+                hops=["Hop 1", "Hop 2"],
+            )
+            assert create_route(new_route) == new_route
+
+            def test_list_token_swap_routes():
+                create_route = create_route
+                route1 = TokenSwapRoute(
+                    id=uuid.uuid4(),
+                    from_token="Token A",
+                    to_token="Token B",
+                    hops=["Hop 1", "Hop 2"],
+                )
+                route2 = TokenSwapRoute(
+                    id=uuid.uuid4(),
+                    from_token="Token C",
+                    to_token="Token D",
+                    hops=["Hop 3", "Hop 4"],
+                )
+                create_route(route1)
+                create_route(route2)
+                client = TestClient(app)
+                response = client.get("/list_token_swap_routes")
+                assert response.status_code == 200
+                assert len(response.json()["routes"]) == 2
