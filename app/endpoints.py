@@ -976,3 +976,25 @@ def get_db():
                             db.commit()
                             db.refresh(new_maker)
                             return new_maker
+from fastapi import APIRouter, HTTPException
+from typing import Dict
+
+router = APIrouter()
+
+
+class ReputationOracle:
+    def __init__(self, oracle_id):
+        self.oracle_id = oracle_id
+        self.reputation_score = 0
+
+        def evaluate(self, domain: str, score: int):
+            if domain == "trust":
+                self.reputation_score += score
+            else:
+                raise HTTPException(status_code=400, detail="Invalid reputation domain")
+
+                def get_reputation_score(self) -> Dict:
+                    return {
+                        "oracle_id": self.oracle_id,
+                        "reputation_score": self.reputation_score,
+                    }

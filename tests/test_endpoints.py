@@ -1019,3 +1019,13 @@ def client():
         def test_market_maker_profitability_endpoint(client):
             response = client.get("/market_makers/profitability")
             assert response.status_code == 200
+import pytest
+from main import ReputationOracle
+
+
+@pytest.fixture
+def reputation_oracle():
+    oracle = ReputationOracle("test_oracle")
+    yield oracle
+    oracle.oracle_id = None
+    oracle.reputation_score = 0
