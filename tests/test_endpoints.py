@@ -1029,3 +1029,50 @@ def reputation_oracle():
     yield oracle
     oracle.oracle_id = None
     oracle.reputation_score = 0
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _app:
+        yield _app
+
+        def test_get_algorithm_executions(client):
+            response = client.get("/algorithm_executions")
+            assert response.status_code == 200
+            assert len(response.json()) == 3
+            for item in response.json():
+                assert isinstance(item.id, int)
+                assert item.symbol == "AAPL"
+                assert item.order_type == "Market"
+                assert isinstance(item.quantity, int)
+                assert isinstance(item.price, float)
+                assert isinstance(item.timestamp, datetime)
+
+                def test_create_algorithm_execution(client):
+                    new_data = {
+                        "symbol": "AAPL",
+                        "order_type": "Market",
+                        "quantity": 1000,
+                        "price": 120.5,
+                    }
+                    response = client.post("/algorithm_executions", json=new_data)
+                    assert response.status_code == 200
+                    assert isinstance(response.json().id, int)
+                    assert response.json().symbol == "AAPL"
+                    assert response.json().order_type == "Market"
+                    assert isinstance(response.json().quantity, int)
+                    assert isinstance(response.json().price, float)
+                    assert isinstance(response.json().timestamp, datetime)
+
+                    def test_create_algorithm_execution_invalid_data(client):
+                        new_data = {
+                            "symbol": 123,
+                            "order_type": "",
+                            "quantity": -1000,
+                            "price": -120.5,
+                        }
+                        response = client.post("/algorithm_executions", json=new_data)
+                        assert response.status_code == 400
