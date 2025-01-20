@@ -1953,3 +1953,93 @@ async def batch_orders(trading_pairs: List[str], quantity: float, price: float):
                     raise HTTPException(
                         status_code=500, detail="Some orders failed to place."
                     )
+from fastapi import APIRouter, Path
+from pydantic import BaseModel
+from datetime import timedelta
+
+
+class MarginTradingPosition(BaseModel):
+    position_id: int
+    symbol: str
+    quantity: float
+    entry_price: float
+    leverage: int
+
+    class LiquidationThreshold(BaseModel):
+        threshold_id: int
+        symbol: str
+        trigger_price: float
+        margin_call_percentage: float
+        liquidation_price: float
+        router = APIRouter()
+
+        @app.post("/positions")
+        def create_margin_trading_position(position: MarginTradingPosition):
+            # Implement the logic to create a new margin trading position
+            pass
+
+            @app.get("/positions/{position_id}")
+            def get_margin_trading_position(position_id: int, symbol: str):
+                # Implement the logic to fetch the specified margin trading position
+                pass
+
+                @app.put("/positions/{position_id}")
+                def update_margin_trading_position(
+                    position_id: int, symbol: str, updated_data: dict
+                ):
+                    # Implement the logic to update the specified margin trading position with the provided data
+                    pass
+
+                    @app.delete("/positions/{position_id}")
+                    def delete_margin_trading_position(position_id: int):
+                        # Implement the logic to delete the specified margin trading position
+                        pass
+
+                        @app.post("/liquidation_thresholds")
+                        def create_liquidation_threshold(
+                            threshold: LiquidationThreshold,
+                        ):
+                            # Implement the logic to create a new liquidation threshold
+                            pass
+
+                            @app.get("/liquidation_thresholds/{threshold_id}")
+                            def get_liquidation_threshold(
+                                threshold_id: int, symbol: str
+                            ):
+                                # Implement the logic to fetch the specified liquidation threshold
+                                pass
+
+                                @app.put("/liquidation_thresholds/{threshold_id}")
+                                def update_liquidation_threshold(
+                                    threshold_id: int, symbol: str, updated_data: dict
+                                ):
+                                    # Implement the logic to update the specified liquidation threshold with the provided data
+                                    pass
+
+                                    @app.delete(
+                                        "/liquidation_thresholds/{threshold_id}"
+                                    )
+                                    def delete_liquidation_threshold(threshold_id: int):
+                                        # Implement the logic to delete the specified liquidation threshold
+                                        pass
+
+                                        @app.post("/position_liquidation")
+                                        def position_liquidation(
+                                            symbol: str,
+                                            current_price: float,
+                                            leverage: int,
+                                        ):
+                                            # Implement the logic to determine if a margin trading position should be liquidated based on the given parameters
+                                            pass
+
+                                            @router.get(
+                                                "/position_liquidation/{symbol}",
+                                                dependencies=[dependency],
+                                            )
+                                            async def calculate_position_liquidation_thresholds(
+                                                symbol: str,
+                                                current_price: float,
+                                                leverage: int,
+                                            ):
+                                                # Implement the logic to retrieve and return the liquidation thresholds for the specified symbol based on the given parameters
+                                                pass

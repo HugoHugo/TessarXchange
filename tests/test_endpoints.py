@@ -2127,3 +2127,63 @@ def test_batch_orders():
     assert len(data["trading_pairs"]) == 2
     assert data["status"] == "success"
     assert "batch_id" in data.keys()
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime, timedelta
+
+
+def test_create_margin_trading_position():
+    client = TestClient(app)
+    response = client.post("/positions", json={})
+    assert response.status_code == 200
+
+    def test_get_margin_trading_position():
+        client = TestClient(app)
+        response = client.get("/positions/1")
+        assert response.status_code == 200
+
+        def test_update_margin_trading_position():
+            client = TestClient(app)
+            response = client.put(
+                "/positions/1", json={"symbol": "BTC", "updated_data": {}}
+            )
+            assert response.status_code == 200
+
+            def test_delete_margin_trading_position():
+                client = TestClient(app)
+                response = client.delete("/positions/1")
+                assert response.status_code == 200
+
+                def test_create_liquidation_thresholds():
+                    client = TestClient(app)
+                    response = client.post(
+                        "/liquidation_thresholds",
+                        json={"threshold": LiquidationThreshold()},
+                    )
+                    assert response.status_code == 200
+
+                    def test_get_liquidation_thresholds():
+                        client = TestClient(app)
+                        response = client.get("/liquidation_thresholds/1")
+                        assert response.status_code == 200
+
+                        def test_update_liquidation_thresholds():
+                            client = TestClient(app)
+                            response = client.put(
+                                "/liquidation_thresholds/1",
+                                json={"symbol": "BTC", "updated_data": {}},
+                            )
+                            assert response.status_code == 200
+
+                            def test_delete_liquidation_thresholds():
+                                client = TestClient(app)
+                                response = client.delete("/liquidation_thresholds/1")
+                                assert response.status_code == 200
+
+                                def test_calculate_position_liquidation_thresholds():
+                                    client = TestClient(app)
+                                    response = client.get(
+                                        "/position_liquidation/BTC",
+                                        params={"current_price": 50000, "leverage": 5},
+                                    )
+                                    assert response.status_code == 200
