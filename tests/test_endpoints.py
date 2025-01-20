@@ -1787,3 +1787,40 @@ def client():
             def test_calculate_dynamic_fee_invalid_client():
                 with pytest.raises(HTTPException):
                     calculate_dynamic_fee(None, 1.0, 2.5)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _:
+        yield _
+
+        def test_get_dids(client):
+            response = client.get("/dids")
+            assert response.status_code == 200
+            assert isinstance(response.json(), list)
+            assert all(isinstance(item, str) for item in response.json())
+
+            def test_integrate_did_endpoint(client):
+                response = client.post(
+                    "/dids/mynewdid", data={"identifier": "mynewdid"}
+                )
+                assert response.status_code == 200
+                assert response.json() == "DID integration successful."
+
+                @pytest.mark.parametrize(
+                    "input_identifier, status",
+                    [
+                        ("invalid-did", False),
+                    ],
+                )
+                def test_integrate_did_invalid_identifier(
+                    client, input_identifier, status
+                ):
+                    response = client.post("/dids/" + input_identifier)
+                    assert response.status_code == 400
+                    assert "Invalid or unknown decentralized identifier" in str(
+                        response.content
+                    )
