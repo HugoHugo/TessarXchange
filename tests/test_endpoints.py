@@ -2227,3 +2227,33 @@ def client():
                 and "action" in response.json()
                 and "resource" in response.json()
             )
+from fastapi import HTTPException
+import pytest
+from main import app
+
+
+@pytest.mark.anyio
+async def test_create_lending_order_book():
+    response = await app.test_client.post("/order_books")
+    assert response.status_code == 200
+    order_book_data = response.json()
+    assert "order_book" in order_book_data
+
+    def test_get_lending_order_book():
+        with pytest.raises(HTTPException):
+            response = app.test_client.get("/order_books/fake_order_id")
+            assert response.status_code == 404
+            error_response = response.json()
+            assert "detail" in error_response
+
+            def test_update_lending_order_book():
+                # This test depends on the database interactions being mocked or handled.
+                # As such, this test is currently not fully functional but illustrates how you might write a test for updating an order book.
+                with pytest.raises(HTTPException):
+                    response = app.test_client.put(
+                        "/order_books/fake_order_id",
+                        json={"new_data": "This is new data"},
+                    )
+                    assert response.status_code == 404
+                    error_response = response.json()
+                    assert "detail" in error_response

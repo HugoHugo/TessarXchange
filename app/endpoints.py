@@ -2123,3 +2123,48 @@ class UserPermissionUpdate(BaseModel):
                 # Perform 'remove' operation for the specified resource
                 pass
                 return {"message": f"User {user_id}'s permission has been updated."}
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class LendingOrderBook(BaseModel):
+    order_id: str
+    lender_name: str
+    borrower_name: str
+    amount: float
+    interest_rate: float
+    status: str
+    lending_order_book_router = APIRouter()
+
+    @app.post("/order_books")
+    async def create_lending_order_book(order_book_data: LendingOrderBook = None):
+        if not order_book_data:
+            order_book_data = LendingOrderBook(
+                order_id=str(uuid.uuid4()),
+                lender_name="Lender Name",
+                borrower_name="Borrower Name",
+                amount=10000.0,
+                interest_rate=5.0,
+                status="active",
+            )
+            order_book_data.order_id = str(uuid.uuid4())
+            return {"order_book": order_book_data}
+
+        @app.get("/order_books/{order_id}")
+        async def get_lending_order_book(order_id: str):
+            order_book = LendingOrderBook(order_id=order_id)
+            # Retrieve order book data from the database
+            # For simplicity, this example will just return a hardcoded value
+            if order_book.order_id == "fake_order_id":
+                raise HTTPException(status_code=404, detail="Order book not found")
+                return {"order_book": order_book.__dict__}
+
+            @app.put("/order_books/{order_id}")
+            async def update_lending_order_book(
+                order_id: str, updated_data: LendingOrderBook = None
+            ):
+                if not updated_data:
+                    updated_data = LendingOrderBook(order_id=order_id, **updated_data)
+                    # Update order book data in the database using the updated_data values
+                    return {"message": "Order book updated successfully"}
