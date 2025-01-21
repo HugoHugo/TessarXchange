@@ -3794,3 +3794,31 @@ def test_attestation_request_valid(attestestation_request):
                     raise HTTPException(
                         status_code=400, detail="Missing DID document ID."
                     )
+import uuid
+from datetime import datetime
+from main import app
+
+
+def test_create_event():
+    client = TestClient(app)
+    event_data = {
+        "event_type": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "recipient_address": "0x12345678901234567890123456789012345678901",
+    }
+    response = client.post("/event", json=event_data)
+    assert response.status_code == 200
+    assert event_data["event_type"] in response.json()
+
+    def test_duplicate_event():
+        client = TestClient(app)
+        event_id = uuid.uuid4()
+        event_data = {
+            "id": event_id,
+            "event_type": "TOKEN_DISTRIBUTION",
+            "timestamp": datetime.now(),
+            "recipient_address": "0x12345678901234567890123456789012345678901",
+        }
+        with pytest.raises(HTTPException):
+            response = client.post("/event", json=event_data)
+            assert response.status_code == 400

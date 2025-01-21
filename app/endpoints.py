@@ -3687,3 +3687,26 @@ class DIDDocument(BaseModel):
                             attestestation_request
                         )
                         return AttestationResponse(**attestation_response)
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class TokenDistributionEvent(BaseModel):
+    id: uuid.UUID
+    event_type: str
+    timestamp: datetime
+    recipient_address: str
+    # Simulating a database for demonstration purposes
+    token_distributions = []
+
+    @app.post("/event")
+    def distribute_token(event: TokenDistributionEvent):
+        if any(td.id == event.id for td in token_distributions):
+            raise HTTPException(
+                status_code=400, detail="Token distribution event already exists."
+            )
+            token_distributions.append(event)
+            return {"message": "Token distribution event has been successfully added."}
