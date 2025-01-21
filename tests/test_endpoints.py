@@ -4348,3 +4348,41 @@ def test_encrypt_decrypt():
             with pytest.raises(HTTPException) as exc:
                 manager.get_bridge_by_public_key("invalid_public_key")
                 assert str(exc.value) == "Bridge not found"
+import pytest
+from fastapi.testclient import TestClient
+from main import app, BridgingRequest, BridgingResponse
+
+
+def test_endpoint_not_found():
+    client = TestClient(app)
+    response = client.get("/notfoundendpoint")
+    assert response.status_code == 404
+    assert "Unsupported cross-chain bridge." in str(response.content)
+
+    def test_bridge_tokens_success():
+        client = TestClient(app)
+        request_data = BridgingRequest(
+            id=str(uuid.uuid4()),
+            from_chain="Ethereum",
+            to_chain="Solana",
+            amount=10,
+            destination_address="testaddress",
+        )
+        response = client.post("/bridging", json=request_data.dict())
+        assert response.status_code == 200
+        assert "success" in str(response.content)
+        assert "Bridging operation for" in str(response.content)
+
+        def test_bridge_tokens_unsupported_chain():
+            client = TestClient(app)
+            with pytest.raises(HTTPException):
+                request_data = BridgingRequest(
+                    id=str(uuid.uuid4()),
+                    from_chain="UnsupportedChain",
+                    to_chain="Solana",
+                    amount=10,
+                    destination_address="testaddress",
+                )
+                response = client.post("/bridging", json=request_data.dict())
+                assert response.status_code == 404
+                assert "Unsupported cross-chain bridge." in str(response.content)
