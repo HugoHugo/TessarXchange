@@ -3899,3 +3899,28 @@ async def websocket_endpoint(websocket: WebSocket):
                                     main()
                                     if __name__ == "__main__":
                                         uvicorn.run(app, host="0.0.0.0", port=8000)
+from fastapi import FastAPI, BackgroundTasks
+import time
+
+app = FastAPI()
+
+
+def calculate_portfolio_value(user_id):
+    # Placeholder function to simulate a calculation
+    return 1000 + (user_id * 10)
+
+
+@app.background
+def update_user_portfolio(user_id: int):
+    while True:
+        portfolio_value = calculate_portfolio_value(user_id)
+        print(f"Updating user {user_id}'s portfolio value.")
+        # Here you can integrate this code with a database or another service.
+        # For demonstration purposes, we just print the result.
+        time.sleep(60)  # Sleep for one minute before updating again
+
+        @app.get("/update_user_portfolio/{user_id}")
+        def update_user_portfolio_endpoint(user_id: int):
+            update_task = BackgroundTasks()
+            update_task.update_user_portfolio(user_id)
+            return {"message": "Background job to update user portfolio started."}

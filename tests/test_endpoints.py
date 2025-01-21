@@ -4021,3 +4021,26 @@ def client():
                     def test_price_update_service_not_connected():
                         with pytest.raises(ConnectionError):
                             PriceUpdateService().websocket_endpoint()
+import pytest
+from main import app, calculate_portfolio_value
+
+
+@pytest.mark.use_testfiles
+class TestUpdateUserPortfolio:
+    @pytest.fixture
+    def background_task(self):
+        return BackgroundTasks()
+
+    @pytest.mark.asyncio
+    async def test_background_job_updates_user_portfolio_every_minute(
+        self, background_task
+    ):
+        # Trigger the update job for user with id 1
+        response = background_task.update_user_portfolio(1)
+        assert response == {
+            "message": "Background job to update user portfolio started."
+        }
+        # Sleep for a minute before checking the updated value of portfolio.
+        time.sleep(60)
+        portfolio_value = calculate_portfolio_value(1)
+        assert portfolio_value == 1010
