@@ -2602,3 +2602,24 @@ class Order:
                 except HTTPException as e:
                     return {"detail": str(e)}
                 return order
+from fastapi import FastAPI
+from typing import List
+
+app = FastAPI()
+
+
+class OrderBook:
+    def __init__(self, bids: List[float], asks: List[float]):
+        self.bids = bids
+        self.asks = asks
+
+        @app.get("/orderbook", response_model=OrderBook)
+        def order_book(trading_pair: str):
+            # Hypothetical example data for the given trading pair.
+            if trading_pair == "BTC-USDT":
+                bids = [10000, 9500, 9000]
+                asks = [11000, 11500, 12000]
+            else:
+                bids = []
+                asks = []
+                return OrderBook(bids, asks)

@@ -2714,3 +2714,28 @@ def test_place_limit_sell_order():
                 client = pytest.app.test_client()
                 response = client.get("/limit-sell", params={"symbol": None})
                 assert response.status_code == 400
+import pytest
+from fastapi.testclient import TestClient
+from main import app, OrderBook
+
+
+@pytest.fixture()
+def test_client():
+    with TestClient(app) as ac:
+        yield ac
+
+        def test_endpoint(test_client):
+            response = test_client.get("/orderbook?trading_pair=BTC-USDT")
+            assert response.status_code == 200
+            order_book = response.json()
+            assert isinstance(order_book, OrderBook)
+            assert "bids" in dir(order_book)
+            assert "asks" in dir(order_book)
+
+            def test_empty_order_book(test_client):
+                response = test_client.get("/orderbook?trading_pair=INVALID")
+                assert response.status_code == 200
+                order_book = response.json()
+                assert isinstance(order_book, OrderBook)
+                assert len(order_book.bids) == 0
+                assert len(order_book.asks) == 0
