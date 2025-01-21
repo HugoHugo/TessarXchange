@@ -3141,3 +3141,21 @@ def test_optimize_routing():
             with pytest.raises(HTTPException):
                 response = client.get("/optimize")
                 assert response.status_code == 500
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_create_payment_channel_network():
+    client = TestClient(app)
+    # Define sample input data
+    node1 = {"id": str(uuid.uuid4()), "state": "online"}
+    node2 = {"id": str(uuid.uuid4()), "state": "offline"}
+    network_input = {"network": PaymentChannelNetwork(nodes=[node1, node2])}
+    # Test the endpoint
+    response = client.post("/networks", json=network_input)
+    assert response.status_code == 200
+    result_data = response.json()
+    assert len(result_data["nodes"]) == 2
+    for node in result_data["nodes"]:
+        assert "id" in node and "state" in node

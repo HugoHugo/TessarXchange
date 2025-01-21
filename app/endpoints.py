@@ -3039,3 +3039,17 @@ async def optimize_endpoint():
     if not data:
         raise HTTPException(status_code=500, detail="Data not available")
         return data
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class PaymentChannelNetwork(BaseModel):
+    id: str = str(uuid.uuid4())
+    nodes: list = []
+    app = FastAPI()
+
+    @app.post("/networks")
+    def create_payment_channel_network(network: PaymentChannelNetwork):
+        network.nodes.append({"id": str(uuid.uuid4()), "state": "online"})
+        return network
