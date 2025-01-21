@@ -3031,3 +3031,34 @@ def client():
                         "price": updated_price,
                         "timestamp": datetime.now(),
                     }
+import pytest
+from main import app, TradingFeeRebateSystem
+
+
+@pytest.fixture()
+def trading_fee_rebate_system():
+    system = TradingFeeRebateSystem()
+    yield system
+    # Clean up your objects here if required.
+    pass
+
+    def test_add_rebate(trading_fee_rebate_system):
+        new_rebate = TradingFeeRebate(
+            currency="USD",
+            rebate_percentage=0.05,
+            min_amount=10000,
+        )
+        trading_fee_rebate_system.add_rebate(new_rebate)
+        assert len(trading_fee_rebate_system._rebates) == 1
+        assert trading_fee_rebate_system._rebates["USD"] == new_rebate
+
+        def test_get_rebate(trading_fee_rebate_system):
+            new_rebate = TradingFeeRebate(
+                currency="USD",
+                rebate_percentage=0.05,
+                min_amount=10000,
+            )
+            trading_fee_rebate_system.add_rebate(new_rebate)
+            response = trading_fee_rebate_system.get_rebate("USD")
+            assert len(response) == 1
+            assert list(response)[0] == new_rebate

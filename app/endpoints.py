@@ -2906,3 +2906,57 @@ class Position(models.BaseModel):
                     raise HTTPException(status_code=404, detail="Position not found")
                 else:
                     return {"detail": "Position deleted"}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class TradingFeeRebate(BaseModel):
+    currency: str
+    rebate_percentage: float
+    min_amount: float
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "currency": "USD",
+                "rebate_percentage": 0.05,
+                "min_amount": 10000,
+            }
+        }
+
+        class TradingFeeRebateSystem:
+            _rebates: dict
+
+            def __init__(self):
+                self._rebates = {}
+
+                def add_rebate(self, rebate: TradingFeeRebate):
+                    if rebate.currency in self._rebates:
+                        raise HTTPException(
+                            status_code=400, detail="Currency already exists."
+                        )
+                        self._rebates[rebate.currency] = rebate
+                        return rebate
+
+                    def get_rebate(self, currency: str):
+                        if currency not in self._rebates:
+                            raise HTTPException(
+                                status_code=404,
+                                detail=f"Rebate for {currency} not found.",
+                            )
+                            return self._rebates[currency]
+
+                        @app.get("/rebaes")
+                        def list_rebates():
+                            return {
+                                "rebaes": list(
+                                    app.state.trading_fee_rebate_system._rebates.values()
+                                )
+                            }
+
+                        @app.post("/rebaes")
+                        def add_rebate(rebate: TradingFeeRebate = ...):
+                            app.state.trading_fee_rebate_system.add_rebate(rebate)
+                            return rebate
