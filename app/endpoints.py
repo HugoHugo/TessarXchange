@@ -3423,3 +3423,32 @@ class LiquiditySnapshot(BaseModel):
                 token_liquidity=150.0,
             ),
         ]
+from fastapi import APIRouter, HTTPException
+from fastapi.params import Querier
+from pydantic import BaseModel
+import datetime
+
+
+class FeeStatement(BaseModel):
+    client_id: int
+    statement_date: datetime.datetime
+    statement_period: str
+    transactions: list
+    router = APIRouter()
+
+    @router.post("/generate_fee_statement")
+    async def generate_fee_statement(
+        fee_statement_data: FeeStatement, querier: Querier
+    ):
+        if fee_statement_data.client_id < 0:
+            raise HTTPException(
+                status_code=400, detail="Client ID must be non-negative."
+            )
+            # Placeholder logic to fetch data from a database
+            # This can be replaced with actual implementation based on requirements
+            return {
+                "status": "success",
+                "statement_date": fee_statement_data.statement_date,
+                "statement_period": fee_statement_data.statement_period,
+                "transactions": fee_statement_data.transactions,
+            }

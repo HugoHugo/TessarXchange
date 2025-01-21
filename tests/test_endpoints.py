@@ -3509,3 +3509,55 @@ def test_create_snapshot():
         response = client.get("/liquidity_snapshots")
         assert response.status_class == "200 OK"
         assert len(response.json()) == 2
+import pytest
+from fastapi.testclient import TestClient
+from main import app, FeeStatement
+
+
+def test_fee_statement_endpoint():
+    client = TestClient(app)
+    # Test for valid data
+    fee_statement_data = FeeStatement(
+        client_id=123,
+        statement_date=datetime(2022, 1, 1),
+        statement_period="Q4 FY 2021",
+        transactions=[
+            {"type": "deposit", "amount": 5000},
+            {"type": "withdrawal", "amount": 3000},
+        ],
+    )
+    response = client.post(
+        "/generate_fee_statement",
+        json=fee_statement_data.dict(),
+    )
+    assert response.status_code == 200
+    # Test that the JSON response contains the expected fields
+    fees = FeeStatement.parse_raw(response.text)
+    assert fees.client_id == fee_statement_data.client_id
+    assert fees.statement_date == fee_statement_data.statement_date
+    assert fees.statement_period == fee_statement_data.statement_period
+    assert len(fees.transactions) == len(fee_statement_data.transactions)
+
+    def test_fee_statement_endpoint_invalid_client_id():
+        client = TestClient(app)
+        # Test for invalid client ID
+        fee_statement_data = FeeStatement(
+            client_id=-123,
+            statement_date=datetime(2022, 1, 1),
+            statement_period="Q4 FY 2021",
+            transactions=[
+                {"type": "deposit", "amount": 5000},
+                {"type": "withdrawal", "amount": 3000},
+            ],
+        )
+        response = client.post(
+            "/generate_fee_statement",
+            json=fee_statement_data.dict(),
+        )
+        assert response.status_code == 400
+        # Test that the JSON response contains an appropriate error message
+        fees = FeeStatement.parse_raw(response.text)
+        assert fees.client_id == fee_statement_data.client_id
+        assert fees.statement_date == fee_statement_data.statement_date
+        assert fees.statement_period == fee_statement_data.statement_period
+        assert len(fees.transactions) == len(fee_statement_data.transactions)
