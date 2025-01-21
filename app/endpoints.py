@@ -3017,3 +3017,25 @@ class Oracle(BaseModel):
                 return oracle
             raise HTTPException(status_code=404, detail="Oracle not found")
             # You can add more endpoints as needed, such as post methods to update or create new oracles.
+from fastapi import FastAPI, HTTPException
+import asyncio
+import ujson
+
+app = FastAPI()
+
+
+async def optimize_routing():
+    data = {
+        "request1": {"latency": 10},
+        "request2": {"latency": 20},
+        "request3": {"latency": 15},
+    }
+    return data
+
+
+@app.get("/optimize")
+async def optimize_endpoint():
+    data = await optimize_routing()
+    if not data:
+        raise HTTPException(status_code=500, detail="Data not available")
+        return data

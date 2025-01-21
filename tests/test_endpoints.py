@@ -3113,3 +3113,31 @@ def test_create_oracle():
             def test_get_invalid_oracle():
                 with pytest.raises(HTTPException):
                     Oracle.get_oracle("invalid_oracle_id")
+import asyncio
+import ujson
+from fastapi.testclient import TestClient
+from main import app
+
+
+def test_optimize_routing():
+    loop = asyncio.get_event_loop()
+    data = loop.run_until_complete(app.optimize_routing())
+    assert isinstance(data, dict)
+    assert "request1" in data
+    assert "request2" in data
+    assert "request3" in data
+
+    def test_optimize_endpoint():
+        client = TestClient(app)
+        response = client.get("/optimize")
+        assert response.status_code == 200
+        assert isinstance(response.json(), dict)
+        assert "request1" in response.json()
+        assert "request2" in response.json()
+        assert "request3" in response.json()
+
+        def test_optimize_endpoint_error():
+            client = TestClient(app)
+            with pytest.raises(HTTPException):
+                response = client.get("/optimize")
+                assert response.status_code == 500
