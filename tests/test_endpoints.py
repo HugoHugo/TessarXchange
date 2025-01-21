@@ -2764,3 +2764,27 @@ def client():
                     response = client.get("/deposits/1")
                     assert response.status_code == 200
                     assert "deposit_id" in response.json()
+from fastapi import TestClient
+from main import app, Portfolio
+
+importpytest
+
+
+def test_dependency_overrides():
+    client = TestClient(app)
+    response = client.get("/dependency_overrides")
+    assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_update_portfolio_background_task():
+        client = TestClient(app)
+        # Trigger the background task to update portfolio value.
+        response = client.post("/update_portfolio_background_task")
+        # Check if the portfolio value has been updated in the response.
+        portfolios = await client.get("http://127.0.0.1:8000/portfolio_list")
+        for portfolio in portfolios.json():
+            assert "updated_at" in portfolio
+            assert datetime.now() > datetime.strptime(
+                portfolio["updated_at"], "%Y-%m-%d %H:%M:%S"
+            )
+            # Additional tests can be added as needed.

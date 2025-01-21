@@ -2646,3 +2646,41 @@ class Deposit(BaseModel):
             # This is a placeholder for demonstration purposes.
             # In practice, you would store and retrieve deposits from your backend storage system.
             return {"deposit_id": deposit_id}
+from fastapi import FastAPI, BackgroundTasks
+import time
+from typing import Optional
+
+app = FastAPI()
+
+
+class Portfolio:
+    def __init__(self, id: int):
+        self.id = id
+        self.portfolio_value = 0.0
+
+        @property
+        def updated_at(self) -> str:
+            return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        def calculate_portfolio_value(portfolio: Portfolio) -> float:
+            # Placeholder code for calculating portfolio value.
+            # You can implement your own logic here.
+            return portfolio.id
+
+        @app.background
+        def update_portfolio_value_background_task():
+            while True:
+                time.sleep(60)
+                portfolios = app.dependency_overrides(
+                    app.current_dependencies()
+                ).portfolio_list()
+                for portfolio in portfolios:
+                    portfolio_value = calculate_portfolio_value(portfolio)
+                    if portfolio_value != portfolio.portfolio_value:
+                        portfolio.portfolio_value = portfolio_value
+                        app.update_portfolio_in_db(portfolio)
+
+                        @app.get("/update_portfolio_background_task")
+                        def update_portfolio_background_task():
+                            update_portfolio_value_background_task()
+                            return {"status": "background task updated"}
