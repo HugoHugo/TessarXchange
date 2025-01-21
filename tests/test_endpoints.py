@@ -3979,3 +3979,45 @@ def client():
             assert "ticker" in data
             assert "ask" in data
             assert "bid" in data
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as test_client:
+        yield test_client
+
+        def test_websocket_endpoint(client):
+            response = client.get("/ws")
+            assert response.status_code == 101
+            assert response.headers["Connection"] == "Upgrade"
+
+            def test_price_update_service():
+                price_updates = []
+                service = PriceUpdateService()
+                with pytest.raises(AssertionError):
+                    asyncio.get_event_loop().run_until_complete(
+                        service.websocket_endpoint()
+                    )
+
+                    # Test that the websocket endpoint is called correctly when new price updates are added
+                    def mock_get_price_updates(
+                        self, websocket: WebSocket, *args, **kwargs
+                    ):
+                        self.price_updates.append(
+                            {"symbol": "BTC/USDT", "price": 40000}
+                        )
+                        return asyncio.Future()
+
+                    service.get_price_updates = mock_get_price_updates
+                    loop = asyncio.get_event_loop()
+                    result = loop.run_until_complete(service.websocket_endpoint())
+                    assert len(result) == 1
+                    assert isinstance(result[0], dict)
+                    assert result[0]["symbol"] == "BTC/USDT"
+                    assert result[0]["price"] == 40000
+
+                    def test_price_update_service_not_connected():
+                        with pytest.raises(ConnectionError):
+                            PriceUpdateService().websocket_endpoint()

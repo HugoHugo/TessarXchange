@@ -3855,3 +3855,47 @@ def get_market_depth(ticker: str):
 def get_market_depth_endpoint(ticker: str):
     data = get_market_depth(ticker)
     return {"ticker": ticker, **data}
+from fastapi import FastAPI, WebSocket
+import asyncio
+import uvicorn
+
+app = FastAPI()
+
+
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    async for message in websocket:
+        received_data = message.json()
+        print(f"Received data: {received_data}")
+        # Replace this with your own price update logic
+        price_update = {"symbol": "BTC/USDT", "price": 40000}
+        response_data = price_update
+        await websocket.send_json(response_data)
+        await websocket.close()
+
+        class PriceUpdateService:
+            def __init__(self):
+                self.price_updates = []
+
+                async def get_price_updates(self, websocket: WebSocket):
+                    while True:
+                        if not self.price_updates:
+                            await asyncio.sleep(1)  # Wait for a second before polling
+                        else:
+                            price_update = {"symbol": "BTC/USDT", "price": 40000}
+                            self.price_updates.append(price_update)
+                            await websocket.accept()
+                            await websocket.send_json([price_update])
+                            print("Sent latest price update to WebSocket client.")
+
+                            async def main():
+                                service = PriceUpdateService()
+
+                                @app.websocket("/price-updates")
+                                async def websocket_endpoint(websocket: WebSocket):
+                                    await websocket.accept()
+                                    await websocket.scope["http"].add("/stop", None)
+                                    await service.get_price_updates(websocket)
+                                    main()
+                                    if __name__ == "__main__":
+                                        uvicorn.run(app, host="0.0.0.0", port=8000)
