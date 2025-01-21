@@ -2865,3 +2865,44 @@ class LendingPosition(BaseModel):
                 raise HTTPException(status_code=400, detail="Missing required fields.")
                 position = create_lending_position(position)
                 return position
+from fastapi import FastAPI, HTTPException
+import models
+
+app = FastAPI()
+
+
+# Assuming we have a database with a `Position` model.
+class Position(models.BaseModel):
+    id: int
+    symbol: str
+    quantity: float
+    price: float
+    timestamp: datetime
+
+    @app.get("/positions", response_model=list[Position])
+    def get_positions():
+        return models.Positions.objects.all()
+
+    @app.post("/positions", response_model=Position)
+    def create_position(position: Position):
+        position.save()
+        return position
+
+    @app.put("/positions/{position_id}", response_model=Position)
+    def update_position(position_id: int, updated_position: Position):
+        position = models.Position.objects.get(id=position_id)
+        # Update the field values of `updated_position`
+        for key, value in updated_position.__dict__.items():
+            if hasattr(position, key):
+                setattr(position, key, value)
+                position.save()
+                return position
+
+            @app.delete("/positions/{position_id}")
+            def delete_position(position_id: int):
+                try:
+                    models.Position.objects.get(id=position_id).delete()
+                except models.Position.DoesNotExist:
+                    raise HTTPException(status_code=404, detail="Position not found")
+                else:
+                    return {"detail": "Position deleted"}

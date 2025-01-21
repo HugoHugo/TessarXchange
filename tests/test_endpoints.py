@@ -2988,3 +2988,46 @@ class LendingPosition(BaseModel):
                     response = client.post("/lending-position", json=position.dict())
                     assert response.status_code == 200
                     assert "position_id" in response.json()
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_get_positions(client):
+            response = client.get("/positions")
+            assert response.status_code == 200
+            assert len(response.json()) > 0
+
+            def test_create_position(client):
+                new_position = {
+                    "id": None,
+                    "symbol": "TESTSYMBOL",
+                    "quantity": 10.5,
+                    "price": 100.2,
+                    "timestamp": datetime.now(),
+                }
+                response = client.post("/positions", json=new_position)
+                assert response.status_code == 200
+                assert response.json() == new_position
+
+                def test_update_position(client):
+                    position_id = 1
+                    updated_symbol = "NEW_SYMBOL"
+                    updated_price = 150.0
+                    response = client.put(
+                        f"/positions/{position_id}",
+                        json={"symbol": updated_symbol, "price": updated_price},
+                    )
+                    assert response.status_code == 200
+                    assert response.json() == {
+                        "id": position_id,
+                        "symbol": updated_symbol,
+                        "quantity": None,
+                        "price": updated_price,
+                        "timestamp": datetime.now(),
+                    }
