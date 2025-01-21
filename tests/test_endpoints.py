@@ -3925,3 +3925,39 @@ def client():
                         data = response.json()
                         assert isinstance(data, list)
                         assert all(isinstance(item, Position) for item in data)
+import pytest
+from unittest import mock
+from main import app
+from main import app, BOTS
+from main import app, BOTS
+
+
+@pytest.fixture
+def sample_bot_data():
+    return {
+        "name": "LiquidatorBot1",
+        "status": "active",
+        "last_active": datetime(2022, 5, 15, 10, 0),
+    }
+
+
+def test_create_liquidator_bot(sample_bot_data):
+    client = TestClient(app)
+    response = client.post("/bots", json=sample_bot_data)
+    assert response.status_code == 200
+
+    def test_get_liquidator_bot():
+        with mock.patch("main.app") as fastapi_app:
+            fastapi_app.return_value = TestClient(app)
+            # Assuming the 'BOTS' dictionary is already populated.
+            bot_name = "LiquidatorBot1"
+            response = client.get(f"/bots/{bot_name}")
+            assert response.status_code == 200
+
+            def test_update_liquidator_bot():
+                with mock.patch("main.app") as fastapi_app:
+                    fastapi_app.return_value = TestClient(app)
+                    # Assuming the 'BOTS' dictionary is already populated.
+                    bot_name = "LiquidatorBot1"
+                    response = client.put(f"/bots/{bot_name}")
+                    assert response.status_code == 200

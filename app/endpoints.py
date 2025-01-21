@@ -3801,3 +3801,39 @@ class Collateral(BaseModel):
                                     if p.collateral_id == collateral_id
                                 ]
                                 return positions
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import datetime
+
+app = FastAPI()
+
+
+class LiquidatorBot(BaseModel):
+    name: str
+    status: str
+    last_active: datetime.datetime
+    BOTS = {}
+
+    @app.post("/bots")
+    def create_liquidator_bot(bot_data: LiquidatorBot):
+        if bot_data.name in BOTS:
+            raise HTTPException(status_code=400, detail="Bot already exists.")
+            BOTS[bot_data.name] = bot_data
+            return {"message": "New liquidator bot created successfully."}
+
+        @app.get("/bots/{bot_name}")
+        def get_liquidator_bot(bot_name: str):
+            if bot_name not in BOTS:
+                raise HTTPException(status_code=404, detail="Bot not found.")
+                return BOTS[bot_name]
+
+            @app.put("/bots/{bot_name}")
+            def update_liquidator_bot(bot_name: str):
+                if bot_name not in BOTS:
+                    raise HTTPException(status_code=404, detail="Bot not found.")
+                    updated_bot = BOTS[bot_name]
+                    # Update the bot's properties (if any)
+                    return {
+                        "message": "Liquidator bot has been successfully updated.",
+                        "bot": updated_bot,
+                    }
