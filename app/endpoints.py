@@ -4239,3 +4239,27 @@ async def bulk_order_import(file: UploadFile):
             if all(field in row for field in fieldnames):
                 writer.writerow(row)
                 return {"message": "CSV file has been successfully imported."}
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from typing import List
+
+
+class NettingGroup(BaseModel):
+    id: int
+    name: str
+    member_accounts: List[str]
+    router = APIRouter()
+
+    @router.post("/netting_groups")
+    async def create_netting_group(netting_group: NettingGroup):
+        # Implement the logic to save the netting group.
+        # For simplicity, we can assume an in-memory store.
+        netting_groups.append(netting_group)
+        return {"message": "Netting group created successfully"}
+
+    @router.get("/netting_groups/{id}")
+    async def get_netting_group(id: int):
+        for netting_group in netting_groups:
+            if netting_group.id == id:
+                return netting_group
+            raise HTTPException(status_code=404, detail="Netting group not found")

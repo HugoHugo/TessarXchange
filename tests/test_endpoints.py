@@ -4417,3 +4417,21 @@ def client():
                         response.json()["message"]
                         == "CSV file has been successfully imported."
                     )
+import pytest
+from main import netting_groups, NettingGroup
+
+
+def test_create_netting_group():
+    new_netting_group = NettingGroup(id=1, name="Alpha", member_accounts=["1234"])
+    response = create_netting_group(new_netting_group)
+    assert response == {"message": "Netting group created successfully"}
+
+    def test_get_netting_group():
+        alpha_netting_group = NettingGroup(id=1, name="Alpha", member_accounts=["1234"])
+        netting_groups.append(alpha_netting_group)
+        response = get_netting_group(1)
+        assert response == alpha_netting_group
+
+        def test_netting_group_not_found():
+            with pytest.raises(HTTPException):
+                get_netting_group(999)
