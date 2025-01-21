@@ -2836,3 +2836,32 @@ class AtomicSwap(BaseModel):
         # @atomic_swap_router.get("/endpoint")
         # async def endpoint():
         #     return {"result": "value"}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import time
+
+app = FastAPI()
+
+
+class LendingPosition(BaseModel):
+    nft_address: str
+    token_id: int
+    loan_amount: float
+    interest_rate: float
+    interest_due_date: datetime
+
+    def create_lending_position(position: LendingPosition) -> dict:
+        if position.loan_amount <= 0 or position.interest_rate <= 0:
+            raise HTTPException(
+                status_code=400, detail="Invalid loan amount and interest rate."
+            )
+            # Simulate a delay before updating the lending position
+            time.sleep(1)
+            return {"position_id": 1234, "status": "active"}
+
+        @app.post("/lending-position")
+        def create_lending_position_request(position: LendingPosition):
+            if not position.nft_address or not position.token_id:
+                raise HTTPException(status_code=400, detail="Missing required fields.")
+                position = create_lending_position(position)
+                return position

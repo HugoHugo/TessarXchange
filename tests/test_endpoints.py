@@ -2936,3 +2936,55 @@ def client():
             assert response.status_code == 400
             assert isinstance(response.json(), dict)
             assert "detail" in response.json()
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime
+
+app = FastAPI()
+
+
+class LendingPosition(BaseModel):
+    nft_address: str
+    token_id: int
+    loan_amount: float
+    interest_rate: float
+    interest_due_date: datetime
+
+    @classmethod
+    def create_lending_position(cls, position: LendingPosition) -> dict:
+        # ... (code remains unchanged)
+        return {"position_id": 1234, "status": "active"}
+
+    def test_create_lending_position():
+        position = LendingPosition(
+            nft_address="0x1", token_id=10, loan_amount=1000.5, interest_rate=0.05
+        )
+        client = TestClient(app)
+        response = client.post("/lending-position", json=position.dict())
+        assert response.status_code == 200
+        assert "position_id" in response.json()
+
+        def test_create_lending_position_invalid():
+            position = LendingPosition(
+                nft_address="0x1", token_id=10, loan_amount=-1000.5, interest_rate=-0.05
+            )
+            client = TestClient(app)
+            with pytest.raises(HTTPException):
+                client.post("/lending-position", json=position.dict())
+
+                @pytest.mark.parametrize(
+                    "loan_amount,interest_rate",
+                    [(1000.5, 0.05)],
+                    names=["test_create_lending_position_valid"],
+                )
+                def test_create_lending_position_valid(loan_amount, interest_rate):
+                    position = LendingPosition(
+                        nft_address="0x1",
+                        token_id=10,
+                        loan_amount=loan_amount,
+                        interest_rate=interest_rate,
+                    )
+                    client = TestClient(app)
+                    response = client.post("/lending-position", json=position.dict())
+                    assert response.status_code == 200
+                    assert "position_id" in response.json()
