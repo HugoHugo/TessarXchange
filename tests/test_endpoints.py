@@ -4386,3 +4386,34 @@ def test_endpoint_not_found():
                 response = client.post("/bridging", json=request_data.dict())
                 assert response.status_code == 404
                 assert "Unsupported cross-chain bridge." in str(response.content)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as ac:
+        yield ac
+
+        def test_bulk_order_import(client):
+            response = client.post(
+                "/bulk_order_import/", files={"file": open("test_orders.csv", "rb")}
+            )
+            assert response.status_code == 200
+            assert (
+                response.json()["message"] == "CSV file has been successfully imported."
+            )
+
+            def test_bulk_order_import_failed_client():
+                with pytest.raises(AssertionError):
+                    client = TestClient(app)
+                    response = client.post(
+                        "/bulk_order_import/",
+                        files={"file": open("non_existent_orders.csv", "rb")},
+                    )
+                    assert response.status_code == 200
+                    assert (
+                        response.json()["message"]
+                        == "CSV file has been successfully imported."
+                    )

@@ -4222,3 +4222,20 @@ class BridgingRequest(BaseModel):
             raise HTTPException(
                 status_code=404, detail="Unsupported cross-chain bridge."
             )
+from fastapi import FastAPI, File, UploadFile
+import csv
+
+app = FastAPI()
+
+
+@app.post("/bulk_order_import/")
+async def bulk_order_import(file: UploadFile):
+    with open("orders.csv", "w", newline="") as file_out:
+        writer = csv.writer(file_out)
+        writer.writerow(["OrderID", "CustomerName", "ProductCode", "Quantity"])
+        fieldnames = ["OrderID", "CustomerName", "ProductCode", "Quantity"]
+        reader = csv.reader(file.uploaded_file)
+        for row in reader:
+            if all(field in row for field in fieldnames):
+                writer.writerow(row)
+                return {"message": "CSV file has been successfully imported."}
