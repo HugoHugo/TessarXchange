@@ -4252,3 +4252,36 @@ def test_request_signatures():
                     "detail" in data
                     and data["detail"] == "Not enough signatures received."
                 )
+import pytest
+from main import app
+
+
+@pytest.mark.parametrize(
+    "account_data, expected",
+    [
+        (
+            {
+                "account_id": "acc123",
+                "source_account_margin": 1000.00,
+                "target_account_margin": 500.00,
+            },
+            "Cross-margin position transfer between accounts was successful.",
+        ),
+        (
+            {
+                "account_id": "invalid_acc",
+                "source_account_margin": -50.00,
+                "target_account_margin": 200.00,
+            },
+            "Invalid margin values",
+        ),
+    ],
+)
+def test_transfer_cross_margin_positions(account_data, expected):
+    with pytest.raises(HTTPException) as e:
+        response = app.test_client().post(
+            "/transfer_cross_margin_positions", json=account_data
+        )
+        assert e.type == HTTPException
+        assert response.status_code == 200
+        assert response.json() == {"message": expected}

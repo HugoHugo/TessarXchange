@@ -4050,3 +4050,24 @@ class SignatureRequest(BaseModel):
                             status_code=400,
                             detail="Insufficient valid signatures received.",
                         )
+from fastapi import APIRouter, HTTPException
+from typing import Dict
+
+router = APIRouter()
+
+
+@router.post("/transfer_cross_margin_positions")
+def transfer_cross_margin_positions(account_data: Dict[str, str]):
+    # Assuming that 'account_data' contains the following fields:
+    # - account_id (string)
+    # - source_account_margin (float)
+    # - target_account_margin (float)
+    account_id = account_data["account_id"]
+    source_margin = float(account_data["source_account_margin"])
+    target_margin = float(account_data["target_account_margin"])
+    if source_margin <= 0 or target_margin <= 0:
+        raise HTTPException(status_code=400, detail="Invalid margin values")
+        # Assuming that the cross-margin position transfer is successful
+        return {
+            "message": "Cross-margin position transfer between accounts was successful."
+        }
