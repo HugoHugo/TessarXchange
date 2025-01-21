@@ -2775,3 +2775,33 @@ class LiquiditySnapshot(BaseModel):
                     )
                     save_snapshot(snapshot)
                     return {"snapshot": snapshot.dict()}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import random
+
+app = FastAPI()
+
+
+class QuoteRequest(BaseModel):
+    request_id: int
+    trader_name: str
+    currency_pair: tuple
+    quote_requests = []
+
+    @app.post("/quote-request")
+    def create_quote_request(request_data: QuoteRequest):
+        quote_requests.append(request_data)
+        return {"message": f"Quote request ID #{request_data.request_id} created."}
+
+    random_quote = {
+        "currency_pair": ("USD", "EUR"),
+        "bid_price": round(random.uniform(1.0, 2.0), 4),
+        "ask_price": round(random.uniform(1.5, 3.0), 4),
+    }
+
+    @app.get("/quote/{request_id}")
+    def get_quote(request_id: int):
+        for req in quote_requests:
+            if req.request_id == request_id:
+                return random_quote
+            raise HTTPException(status_code=404, detail="Quote request not found.")

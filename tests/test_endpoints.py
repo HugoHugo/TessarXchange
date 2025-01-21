@@ -2885,3 +2885,15 @@ def test_load_snapshot():
             assert isinstance(snapshot_data, dict)
             for field_name in ["timestamp", "total_liquidity", "rewards_earned"]:
                 assert field_name in snapshot_data
+import pytest
+from fastapi import HTTPException
+from main import app
+
+
+@pytest.mark.parametrize(
+    "request_id, expected_exception", [(0, None), (-1, HTTPException)]
+)
+def test_get_quote(request_id, expected_exception):
+    with pytest.raises(expected_exception):
+        client = TestClient(app)
+        response = client.get(f"/quote/{request_id}")
