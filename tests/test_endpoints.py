@@ -3082,3 +3082,34 @@ def test_liquidity_routing_endpoint():
     @handle_order.resolves
     def test_handle_order(order):
         assert isinstance(order, Order)
+import pytest
+from main import Oracle, get_oracles
+
+
+def test_create_oracle():
+    oracle = Oracle(name="BitcoinOracle", url="https://bitcoinoracle.com")
+    assert len(get_oracles().oracles) == 1
+    assert get_oracles().oracles[0].name == "BitcoinOracle"
+    assert get_oracles().oracles[0].url == "https://bitcoinoracle.com"
+
+    def test_get_oracle():
+        oracle = Oracle(name="BitcoinOracle", url="https://bitcoinoracle.com")
+        oracles = [oracle]
+        get_oracles.return_value.oracles = oracles
+        response = Oracle.get_oracle(oracle.id)
+        assert len(response) == 1
+        assert response[0].name == "BitcoinOracle"
+        assert response[0].url == "https://bitcoinoracle.com"
+
+        def test_get_all_oracles():
+            oracle = Oracle(name="BitcoinOracle", url="https://bitcoinoracle.com")
+            oracles = [oracle]
+            get_oracles.return_value.oracles = oracles
+            response = get_oracles().oracles
+            assert len(response) == 1
+            assert response[0].name == "BitcoinOracle"
+            assert response[0].url == "https://bitcoinoracle.com"
+
+            def test_get_invalid_oracle():
+                with pytest.raises(HTTPException):
+                    Oracle.get_oracle("invalid_oracle_id")

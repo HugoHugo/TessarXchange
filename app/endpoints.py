@@ -2991,3 +2991,29 @@ class Order:
                         "optimal_price": optimal_price,
                         "status": "success",
                     }
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class Oracle(BaseModel):
+    id: str = str(uuid.uuid4())
+    name: str
+    url: str
+    oracle_router = APIRouter()
+
+    @oracle_router.get("/oracles")
+    def get_oracles():
+        oracles = [
+            Oracle(name="BitcoinOracle", url="https://bitcoinoracle.com"),
+            Oracle(name="EthereumOracle", url="https://ethereumoracle.com"),
+        ]
+        return {"oracles": oracles}
+
+    @oracle_router.get("/oracles/{oracle_id}")
+    def get_oracle(oracle_id: str):
+        for oracle in get_oracles().oracles:
+            if oracle.id == oracle_id:
+                return oracle
+            raise HTTPException(status_code=404, detail="Oracle not found")
+            # You can add more endpoints as needed, such as post methods to update or create new oracles.
