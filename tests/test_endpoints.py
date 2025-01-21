@@ -3691,3 +3691,28 @@ class TestAPI:
                         assert isinstance(data, dict)
                         assert "STAKES" in data.keys()
                         # Additional assertions and setup for the client
+import pytest
+from main import app
+from your_app_validator_node import ValidatorNode, validator_node_router
+
+
+@pytest.fixture
+def client():
+    # Code to initialize the test application
+    pass
+
+    def test_add_validator_node(client):
+        # Code to add a new validator node and check the response
+        pass
+
+        def test_get_validator_node(client):
+            # Code to retrieve a specific validator node from the database and check the response
+            pass
+
+            def test_update_validator_node(client):
+                # Code to update a validator node's status in the database and check the response
+                pass
+
+                def test_delete_validator_node(client):
+                    # Code to delete a validator node from the database and check the response
+                    pass

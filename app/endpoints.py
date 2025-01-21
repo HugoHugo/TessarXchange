@@ -3595,3 +3595,36 @@ class Stake(BaseModel):
                     VOTES[vote_data.vote_id] = vote_data
                     time.sleep(1)  # Simulating a delay for a decentralized system
                     return {"message": "Voting successful"}
+from fastapi import APIRouter, Path, Query
+from pydantic import BaseModel
+from datetime import datetime
+
+
+class ValidatorNode(BaseModel):
+    id: int
+    public_key: str
+    status: str
+    validator_node_router = APIRouter()
+
+    @app.post("/validator_nodes")
+    def add_validator_node(validator_node: ValidatorNode):
+        # Logic to add a new validator node, including updating the database.
+        return {"message": "Validator Node added successfully"}
+
+    @app.get("/validator_nodes/{id}")
+    def get_validator_node(id: int):
+        # Logic to retrieve a specific validator node from the database.
+        return {"validator_node_id": id, "status": "Retrieved successfully"}
+
+    @app.put("/validator_nodes/{id}")
+    def update_validator_node(id: int, status: str = None):
+        # Logic to update a validator node's status in the database.
+        updated_status = status if status is not None else ""
+        return {
+            "message": f"Validator Node ID {id} updated status from '{updated_status}'"
+        }
+
+    @app.delete("/validator_nodes/{id}")
+    def delete_validator_node(id: int):
+        # Logic to remove a validator node from the database.
+        return {"message": f"Validator Node ID {id} deleted successfully"}
