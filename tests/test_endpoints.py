@@ -2636,3 +2636,34 @@ def test_create_transaction_batch():
         response = create_transaction_block(transaction_batch.json())
         assert response.status_code == 200
         assert response.json() == expected_response
+import pytest
+from main import (
+    LiquidityPool,
+    create_liquidity_pool_endpoint,
+    get_liquidity_pool_endpoint,
+)
+
+
+@pytest.fixture
+def test_pool():
+    pool_data = LiquidityPoolIn(
+        id=str(uuid.uuid4()),
+        token1_id="token1",
+        token2_id="token2",
+        amount1=100,
+        amount2=200,
+    )
+    new_pool = create_liquidity_pool_endpoint(pool_data)
+    return new_pool
+
+
+@pytest.mark.asyncio
+async def test_create_liquidity_pool(test_pool):
+    assert test_pool.id == str(uuid.uuid4())
+    assert test_pool.token1_id == "token1"
+    assert test_pool.token2_id == "token2"
+
+    def test_get_liquidity_pool():
+        # This tests would be implemented here using the provided
+        # get_liquidity_pool_endpoint function from the given API implementation.
+        pass  # Placeholder for test implementation

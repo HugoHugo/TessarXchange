@@ -2493,3 +2493,64 @@ class TransactionBatch(BaseModel):
                 id=batch_id, transactions=transactions, timestamp=timestamp
             )
             return {"message": f"Transaction batch {batch_id} created.", "id": batch_id}
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class LiquidityPoolIn(BaseModel):
+    id: str
+    token1_id: str
+    token2_id: str
+    amount1: float
+    amount2: float
+
+    class LiquidityProviderIn(BaseModel):
+        provider_address: str
+        liquidity_pool_id: str
+        amount_provided: float
+        router = APIRouter()
+
+        class LiquidityPool(BaseModel):
+            id: str
+            token1_id: str
+            token2_id: str
+            total_amount: float
+            liquidity_provider_count: int
+
+            async def create_liquidity_pool(
+                pool_data: LiquidityPoolIn,
+            ) -> LiquidityPool:
+                pool_id = str(uuid.uuid4())
+                new_pool = LiquidityPool(
+                    id=pool_id,
+                    token1_id=pool_data.token1_id,
+                    token2_id=pool_data.token2_id,
+                    total_amount=pool_data.amount1 * pool_data.amount2,
+                )
+                return new_pool
+
+            async def get_liquidity_pool(pool_id: str) -> LiquidityPool:
+                pool = LiquidityPool(
+                    id=pool_id,
+                    token1_id="placeholder",
+                    token2_id="placeholder",
+                    total_amount=0.0,
+                )
+                return pool
+
+            @app.post("/create/liquidity/pool")
+            async def create_liquidity_pool_endpoint(
+                pool_data: LiquidityPoolIn,
+            ) -> LiquidityPool:
+                liquidity_pool = await create_liquidity_pool(pool_data)
+                return liquidity_pool
+
+            @app.get("/liquidity/pools/{pool_id}")
+            async def get_liquidity_pool_endpoint(pool_id: str) -> LiquidityPool:
+                liquidity_pool = await get_liquidity_pool(pool_id)
+                if not liquidity_pool:
+                    raise HTTPException(
+                        status_code=404, detail="Liquidity pool not found"
+                    )
+                    return liquidity_pool
