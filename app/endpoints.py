@@ -2439,3 +2439,34 @@ class WalletSecurity:
                 security_check = WalletSecurity(url=wallet_url)
                 latest_scores = security_check.fetch_scores()
                 return {"wallet_url": wallet_url, "scores": latest_scores}
+from fastapi import FastAPI, HTTPException
+import random
+
+app = FastAPI()
+
+
+class Position:
+    def __init__(self, symbol: str, quantity: float):
+        self.symbol = symbol
+        self.quantity = quantity
+        self.price = 0.0
+
+        async def unwinding(symbol: str, position: Position, amount: float):
+            if abs(position.quantity - amount) > 1e-6:
+                raise HTTPException(status_code=400, detail="Invalid position quantity")
+                price = random.uniform(position.price * 0.9, position.price * 1.1)
+                symbol_position = Position(symbol=symbol, quantity=position.quantity)
+                if position.quantity > 0:
+                    await app.include_in_schema(False, symbol_position)
+                    return {
+                        "symbol": symbol,
+                        "price": price,
+                        "quantity": -symbol_position.quantity,
+                    }
+            else:
+                await app.include_in_schema(False, symbol_position)
+                return {
+                    "symbol": symbol,
+                    "price": price,
+                    "quantity": symbol_position.quantity,
+                }

@@ -2554,3 +2554,58 @@ def test_fetch_scores():
         result = response.json()
         assert result["wallet_url"] == "https://fakeurl.com"
         assert isinstance(result["scores"], dict)
+from fastapi import HTTPException
+import pytest
+from main import app, Position
+
+
+def test_unwinding():
+    client = TestClient(app)
+    # Create a random position for unwinding
+    symbol = "ABC"
+    quantity = 100.0
+    price = random.uniform(10.0, 20.0)
+    position = Position(symbol=symbol, quantity=quantity, price=price)
+    response = client.get(
+        "/unwind", params={"symbol": symbol, "quantity": -position.quantity}
+    )
+    assert response.status_code == 200
+    expected_data = {
+        "symbol": symbol,
+        "price": random.uniform(position.price * 0.9, position.price * 1.1),
+        "quantity": -position.quantity,
+    }
+    assert dict(response.json()) == expected_data
+
+    def test_unwinding_invalid_position():
+        client = TestClient(app)
+        # Create an invalid position quantity to test the exception handling.
+        symbol = "ABC"
+        quantity = -100.0
+        price = random.uniform(10.0, 20.0)
+        position = Position(symbol=symbol, quantity=quantity, price=price)
+        with pytest.raises(HTTPException):
+            response = client.get(
+                "/unwind", params={"symbol": symbol, "quantity": -position.quantity}
+            )
+            assert response.status_code == 400
+
+            def test_unwinding_invalid_price_range():
+                client = TestClient(app)
+                # Create an invalid position quantity to test the exception handling.
+                symbol = "ABC"
+                quantity = 100.0
+                price = 1.0
+                position = Position(symbol=symbol, quantity=quantity, price=price)
+                with pytest.raises(HTTPException):
+                    response = client.get(
+                        "/unwind",
+                        params={"symbol": symbol, "quantity": -position.quantity},
+                    )
+                    assert response.status_code == 400
+
+                    def test_unwinding_no_position():
+                        client = TestClient(app)
+                        with pytest.raises(HTTPException):
+                            response = client.get("/unwind")
+                            assert response.status_code == 404
