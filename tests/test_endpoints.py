@@ -3822,3 +3822,41 @@ def test_create_event():
         with pytest.raises(HTTPException):
             response = client.post("/event", json=event_data)
             assert response.status_code == 400
+import asyncio
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
+
+app = FastAPI()
+
+
+class LPRebalancer:
+    def __init__(self, lp_address: str):
+        self.lp_address = lp_address
+
+        async def rebalance_lps():
+            while True:
+                lp_rebalancer = LPRebalancer(
+                    lp_address="0x..."
+                )  # Replace with actual token addresses
+                await lp_rebalancer.rebalance()
+                print("Waiting for the next rebalance...")
+                await asyncio.sleep(60 * 5)  # Sleep for 5 minutes before checking again
+
+                # Tests
+                def test_rebalance_lps():
+                    loop = asyncio.get_event_loop()
+                    response = loop.run_until_complete(rebalance_lps())
+                    assert "Liquidity pool rebalancing initiated." in str(response)
+
+                    @pytest.mark.asyncio
+                    async def test_create_endpoint(client: TestClient):
+                        response = await client.post("/rebalance_lps")
+                        assert response.status_code == 200
+
+                        def test_lp_rebalancer():
+                            lp_rebalancer = LPRebalancer("0x...")
+                            with pytest.raises(HTTPException):
+                                rebalance_result = lp_rebalancer.rebalance()
+                                assert "Liquidity pool rebalanced." in str(
+                                    rebalance_result
+                                )
