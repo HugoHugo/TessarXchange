@@ -4305,3 +4305,19 @@ def client():
                 with pytest.raises(HTTPException):
                     amm_pair_data = AMMPair(token0="invalid_token", token1="USDT")
                     client.post("/amm_pairs", json=amm_pair_data.dict())
+import pytest
+from main import app
+
+
+def test_create_otc_quote_request():
+    client = TestClient(app)
+    req_data = {
+        "request_id": "1234",
+        "trader_name": "Trader One",
+        "instrument_type": "STK",
+        "amount": 100.0,
+        "settlement_date": datetime.now().date(),
+    }
+    response = client.post("/otc_quote_request", json=req_data)
+    assert response.status_code == 200
+    assert "desk_id" in response.json()

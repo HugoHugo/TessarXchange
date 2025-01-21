@@ -4085,3 +4085,47 @@ class AMMPair(BaseModel):
     @app.post("/amm_pairs")
     def create_amm_pair(amm_pair_data: AMMPair):
         return {"id": amm_pair_data.id}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import random
+
+app = FastAPI()
+
+
+class QuoteRequest(BaseModel):
+    request_id: str
+    trader_name: str
+    instrument_type: str
+    amount: float
+    settlement_date: datetime
+
+    class OTCDeskQuote:
+        def __init__(self, desk_id):
+            self.desk_id = desk_id
+            self.quotes = []
+
+            def add_quote(self, quote: QuoteRequest):
+                if not self.is_valid_quote(quote):
+                    raise HTTPException(status_code=400, detail="Invalid quote request")
+                    self.quotes.append(quote)
+                    return {"status": "success", "message": "Quote added successfully"}
+
+                def is_valid_quote(self, quote: QuoteRequest):
+                    # Implement your validation logic here
+                    valid = True
+                    if not isinstance(quote, QuoteRequest):
+                        valid = False
+                    elif quote.request_id == "" or quote.trader_name == "":
+                        valid = False
+                    elif quote.instrument_type == "" or quote.amount <= 0:
+                        valid = False
+                        return valid
+
+                    @app.post("/otc_quote_request")
+                    def create_otc_quote_request(quote: QuoteRequest):
+                        desk_id = (
+                            f"{random.randint(100000, 999999)}-{datetime.now().year}"
+                        )
+                        otc_desk = OTCDeskQuote(desk_id)
+                        otc_desk.add_quote(quote)
+                        return {"desk_id": quote.request_id, "success": True}
