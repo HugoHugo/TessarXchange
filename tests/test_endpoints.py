@@ -2609,3 +2609,30 @@ def test_unwinding():
                         with pytest.raises(HTTPException):
                             response = client.get("/unwind")
                             assert response.status_code == 404
+from fastapi import HTTPException
+import pytest
+from main import TransactionBatch, create_transaction_batch
+
+
+@pytest.fixture()
+def transaction_batch():
+    batch_id = "test_batch"
+    transactions = [
+        {"id": "t1", "sender": "Alice", "receiver": "Bob", "amount": 10},
+        {"id": "t2", "sender": "Charlie", "receiver": "David", "amount": 20},
+    ]
+    timestamp = datetime.now()
+    return TransactionBatch(id=batch_id, transactions=transactions, timestamp=timestamp)
+
+
+def test_create_transaction_batch():
+    transaction_batch = transaction_batch()
+    with pytest.raises(HTTPException):
+        create_transaction_batch({"id": "test_invalid", "transactions": []})
+        expected_response = {
+            "message": f"Transaction batch {transaction_batch.id} created.",
+            "id": transaction_batch.id,
+        }
+        response = create_transaction_block(transaction_batch.json())
+        assert response.status_code == 200
+        assert response.json() == expected_response

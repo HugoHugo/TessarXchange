@@ -2470,3 +2470,26 @@ class Position:
                     "price": price,
                     "quantity": symbol_position.quantity,
                 }
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import json
+
+
+class TransactionBatch(BaseModel):
+    id: str
+    transactions: list
+    timestamp: datetime
+    transactions_batches = {}
+    router = APIRouter()
+
+    @router.post("/batch_transactions")
+    async def create_transaction_batch(batch_data: dict):
+        batch_id = batch_data.get("id", None)
+        if not batch_id:
+            raise HTTPException(status_code=400, detail="Batch ID is required.")
+            transactions = batch_data.get("transactions", [])
+            timestamp = datetime.now()
+            transactions_batches[batch_id] = TransactionBatch(
+                id=batch_id, transactions=transactions, timestamp=timestamp
+            )
+            return {"message": f"Transaction batch {batch_id} created.", "id": batch_id}
