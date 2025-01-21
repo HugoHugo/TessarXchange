@@ -3751,3 +3751,46 @@ def client():
                 client = TestClient(app)
                 response = client.get("/manipulate_market")
                 assert response.status_code == 404
+import pytest
+from main import DIDDocument, AttestationState, AttestationRequest, AttestationResponse
+
+
+@pytest.fixture()
+def attestestation_request():
+    return AttestationRequest(
+        did_document=DIDDocument(
+            id=str(uuid.uuid4()),
+        ),
+        attestation_request_id=str(uuid.uuid4()),
+    )
+
+
+def test_attestation_request_valid(attestestation_request):
+    assert not attestestation_request.did_document.id
+    assert not attestestation_request.attestation_request_id
+    attestestation_request.did_document.id = str(uuid.uuid4())
+    attestestation_request.attestation_request_id = str(uuid.uuid4())
+    assert attestestation_request.did_document.id
+    assert attestestation_request.attestation_request_id
+
+    def test_attestation_request_invalid():
+        with pytest.raises(HTTPException):
+            AttestationRequest(
+                did_document=DIDDocument(
+                    id=str(uuid.uuid4()),
+                ),
+                attestation_request_id=str(uuid.uuid4()),
+            )
+            assert not DIDDocument.id
+            assert not uuid.UUID
+            request = AttestationRequest(
+                did_document=DIDDocument(
+                    id=None,
+                ),
+                attestation_request_id=uuid.uuid4(),
+            )
+            with pytest.raises(HTTPException):
+                if not request.did_document.id:
+                    raise HTTPException(
+                        status_code=400, detail="Missing DID document ID."
+                    )

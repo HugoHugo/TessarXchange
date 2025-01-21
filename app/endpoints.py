@@ -3651,3 +3651,39 @@ class MarketManipulation:
                 return app
 
             fastapi_app = create_fastapi_app()
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class DIDDocument(BaseModel):
+    id: str
+    verificationMethod: list
+
+    class AttestationState(BaseModel):
+        status: str
+        timestamp: datetime
+
+        class AttestationRequest(BaseModel):
+            did_document: DIDDocument
+            attestation_request_id: uuid.UUID
+
+            class AttestationResponse(BaseModel):
+                attestation_response_id: uuid.UUID
+                attestation_state: AttestationState
+                verificationAdjective: str
+
+                @app.post("/attest")
+                async def attest(attestation_request: AttestationRequest):
+                    # Validate the attestation request
+                    if not attestation_request.did_document.id:
+                        raise HTTPException(
+                            status_code=400, detail="Missing DID document ID."
+                        )
+                        # Assuming a function to perform attestation
+                        attestation_response = perform_attestation(
+                            attestestation_request
+                        )
+                        return AttestationResponse(**attestation_response)
