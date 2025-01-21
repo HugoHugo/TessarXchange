@@ -3616,3 +3616,20 @@ def test_is_trading_pair_eligible(test_data):
         expected_output = {"result": "Delisted BTC-USD"}
         response = delist_trading_pair(pair_symbol)
         assert response == expected_output
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as _client:
+        yield _
+
+        # Clean up the TestClient here, if needed.
+        def test_stress_test_endpoint(client):
+            response = client.get("/stress-test")
+            assert response.status_code == 200
+            result_data = response.json()
+            assert isinstance(result_data, dict)
+            assert "portfolio_return" in result_data
+            assert "portfolio_volatility" in result_data

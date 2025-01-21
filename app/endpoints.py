@@ -3506,3 +3506,31 @@ async def delist_trading_pair(pair_symbol: str):
         raise HTTPException(status_code=400, detail="Invalid trading pair symbol")
         # Define the logic for delisting a trading pair here.
         return {"result": f"Delisted {pair_symbol}"}
+from fastapi import FastAPI, HTTPException
+import numpy as np
+from pyfolio import time_series
+
+app = FastAPI()
+
+
+def calculate_stress_portflio(portfolio_data):
+    # Validate data
+    if not isinstance(portfolio_data, dict) or "prices" not in portfolio_data:
+        raise HTTPException(status_code=400, detail="Invalid data format")
+        prices = time_series.from_dtr(portfolio_data["prices"]).to_pandas()
+        # Check for missing data
+        if prices.isna().sum() > 0:
+            raise HTTPException(status_code=500, detail="Missing data in the portfolio")
+            # Calculate stress testing metrics
+            portfolio_return = np.mean(prices["Close"].values)
+            portfolio_volatility = np.std(prices["Close"].values)
+            return {
+                "portfolio_return": portfolio_return,
+                "portfolio_volatility": portfolio_volatility,
+            }
+
+        @app.get("/stress-test", response_model=dict)
+        def stress_test(portfolio_data: dict):
+            if not isinstance(portfolio_data, dict) or "prices" not in portfolio_data:
+                raise HTTPException(status_code=400, detail="Invalid data format")
+                return calculate_stress_portflio(portfolio_data)
