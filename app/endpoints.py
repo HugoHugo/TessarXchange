@@ -2717,3 +2717,21 @@ class StopOrder(BaseModel):
                     raise HTTPException(status_code=400, detail="Invalid order type")
                     # This block of code is just to simulate the execution of the stop-loss/trailing stop order.
                     time.sleep(1)  # Simulate processing time
+from fastapi import FastAPI, Path
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class TradingStrategyParams(BaseModel):
+    risk_level: float
+    stop_loss_percentage: float
+    take_profit_percentage: float
+    time_frame_minutes: int
+
+    @app.put("/trading-strategy/params")
+    def update_trading_strategy_params(params: TradingStrategyParams):
+        return {
+            "status": "parameters updated successfully",
+            "updated_params": params.dict(),
+        }

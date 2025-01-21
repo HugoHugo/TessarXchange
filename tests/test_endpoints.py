@@ -2829,3 +2829,27 @@ def test_stop_loss_order():
                         assert order.price == 175.0
                         assert order.type == "trailing_stop"
                         assert order.trigger_price == 170.0
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+from datetime import datetime
+
+
+def test_update_trading_strategy_params():
+    client = TestClient(app)
+    # Define TradingStrategyParams object
+    params = TradingStrategyParams(
+        risk_level=0.1,
+        stop_loss_percentage=2.5,
+        take_profit_percentage=10.0,
+        time_frame_minutes=15,
+    )
+    # Send a PUT request to the endpoint with the params object
+    response = client.put("/trading-strategy/params", json=params)
+    assert response.status_code == 200
+    data = response.json()
+    expected_data = {
+        "status": "parameters updated successfully",
+        "updated_params": params.dict(),
+    }
+    assert data == expected_data
