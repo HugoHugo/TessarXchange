@@ -2788,3 +2788,44 @@ def test_dependency_overrides():
                 portfolio["updated_at"], "%Y-%m-%d %H:%M:%S"
             )
             # Additional tests can be added as needed.
+import pytest
+from fastapi import HTTPException
+import time
+
+
+def test_stop_loss_order():
+    order = StopOrder(
+        symbol="AAPL",
+        quantity=100,
+        price=150.0,
+        type="stop_loss",
+        trigger_price=145.0,
+    )
+    with pytest.raises(HTTPException):
+        with pytest.raises(Exception):
+            execute_order(order, market_data)
+            assert order.symbol == "AAPL"
+            assert order.quantity == 100
+            assert order.price == 150.0
+            assert order.type == "stop_loss"
+            assert order.trigger_price == 145.0
+
+            def test_trailing_stop_loss():
+                order = StopOrder(
+                    symbol="MSFT",
+                    quantity=50,
+                    price=175.0,
+                    type="trailing_stop",
+                    trigger_price=170.0,
+                )
+                with pytest.raises(HTTPException):
+                    with pytest.raises(Exception):
+                        market_data = {
+                            ...
+                        }  # Placeholder for a mock market data object.
+                        execute_order(order, market_data)
+                        assert order.symbol == "MSFT"
+                        assert order.quantity == 50
+                        assert order.price == 175.0
+                        assert order.type == "trailing_stop"
+                        assert order.trigger_price == 170.0

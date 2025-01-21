@@ -2684,3 +2684,36 @@ class Portfolio:
                         def update_portfolio_background_task():
                             update_portfolio_value_background_task()
                             return {"status": "background task updated"}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import time
+
+app = FastAPI()
+
+
+class StopOrder(BaseModel):
+    symbol: str
+    quantity: int
+    price: float
+    type: str  # stop_loss or trailing_stop
+    trigger_price: float
+
+    def execute_order(order: StopOrder, market_data):
+        if order.type == "stop_loss":
+            if market_data.last_price < order.trigger_price:
+                # Place the stop-loss order
+                # This is just a placeholder to simulate placing an order.
+                print(
+                    f"Stop-Loss Order placed for {order.symbol} at price: {order.trigger_price}, quantity: {order.quantity}"
+                )
+            elif order.type == "trailing_stop":
+                if market_data.last_price < order.trigger_price:
+                    # Calculate the trailing stop loss
+                    # This is just a placeholder to simulate calculating a trailing stop loss.
+                    print(
+                        f"Trailing Stop Loss activated for {order.symbol} at trigger price: {order.trigger_price}, current price: {market_data.last_price}"
+                    )
+                else:
+                    raise HTTPException(status_code=400, detail="Invalid order type")
+                    # This block of code is just to simulate the execution of the stop-loss/trailing stop order.
+                    time.sleep(1)  # Simulate processing time
