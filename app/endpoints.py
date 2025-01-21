@@ -2372,3 +2372,19 @@ class CurveInput(BaseModel):
         def optimize_curve_endpoint(curve_input: CurveInput):
             optimized_output = optimize_curve(curve_input)
             return optimized_output
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class OracleData(BaseModel):
+    id: str
+    chain: str
+    timestamp: datetime
+    value: float
+    oracle_data_router = APIRouter()
+
+    @oracle_data_router.post("/data")
+    async def add_oracle_data(data: OracleData):
+        data.id = str(uuid.uuid4())
+        return {"message": "Oracle data added successfully", "data": data}

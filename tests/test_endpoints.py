@@ -2492,3 +2492,31 @@ def test_optimize_curve():
         response = client.get("/optimize_curve")
         assert response.status_code == 200
         assert b'{"x_curve": [...]}' in response.content
+from fastapi.testclient import TestClient
+import pytest
+from main import app, OracleData
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _client:
+        yield _client
+
+        def test_add_oracle_data(client):
+            data = OracleData(
+                id=uuid.uuid4(), chain="Chain1", timestamp=datetime.now(), value=100.5
+            )
+            response = client.post("/data", json=data.dict())
+            assert response.status_code == 200
+            assert "message" in response.json()
+            assert "data" in response.json()
+
+            def test_add_oracle_data_bad_request(client):
+                data = OracleData(
+                    id=uuid.uuid4(),
+                    chain="Chain1",
+                    timestamp=datetime.now() - datetime(1970, 1, 1),
+                    value=100.5,
+                )
+                response = client.post("/data", json=data.dict())
+                assert response.status_code == 400
