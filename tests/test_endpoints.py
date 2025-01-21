@@ -3331,3 +3331,52 @@ def test_fee_optimization():
         )
         response = client.post("/fee_optimization", json=input_data.json())
         assert response.status_code == 422
+import pytest
+from main import DarkPool, app
+
+
+@pytest.fixture
+def dark_pool():
+    # Create a new dark pool instance
+    return DarkPool()
+
+
+def test_create_dark_pool(dark_pool):
+    # Test creating a new dark pool with provided data
+    id = str(uuid.uuid4())
+    dark_pool.id = id
+    dark_pool.buyer = "Buyer A"
+    dark_pool.seller = "Seller B"
+    dark_pool.buy_amount = 1000.0
+    dark_pool.sell_amount = 500.0
+    response = dark_pool.dict()
+    assert len(response) == 13
+    assert response["id"] == id
+    assert response["buyer"] == "Buyer A"
+    assert response["seller"] == "Seller B"
+    assert response["buy_amount"] == 1000.0
+    assert response["sell_amount"] == 500.0
+
+    def test_get_dark_pool(dark_pool):
+        # Test retrieving a dark pool with provided ID
+        id = str(uuid.uuid4())
+        dark_pool.id = id
+        dark_pool.buyer = "Buyer A"
+        dark_pool.seller = "Seller B"
+        dark_pool.buy_amount = 1000.0
+        dark_pool.sell_amount = 500.0
+        response = dark_pool.dict()
+        get_response = dark_pool.get_dark_pool(id)
+        assert len(get_response) == 13
+        assert get_response["id"] == id
+        assert get_response["buyer"] == "Buyer A"
+        assert get_response["seller"] == "Seller B"
+        assert get_response["buy_amount"] == 1000.0
+        assert get_response["sell_amount"] == 500.0
+
+        def test_get_dark_pool_non_existent(dark_pool):
+            # Test retrieving a non-existent dark pool with provided ID
+            id = str(uuid.uuid4())
+            with pytest.raises(HTTPException) as context:
+                _ = dark_pool.get_dark_pool(id)
+                assert str(context.value) == "Dark pool not found."

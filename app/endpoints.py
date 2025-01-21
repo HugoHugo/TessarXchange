@@ -3222,3 +3222,38 @@ class FeeOptimizationInput(BaseModel):
         fee_0 = sqrt_k * fee_cemented - mid * slippage_percentage / 2000
         fee_1 = sqrt_k * fee_cemented + mid * slippage_percentage / 2000
         return {"fee_0": fee_0, "fee_1": fee_1}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class DarkPool(BaseModel):
+    id: str
+    buyer: str
+    seller: str
+    buy_amount: float
+    sell_amount: float
+    timestamp: datetime
+    app = FastAPI()
+
+    @app.post("/darkpools")
+    def create_dark_pool(dark_pool: DarkPool):
+        if not dark_pool.buyer or not dark_pool.seller:
+            raise HTTPException(
+                status_code=400, detail="Buyer and Seller must be provided."
+            )
+            new_id = str(uuid.uuid4())
+            return {"id": new_id, "dark_pool": dict(dark_pool)}
+
+        @app.get("/darkpools/{id}")
+        def get_dark_pool(id: str):
+            dark_pool = app.state.dark_pools.get(id)
+            if not dark_pool:
+                raise HTTPException(status_code=404, detail="Dark pool not found.")
+                return {
+                    "id": dark_pool.id,
+                    "buyer": dark_pool.buyer,
+                    "seller": dark_pool.seller,
+                    "buy_amount": dark_pool.buy_amount,
+                    "sell_amount": dark_pool.sell_amount,
+                }
