@@ -2520,3 +2520,18 @@ def client():
                 )
                 response = client.post("/data", json=data.dict())
                 assert response.status_code == 400
+from fastapi.testclient import TestClient
+import pytest
+from main import app, start_liquidation_auction
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as FastAPIClient:
+        yield FastAPIClient
+
+        def test_start_liquidation_auction(client):
+            response = client.post(
+                "/start_liquidation", json={"auction_id": "test_auction"}
+            )
+            assert response.status_code == 200

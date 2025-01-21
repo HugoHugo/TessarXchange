@@ -2388,3 +2388,28 @@ class OracleData(BaseModel):
     async def add_oracle_data(data: OracleData):
         data.id = str(uuid.uuid4())
         return {"message": "Oracle data added successfully", "data": data}
+from fastapi import APIRouter, HTTPException
+from datetime import datetime
+from pydantic import BaseModel
+
+
+class AuctionData(BaseModel):
+    auction_id: str
+    starting_price: float
+    current_price: float = None
+    expiry_time: datetime = None
+    auction_router = APIRouter()
+
+    @app.post("/auctions")
+    def start_auction(auction_data: AuctionData):
+        if auction_data.expiry_time is None:
+            raise HTTPException(status_code=400, detail="Expiry time is required.")
+            # Implement liquidation auction logic here
+            # For demonstration purposes, we'll just return the auction data
+            return auction_data
+
+        @app.get("/auctions/{auction_id}")
+        def get_auction(auction_id: str):
+            # Implement retrieval of auction details based on auction_id
+            # Return the retrieved auction data for demonstration purposes
+            return {"auction_id": auction_id, "status": "active"}
