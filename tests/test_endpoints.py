@@ -3561,3 +3561,39 @@ def test_fee_statement_endpoint():
         assert fees.statement_date == fee_statement_data.statement_date
         assert fees.statement_period == fee_statement_data.statement_period
         assert len(fees.transactions) == len(fee_statement_data.transactions)
+from fastapi.testclient import TestClient
+from main import app
+
+importpytest
+
+
+def test_get_whitelisted_addresses():
+    client = TestClient(app)
+    response = client.get("/whitelist")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+    def test_set_whitelisted_address():
+        client = TestClient(app)
+        # Test adding an address to whitelist
+        response = client.post("/whitelist", json={"address": "0x1234567890"})
+        assert response.status_code == 200
+        assert response.json() == {"result": "address added to whitelist"}
+
+        def test_get_whitelisted_address():
+            client = TestClient(app)
+            # Test getting an address from whitelist
+            WHITE_LISTED_ADDRESSES.append("0x1234567890")
+            response = client.get("/whitelist/0x1234567890")
+            assert response.status_code == 200
+            assert response.json() == {
+                "result": "Address 0x1234567890 is valid for withdrawal"
+            }
+
+            def test_get_whitelisted_address_not_found():
+                client = TestClient(app)
+                # Test getting an address not in whitelist
+                with pytest.raises(HTTPException):
+                    response = client.get("/whitelist/0x9999999999")
+                    assert response.status_code == 404
+                    assert "Address not found in whitelist" in str(response.content)

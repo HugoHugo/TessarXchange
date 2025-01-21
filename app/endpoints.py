@@ -3452,3 +3452,39 @@ class FeeStatement(BaseModel):
                 "statement_period": fee_statement_data.statement_period,
                 "transactions": fee_statement_data.transactions,
             }
+from fastapi import FastAPI, HTTPException
+from typing import List
+import json
+
+app = FastAPI()
+WHITE_LISTED_ADDRESSES = []
+
+
+def load_white_listed_addresses():
+    if not os.path.exists("white_listed_addresses.json"):
+        return []
+    with open("white_listed_addresses.json", "r") as file:
+        white_listed_addresses_data = json.load(file)
+        return white_listed_addresses_data
+
+    def save_white_listed_addresses(whitelisted_addresses: List[str]):
+        with open("white_listed_addresses.json", "w") as file:
+            json.dump(whitelisted_addresses, file)
+
+            @app.get("/whitelist", response_model=List[str])
+            async def get_whitelisted_addresses():
+                return load_white_listed_addresses()
+
+            @app.post("/whitelist")
+            async def set_whitelisted_address(address: str):
+                WHITE_LISTED_ADDRESES.append(address)
+                save_white_listed_addresses(WHITE_LISTED_ADDRESSES)
+                return {"result": "address added to whitelist"}
+
+            @app.get("/whitelist/{address}")
+            async def get_whitelisted_address(address: str):
+                if address not in WHITE_LISTED_ADDRESSES:
+                    raise HTTPException(
+                        status_code=404, detail="Address not found in whitelist"
+                    )
+                    return {"result": f"Address {address} is valid for withdrawal"}
