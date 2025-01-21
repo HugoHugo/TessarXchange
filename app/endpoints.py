@@ -3957,3 +3957,52 @@ class TaxReportRequest(BaseModel):
                 )
                 tax_report = generate_tax_report(request_data)
                 return {"result": "Tax Report Generated", "report_data": tax_report}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import random
+
+app = FastAPI()
+
+
+class Exposure(BaseModel):
+    user_id: int
+    limit: float
+    current_exposure: float
+    timestamp: datetime
+
+    class RiskManager:
+        def __init__(self):
+            self.exposures = []
+
+            def monitor(self, exposure: Exposure):
+                if exposure.current_exposure > exposure.limit:
+                    raise HTTPException(
+                        status_code=400, detail="Exposure limit exceeded."
+                    )
+                    self.exposures.append(exposure)
+
+                    def get_user_exposure(self, user_id: int) -> Exposure:
+                        for exposure in self.exposures:
+                            if exposure.user_id == user_id:
+                                return exposure
+                            raise HTTPException(
+                                status_code=404, detail="User not found."
+                            )
+                            # Example usage
+                            risk_manager = RiskManager()
+                            exposure = Exposure(
+                                user_id=random.randint(1, 1000),
+                                limit=500.0,
+                                current_exposure=300.0,
+                                timestamp=datetime.now(),
+                            )
+                            try:
+                                risk_manager.monitor(exposure)
+                                exposure_in_user_format = (
+                                    risk_manager.get_user_exposure(exposure.user_id)
+                                )
+                                print(
+                                    f"User {exposure.user_id} has an exposure of {exposure_in_user_format.current_exposure:.2f}"
+                                )
+                            except HTTPException as e:
+                                print(e.detail)

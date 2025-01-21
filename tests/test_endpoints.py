@@ -4077,3 +4077,131 @@ def test_generate_tax_report():
                 ).item():
                     response = create_tax_report(request_data)
                     assert response.status_code == 200
+import pytest
+from fastapi.testclient import TestClient
+from main import app, RiskManager
+from datetime import datetime
+
+
+@pytest.fixture
+def risk_manager():
+    return RiskManager()
+
+
+def test_monitor_exposure(mocker):
+    risk_manager = RiskManager()
+
+    def mock_timestamp() -> datetime:
+        return datetime.now()
+
+    mocker.patch.object(risk_manager, "timestamp", new=mock_timestamp)
+    exposure = Exposure(
+        user_id=random.randint(1, 1000),
+        limit=500.0,
+        current_exposure=300.0,
+        timestamp=datetime.now(),
+    )
+    with pytest.raises(HTTPException):
+        risk_manager.monitor(exposure)
+
+        def test_get_user_exposure():
+            risk_manager = RiskManager()
+            exposure = Exposure(
+                user_id=1,
+                limit=500.0,
+                current_exposure=350.0,
+                timestamp=datetime.now(),
+            )
+            risk_manager.exposures.append(exposure)
+            exposure_in_user_format = risk_manager.get_user_exposure(1)
+            assert exposure_in_user_format == exposure
+
+            def test_monitor_and_get_user_exposure():
+                risk_manager = RiskManager()
+                exposure = Exposure(
+                    user_id=1,
+                    limit=500.0,
+                    current_exposure=350.0,
+                    timestamp=datetime.now(),
+                )
+                with pytest.raises(HTTPException):
+                    risk_manager.monitor(exposure)
+                    with pytest.raises(HTTPException):
+                        risk_manager.get_user_exposure(1)
+
+                        @pytest.mark.parametrize(
+                            "exposure, expected",
+                            [
+                                (
+                                    Exposure(
+                                        user_id=2,
+                                        limit=1000.0,
+                                        current_exposure=500.0,
+                                        timestamp=datetime.now(),
+                                    ),
+                                    400,
+                                ),
+                                (
+                                    Exposure(
+                                        user_id=2,
+                                        limit=1000.0,
+                                        current_exposure=999.0,
+                                        timestamp=datetime.now(),
+                                    ),
+                                    200,
+                                ),
+                            ],
+                        )
+                        def test_risk_manager_exceptions(risk_manager, mocker):
+                            risk_manager.exposures = []
+                            mock_timestamp = mocker.patch.object(
+                                risk_manager, "timestamp", new=mock_timestamp
+                            )
+                            for exposure, expected_status in exposure_cases:
+                                with pytest.raises(HTTPException) as e_info:
+                                    risk_manager.monitor(exposure)
+                                    assert e_info.value.status_code == expected_status
+
+                                    @pytest.mark.parametrize(
+                                        "exposure, user_exposure",
+                                        [
+                                            (
+                                                Exposure(
+                                                    user_id=2,
+                                                    limit=1000.0,
+                                                    current_exposure=500.0,
+                                                    timestamp=datetime.now(),
+                                                ),
+                                                1,
+                                            ),
+                                        ],
+                                    )
+                                    def test_risk_manager_get_user_exposure(
+                                        risk_manager, mocker
+                                    ):
+                                        risk_manager.exposures = []
+                                        mock_timestamp = mocker.patch.object(
+                                            risk_manager,
+                                            "timestamp",
+                                            new=mock_timestamp,
+                                        )
+                                        exposure = Exposure(
+                                            user_id=2,
+                                            limit=1000.0,
+                                            current_exposure=500.0,
+                                            timestamp=datetime.now(),
+                                        )
+                                        with pytest.raises(HTTPException):
+                                            risk_manager.monitor(exposure)
+                                            with pytest.raises(HTTPException) as e_info:
+                                                exposure_in_user_format = (
+                                                    risk_manager.get_user_exposure(2)
+                                                )
+                                                assert e_info.value.status_code == 200
+                                                assert (
+                                                    exposure_in_user_format.user_id == 2
+                                                )
+                                                assert (
+                                                    exposure_in_user_format.current_exposure
+                                                    == 500.0
+                                                )
