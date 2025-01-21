@@ -3092,3 +3092,36 @@ class Reputation:
             if new_score < -100 or new_score > 100:
                 raise HTTPException(status_code=400, detail="Invalid reputation score")
                 self.reputation_score += new_score
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class InventoryHedgingItem(BaseModel):
+    id: str
+    symbol: str
+    quantity: float
+    INVENTORY_HEDGING_ITEMS = {}
+
+    def get_hedging_item(symbol: str) -> InventoryHedgingItem:
+        item_id = f"{symbol}_id_{uuid.uuid4()}"
+        if symbol not in INVENTORY_HEDGING_ITEMS and item_id in INVENTORY_HedgingItems:
+            hedging_item_data = INVENTORY_HEDGING_ITEMS.get(item_id)
+            if hedging_item_data:
+                return InventoryHedgingItem(**hedging_item_data)
+            raise HTTPException(status_code=404, detail="Hedging item not found")
+            new_hedging_item = InventoryHedgingItem(
+                id=str(uuid.uuid4()), symbol=symbol, quantity=0
+            )
+            INVENTORY_HEDGING_ITEMS[symbol] = new_hedging_item.dict()
+            return new_hedging_item
+
+        @app.get("/inventory-hedging", response_model=list[InventoryHedgingItem])
+        def get_inventory_hedging():
+            hedging_items = []
+            for symbol, item in INVENTORY_HEDGING_ITEMS.items():
+                hedging_item = InventoryHedgingItem(**item)
+                hedging_items.append(hedging_item)
+                return hedging_items

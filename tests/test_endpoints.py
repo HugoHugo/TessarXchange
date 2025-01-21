@@ -3236,3 +3236,23 @@ def client():
                             response = client.get(f"/reputation/{invalid_user_id}")
                             assert response.status_code == 404
                             assert response.text == "User not found"
+import pytest
+from fastapi.testclient import TestClient
+from main import app, InventoryHedgingItem
+
+
+def test_get_inventory_hedging():
+    client = TestClient(app)
+    response = client.get("/inventory-hedging")
+    assert response.status_code == 200
+    hedging_items = response.json()
+    assert len(hedging_items) > 0
+
+    def test_get_hedging_item_not_found():
+        client = TestClient(app)
+        symbol = "unknown_symbol"
+        with pytest.raises(HTTPException):
+            response = client.get(f"/inventory-hedging/{symbol}")
+            content = response.content
+            assert content
+            assert response.status_code == 404
