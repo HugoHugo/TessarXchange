@@ -4263,3 +4263,29 @@ class NettingGroup(BaseModel):
             if netting_group.id == id:
                 return netting_group
             raise HTTPException(status_code=404, detail="Netting group not found")
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class Bridge(BaseModel):
+    id: str = str(uuid.uuid4())
+    src_mac: str
+    dst_bridge_id: str
+    status: str = "inactive"
+    app = FastAPI()
+    # In-memory storage (for simplicity)
+    bridges = {}
+
+    @app.post("/bridge")
+    async def create_bridge(br: Bridge):
+        if br.id in bridges:
+            raise HTTPException(status_code=400, detail="Bridge ID already exists.")
+            bridges[br.id] = br
+            return {"message": "New bridge created", "bridge_id": br.id}
+
+        @app.get("/bridges/{id}")
+        async def get_bridge(id: str):
+            if id not in bridges:
+                raise HTTPException(status_code=404, detail="Bridge ID not found.")
+                return {"bridge_id": id, "status": bridges[id].status}

@@ -4435,3 +4435,44 @@ def test_create_netting_group():
         def test_netting_group_not_found():
             with pytest.raises(HTTPException):
                 get_netting_group(999)
+from fastapi import HTTPException
+import pytest
+from main import Bridge
+
+
+@pytest.fixture
+def sample_bridge():
+    return Bridge(src_mac="00:11:22:33:44", dst_bridge_id="12345678")
+
+
+def test_create_bridges(sample_bridge):
+    assert sample_bridge.src_mac == "00:11:22:33:44"
+    assert sample_bridge.dst_bridge_id is None
+    assert sample_bridge.status == "inactive"
+    response = Bridge(src_mac="00:11:22:33:45", dst_bridge_id="12345679").app
+    assert response.src_mac == "00:11:22:33:45"
+    assert response.dst_bridge_id == "12345679"
+    assert response.status == "inactive"
+
+    def test_get_bridge(sample_bridge):
+        with pytest.raises(HTTPException) as ex:
+            Bridge().get_bridge(id="12345678")
+            assert str(ex.value).startswith("Bridge ID not found.")
+
+            def test_post_bridges_with_existing_id():
+                with pytest.raises(HTTPException) as ex:
+                    sample_bridge = Bridge(
+                        src_mac="00:11:22:33:45", dst_bridge_id="12345679"
+                    )
+                    response = sample_bridge.app.post("/bridge", data=sample_bridge)
+                    assert str(ex.value).startswith("Bridge ID already exists.")
+
+                    def test_post_bridges_success():
+                        with pytest.raises(HTTPException) as ex:
+                            sample_bridge = Bridge(
+                                src_mac="00:11:22:33:46", dst_bridge_id="12345678"
+                            )
+                            response = sample_bridge.app.post(
+                                "/bridge", data=sample_bridge
+                            )
+                            assert str(ex.value).startswith("New bridge created")
