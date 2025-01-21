@@ -2960,3 +2960,34 @@ class TradingFeeRebate(BaseModel):
                         def add_rebate(rebate: TradingFeeRebate = ...):
                             app.state.trading_fee_rebate_system.add_rebate(rebate)
                             return rebate
+from fastapi import FastAPI, HTTPException
+import random
+
+app = FastAPI()
+
+
+class Order:
+    def __init__(self, id: int, quantity: float, price: float):
+        self.id = id
+        self.quantity = quantity
+        self.price = price
+
+        def liquidity_routing(order: Order, liquidity_pools: list) -> dict:
+            optimal_price = 0.0
+            for pool in liquidity_pools:
+                if optimal_price == 0.0 or random.random() < 0.5:
+                    optimal_price = pool["price"]
+                    return {"optimal_price": optimal_price}
+
+                @app.post("/order")
+                async def handle_order(order: Order):
+                    liquidity_pools = [
+                        {"id": "pool1", "quantity": 100, "price": 10.5},
+                        {"id": "pool2", "quantity": 150, "price": 12.8},
+                    ]
+                    optimal_price = liquidity_routing(order, liquidity_pools)
+                    return {
+                        "order_id": order.id,
+                        "optimal_price": optimal_price,
+                        "status": "success",
+                    }

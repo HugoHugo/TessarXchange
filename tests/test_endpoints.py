@@ -3062,3 +3062,23 @@ def trading_fee_rebate_system():
             response = trading_fee_rebate_system.get_rebate("USD")
             assert len(response) == 1
             assert list(response)[0] == new_rebate
+import pytest
+from main import app, Order
+
+
+def test_liquidity_routing_endpoint():
+    client = TestClient(app)
+    response = client.get("/liquidity_routing")
+    assert response.status_code == 200
+    liquidity_pools = [
+        {"id": "pool1", "quantity": 100, "price": 10.5},
+        {"id": "pool2", "quantity": 150, "price": 12.8},
+    ]
+
+    @pytest.fixture
+    def handle_order():
+        return app.test_client().post("/order")
+
+    @handle_order.resolves
+    def test_handle_order(order):
+        assert isinstance(order, Order)
