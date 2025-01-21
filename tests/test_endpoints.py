@@ -3597,3 +3597,22 @@ def test_get_whitelisted_addresses():
                     response = client.get("/whitelist/0x9999999999")
                     assert response.status_code == 404
                     assert "Address not found in whitelist" in str(response.content)
+import pytest
+from main import is_trading_pair_eligible, delist_trading_pair
+
+
+@pytest.fixture()
+def test_data():
+    return {"BTC-USD": True, "ETH-BNB": False}
+
+
+@pytest.mark.parametrize("pair_symbol", ["BTC-USD", "ETH-USD"])
+def test_is_trading_pair_eligible(test_data):
+    assert is_trading_pair_eligible("BTC-USD") == test_data["BTC-USD"]
+    assert is_trading_pair_eligible("ETH-USD") == test_data["ETH-USD"]
+
+    @pytest.mark.parametrize("pair_symbol", ["BTC-USD"])
+    def test_delist_trading_pair(test_data):
+        expected_output = {"result": "Delisted BTC-USD"}
+        response = delist_trading_pair(pair_symbol)
+        assert response == expected_output

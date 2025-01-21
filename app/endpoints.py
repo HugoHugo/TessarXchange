@@ -3488,3 +3488,21 @@ def load_white_listed_addresses():
                         status_code=404, detail="Address not found in whitelist"
                     )
                     return {"result": f"Address {address} is valid for withdrawal"}
+from fastapi import APIRouter, HTTPException
+from typing import Dict
+
+trade_pairs_router = APIRouter()
+
+
+def is_trading_pair_eligible(pair_symbol: str) -> bool:
+    # Define criteria for eligibility here.
+    eligible_pairs = ["BTC-USD", "ETH-USD"]
+    return pair_symbol in eligible_pairs
+
+
+@trade_pairs_router.get("/delist/{pair_symbol}")
+async def delist_trading_pair(pair_symbol: str):
+    if not is_trading_pair_eligible(pair_symbol):
+        raise HTTPException(status_code=400, detail="Invalid trading pair symbol")
+        # Define the logic for delisting a trading pair here.
+        return {"result": f"Delisted {pair_symbol}"}
