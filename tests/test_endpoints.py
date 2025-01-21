@@ -3463,3 +3463,31 @@ def test_create_alert(alert):
                 "notification_type": "sms",
             },
         ]
+from fastapi import HTTPException
+import pytest
+from main import app, SystemHealth
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _client:
+        yield _client
+
+        def test_system_health(client):
+            response = client.get("/system-health")
+            assert response.status_code == 200
+            health_data: SystemHealth = response.json()
+            assert isinstance(health_data, SystemHealth)
+            assert "application_uuid" in health_data
+            assert "uptime_seconds" in health_data
+            assert "memory_usage_mb" in health_data
+            assert "cpu_usage_percent" in health_data
+            assert isinstance(health_data.application_uuid, str)
+            assert isinstance(health_data.uptime_seconds, int)
+            assert isinstance(health_data.memory_usage_mb, int)
+            assert isinstance(health_data.cpu_usage_percent, float)
+
+            def test_system_health_exception(client):
+                response = client.get("/system-health", status_code=500)
+                content = response.content
+                assert b"Internal Server Error" in content

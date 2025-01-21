@@ -3357,3 +3357,37 @@ class PriceAlert(BaseModel):
 
             if __name__ == "__main__":
                 uvicorn.run(app, host="0.0.0.0", port=8000)
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class SystemHealth(BaseModel):
+    application_uuid: str
+    uptime_seconds: int
+    memory_usage_mb: int
+    cpu_usage_percent: float
+
+    def get_system_health() -> SystemHealth:
+        # This is a placeholder and should be replaced with actual
+        # system monitoring code.
+        application_uuid = str(uuid.uuid4())
+        uptime_seconds = 3600  # Replace this with the actual system uptime
+        memory_usage_mb = 100  # Replace this with the actual memory usage
+        cpu_usage_percent = 10.5  # Replace this with the actual CPU usage percentage
+        return SystemHealth(
+            application_uuid=application_uuid,
+            uptime_seconds=uptime_seconds,
+            memory_usage_mb=memory_usage_mb,
+            cpu_usage_percent=cpu_usage_percent,
+        )
+
+    @app.get("/system-health", response_model=SystemHealth)
+    def system_health():
+        try:
+            health = get_system_health()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+            return health
