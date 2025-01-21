@@ -3652,3 +3652,42 @@ def client():
             bank_balance = attestation_data["attestation_data"]["bank_balance"]
             assert stablecoin_total == data["stablecoin_total"]
             assert bank_balance == data["bank_balance"]
+from pytest import mark, raises
+import time
+
+
+@pytest.mark.fastapi
+class TestAPI:
+    @mark.test_staking
+    def test_stake(self):
+        token_data = Stake(
+            stake_id=1, owner="alice", amount=100.0, timestamp=datetime.now()
+        )
+        with raises(HTTPException, status_code=400, detail="Stake already exists"):
+            STAKES[token_data.stake_id] = token_data
+
+            # Additional assertions for the success case
+            @mark.test_voting
+            def test_vote(self):
+                vote_data = Vote(
+                    vote_id=1,
+                    proposal="Proposal 1",
+                    voter="alice",
+                    votes_for=50,
+                    votes_against=10,
+                    timestamp=datetime.now(),
+                )
+                with raises(
+                    HTTPException, status_code=400, detail="Vote already exists"
+                ):
+                    VOTES[vote_data.vote_id] = vote_data
+
+                    # Additional assertions for the success case
+                    @mark.test_stakes_endpoint
+                    def test_get_stakes(self):
+                        response = self.client.get("/stakes")
+                        assert response.status_code == 200
+                        data = response.json()
+                        assert isinstance(data, dict)
+                        assert "STAKES" in data.keys()
+                        # Additional assertions and setup for the client

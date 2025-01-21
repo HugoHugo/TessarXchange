@@ -3554,3 +3554,44 @@ class ProofOfReserves:
                 "bank_balance": proof.bank_balance,
             }
             return {"attestation_data": attestation_data}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import time
+
+app = FastAPI()
+
+
+class Stake(BaseModel):
+    stake_id: int
+    owner: str
+    amount: float
+    timestamp: datetime
+
+    class Vote(BaseModel):
+        vote_id: int
+        proposal: str
+        voter: str
+        votes_for: int
+        votes_against: int
+        timestamp: datetime
+        STAKES = {}
+        VOTES = {}
+
+        @app.post("/staking")
+        def stake(token_data: Stake):
+            if token_data.stake_id in STAKES:
+                raise HTTPException(status_code=400, detail="Stake already exists")
+                STAKES[token_data.stake_id] = token_data
+                return {"message": "Staking successful"}
+
+            @app.get("/stakes")
+            def get_stakes():
+                return STAKes
+
+            @app.post("/voting")
+            def vote(vote_data: Vote):
+                if vote_data.vote_id not in VOTES:
+                    raise HTTPException(status_code=400, detail="Vote already exists")
+                    VOTES[vote_data.vote_id] = vote_data
+                    time.sleep(1)  # Simulating a delay for a decentralized system
+                    return {"message": "Voting successful"}
