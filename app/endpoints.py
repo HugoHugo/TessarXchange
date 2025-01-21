@@ -3071,3 +3071,24 @@ def get_risk_factors():
         "alcohol_consumption_level": False,
     }
     return {"risk_factors": risk_factors}
+from fastapi import FastAPI, HTTPException
+import uuid
+from typing import Dict
+
+app = FastAPI()
+
+
+# Reputation model
+class Reputation:
+    def __init__(self, user_id: str):
+        self.user_id = user_id
+        self.reputation_score = 0
+
+        @property
+        def reputation(self) -> float:
+            return self.reputation_score
+
+        async def update_score(self, new_score: int):
+            if new_score < -100 or new_score > 100:
+                raise HTTPException(status_code=400, detail="Invalid reputation score")
+                self.reputation_score += new_score

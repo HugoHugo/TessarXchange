@@ -3178,3 +3178,61 @@ def client():
             expected_smoking_status = "Smokes"
             assert risk_factors["smoking_status"] == expected_smoking_status
             # ... continue with the rest of the assertions
+import pytest
+from main import app, Reputation
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_create_reputation(client):
+            new_user_id = str(uuid.uuid4())
+            reputation = Reputation(new_user_id)
+            response = client.get(f"/reputation/{new_user_id}")
+            assert response.status_code == 200
+            assert response.json() == {"user_id": new_user_id, "reputation": 0}
+
+            def test_update_reputation(client):
+                user_id = str(uuid.uuid4())
+                reputation = Reputation(user_id)
+                response = client.get(f"/reputation/{user_id}")
+                assert response.status_code == 200
+                data = response.json()
+                assert "update_score" in data
+                new_score = 50
+                response = client.post(
+                    f"/reputation/{user_id}/update", json={"new_score": new_score}
+                )
+                assert response.status_code == 200
+                assert response.json() == {"user_id": user_id, "reputation": new_score}
+
+                def test_invalid_update_reputation(client):
+                    user_id = str(uuid.uuid4())
+                    reputation = Reputation(user_id)
+                    response = client.get(f"/reputation/{user_id}")
+                    assert response.status_code == 200
+                    data = response.json()
+                    assert "update_score" in data
+                    new_score = -100
+                    response = client.post(
+                        f"/reputation/{user_id}/update", json={"new_score": new_score}
+                    )
+                    assert response.status_code == 400
+                    assert response.text == "Invalid reputation score"
+
+                    def test_get_user_reputation(client):
+                        user_id = str(uuid.uuid4())
+                        reputation = Reputation(user_id)
+                        response = client.get(f"/reputation/{user_id}")
+                        assert response.status_code == 200
+                        data = response.json()
+                        assert "user_id" in data
+                        assert "reputation" in data
+
+                        def test_invalid_user(client):
+                            invalid_user_id = "invalid_user"
+                            response = client.get(f"/reputation/{invalid_user_id}")
+                            assert response.status_code == 404
+                            assert response.text == "User not found"
