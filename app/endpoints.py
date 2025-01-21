@@ -2568,3 +2568,37 @@ class PrimeBrokerageID(BaseModel):
         name: str
         address: str
         contact_number: str
+from fastapi import FastAPI, HTTPException
+from typing import Optional
+from datetime import datetime
+
+app = FastAPI()
+
+
+class Order:
+    def __init__(self, symbol: str, price: float, quantity: int, time_placed: datetime):
+        self.symbol = symbol
+        self.price = price
+        self.quantity = quantity
+        self.time_placed = time_placed
+
+        def place_limit_sell_order(symbol: str, price: float, quantity: int) -> Order:
+            time_now = datetime.now()
+            order = Order(
+                symbol=symbol, price=price, quantity=quantity, time_placed=time_now
+            )
+            return order
+
+        @app.post("/limit-sell")
+        def limit_sell_order(
+            symbol: Optional[str] = None, price: float = 0.0, quantity: int = 0
+        ):
+            if symbol is None:
+                raise HTTPException(status_code=400, detail="Symbol must be provided.")
+                try:
+                    order = place_limit_sell_order(
+                        symbol=symbol, price=price, quantity=quantity
+                    )
+                except HTTPException as e:
+                    return {"detail": str(e)}
+                return order

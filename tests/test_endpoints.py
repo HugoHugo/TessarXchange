@@ -2691,3 +2691,26 @@ class TestInstitutionalPrimeBrokers:
                 InstitutionalPrimeBrokers(
                     id="123", name="", address="", contact_number=""
                 )
+import pytest
+from datetime import datetime
+
+
+def test_place_limit_sell_order():
+    symbol = "AAPL"
+    price = 150.0
+    quantity = 10
+    order = Order.place_limit_sell_order(symbol, price, quantity)
+    assert isinstance(order, Order)
+    assert order.symbol == symbol
+    assert order.price == price
+    assert order.quantity == quantity
+
+    def test_limit_sell_order_endpoint():
+        client = pytest.app.test_client()
+        with pytest.raises(HTTPException):
+            response = client.get("/limit-sell")
+
+            def test_limit_sell_order_with_symbol_required_error():
+                client = pytest.app.test_client()
+                response = client.get("/limit-sell", params={"symbol": None})
+                assert response.status_code == 400
