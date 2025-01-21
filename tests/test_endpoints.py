@@ -3716,3 +3716,38 @@ def client():
                 def test_delete_validator_node(client):
                     # Code to delete a validator node from the database and check the response
                     pass
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime, timedelta
+from main import app
+
+
+@pytest.fixture
+def client():
+    fastapi_app = create_fastapi_app()
+    yield TestClient(fastapi_app)
+    fastapi_app.client.close()
+
+    def test_endpoint(client):
+        response = client.get("/manipulate_market")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, MarketManipulation)
+        assert data.manipulated_price > 0
+
+        @pytest.mark.asyncio
+        async def test_market_manipulation_detection():
+            client = TestClient(app)
+            response = await client.post(
+                "/manipulate_market",
+                json={
+                    "timestamp": datetime.now(),
+                    "manipulated_price": random.uniform(100, 200),
+                },
+            )
+            assert response.status_code == 400
+
+            def test_invalid_timestamp():
+                client = TestClient(app)
+                response = client.get("/manipulate_market")
+                assert response.status_code == 404

@@ -3628,3 +3628,26 @@ class ValidatorNode(BaseModel):
     def delete_validator_node(id: int):
         # Logic to remove a validator node from the database.
         return {"message": f"Validator Node ID {id} deleted successfully"}
+from fastapi import FastAPI, HTTPException
+import random
+from typing import List
+
+
+class MarketManipulation:
+    def __init__(self, timestamp: datetime, manipulated_price: float):
+        self.timestamp = timestamp
+        self.manipulated_price = manipulated_price
+
+        def create_fastapi_app():
+            app = FastAPI()
+
+            @app.post("/manipulate_market")
+            async def manipulate_market(data: MarketManipulation):
+                if random.random() < 0.1:
+                    raise HTTPException(
+                        status_code=400, detail="Market manipulation detected!"
+                    )
+                    return data
+                return app
+
+            fastapi_app = create_fastapi_app()
