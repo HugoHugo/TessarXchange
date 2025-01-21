@@ -4071,3 +4071,17 @@ def transfer_cross_margin_positions(account_data: Dict[str, str]):
         return {
             "message": "Cross-margin position transfer between accounts was successful."
         }
+from fastapi import APIRouter, Path, Query
+from pydantic import BaseModel
+import uuid
+
+
+class AMMPair(BaseModel):
+    id: str = str(uuid.uuid4())
+    token0: str
+    token1: str
+    ammpair_router = APIRouter()
+
+    @app.post("/amm_pairs")
+    def create_amm_pair(amm_pair_data: AMMPair):
+        return {"id": amm_pair_data.id}

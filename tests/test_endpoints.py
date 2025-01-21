@@ -4285,3 +4285,23 @@ def test_transfer_cross_margin_positions(account_data, expected):
         assert e.type == HTTPException
         assert response.status_code == 200
         assert response.json() == {"message": expected}
+from fastapi import HTTPException
+import pytest
+from main import app, AMMPair
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_create_amm_pair(client):
+            amm_pair = AMMPair(token0="BTC", token1="USDT")
+            response = client.post("/amm_pairs", json=amm_pair.dict())
+            assert response.status_code == 200
+            assert "id" in response.json()
+
+            def test_create_invalid_amm_pair(client):
+                with pytest.raises(HTTPException):
+                    amm_pair_data = AMMPair(token0="invalid_token", token1="USDT")
+                    client.post("/amm_pairs", json=amm_pair_data.dict())
