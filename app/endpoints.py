@@ -3053,3 +3053,21 @@ class PaymentChannelNetwork(BaseModel):
     def create_payment_channel_network(network: PaymentChannelNetwork):
         network.nodes.append({"id": str(uuid.uuid4()), "state": "online"})
         return network
+from fastapi import FastAPI
+from datetime import datetime
+
+app = FastAPI()
+
+
+@app.get("/risk_factors")
+def get_risk_factors():
+    # Example risk factors with their values
+    risk_factors = {
+        "age_group": "30-40",
+        "smoking_status": "Smokes",
+        "body_mass_index": "28.5",
+        "family_history_of_diseases": True,
+        "physical_activity_level": False,
+        "alcohol_consumption_level": False,
+    }
+    return {"risk_factors": risk_factors}

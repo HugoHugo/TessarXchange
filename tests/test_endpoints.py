@@ -3159,3 +3159,22 @@ def test_create_payment_channel_network():
     assert len(result_data["nodes"]) == 2
     for node in result_data["nodes"]:
         assert "id" in node and "state" in node
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as ac:
+        yield ac
+
+        def test_risk_factors_endpoint(client):
+            response = client.get("/risk_factors")
+            assert response.status_code == 200
+            data = response.json()
+            risk_factors = data["risk_factors"]
+            expected_age_group = "30-40"
+            assert risk_factors["age_group"] == expected_age_group
+            expected_smoking_status = "Smokes"
+            assert risk_factors["smoking_status"] == expected_smoking_status
+            # ... continue with the rest of the assertions
