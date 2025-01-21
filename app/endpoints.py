@@ -3924,3 +3924,36 @@ def update_user_portfolio(user_id: int):
             update_task = BackgroundTasks()
             update_task.update_user_portfolio(user_id)
             return {"message": "Background job to update user portfolio started."}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import datetime
+
+app = FastAPI()
+
+
+class TaxReportRequest(BaseModel):
+    start_date: str
+    end_date: str
+    REPORT_DATA = []
+
+    def generate_tax_report(request_data):
+        start_date = datetime.datetime.strptime(
+            request_data.start_date, "%Y-%m-%d"
+        ).date()
+        end_date = datetime.datetime.strptime(request_data.end_date, "%Y-%m-%d").date()
+        report_entries = []
+        for i in range((end_date - start_date).days + 1):
+            current_date = start_date + datetime.timedelta(days=i)
+            # Add your logic to determine the tax report data
+            tax_report_data = {"date": current_date.strftime("%Y-%m-%d")}
+            report_entries.append(tax_report_data)
+            return REPORT_DATA
+
+        @app.post("/tax-report")
+        def create_tax_report(request_data: TaxReportRequest):
+            if not request_data.start_date or not request_data.end_date:
+                raise HTTPException(
+                    status_code=400, detail="Missing start or end dates."
+                )
+                tax_report = generate_tax_report(request_data)
+                return {"result": "Tax Report Generated", "report_data": tax_report}

@@ -4044,3 +4044,36 @@ class TestUpdateUserPortfolio:
         time.sleep(60)
         portfolio_value = calculate_portfolio_value(1)
         assert portfolio_value == 1010
+import pytest
+from main import app
+
+
+def test_generate_tax_report():
+    with pytest.raises(HTTPException):
+        if not TaxReportRequest.start_date or not TaxReportRequest.end_date:
+            raise HTTPException(status_code=400, detail="Missing start or end dates.")
+            request_data = TaxReportRequest(
+                start_date="2023-01-01", end_date="2023-12-31"
+            )
+            tax_report = generate_tax_report(request_data)
+            assert type(tax_report) == dict
+            assert "result" in tax_report
+            assert "report_data" in tax_report
+
+            def test_create_tax_report():
+                request_data = TaxReportRequest(
+                    start_date="2023-01-01", end_date="2023-12-31"
+                )
+                with pytest.approx(
+                    {
+                        "result": "Tax Report Generated",
+                        "report_data": [
+                            {"date": "2023-01-01"},
+                            {"date": "2023-02-01"},
+                            ...,
+                            {"date": "2023-12-31"},
+                        ],
+                    }
+                ).item():
+                    response = create_tax_report(request_data)
+                    assert response.status_code == 200
