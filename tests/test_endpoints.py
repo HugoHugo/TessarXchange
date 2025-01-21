@@ -2897,3 +2897,42 @@ def test_get_quote(request_id, expected_exception):
     with pytest.raises(expected_exception):
         client = TestClient(app)
         response = client.get(f"/quote/{request_id}")
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime, timedelta
+from main import app
+
+
+@pytest.fixture()
+def client():
+    # Mock the database or any other dependency used by the endpoint
+    yield TestClient(app)
+
+    # Clean up any resources allocated during testing.
+    def test_valid_atomic_swap(client):
+        atomic_swap_data = {
+            "id": str(uuid.uuid4()),
+            "from_address": "FromAddress",
+            "to_address": "ToAddress",
+            "amount": 1.0,
+            "expiration_time": datetime.now() + timedelta(minutes=10),
+            "secret": "SecretValue",
+        }
+        response = client.post("/atomic-swap/swap", json=atomic_swap_data)
+        assert response.status_code == 200
+        assert isinstance(response.json(), dict)
+        assert "message" in response.json()
+
+        def test_invalid_atomic_swap(client):
+            atomic_swap_data = {
+                "id": str(uuid.uuid4()),
+                "from_address": "FromAddress",
+                "to_address": "ToAddress",
+                "amount": 1.0,
+                "expiration_time": datetime.now() - timedelta(minutes=10),
+                "secret": "SecretValue",
+            }
+            response = client.post("/atomic-swap/swap", json=atomic_swap_data)
+            assert response.status_code == 400
+            assert isinstance(response.json(), dict)
+            assert "detail" in response.json()

@@ -2805,3 +2805,34 @@ class QuoteRequest(BaseModel):
             if req.request_id == request_id:
                 return random_quote
             raise HTTPException(status_code=404, detail="Quote request not found.")
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class AtomicSwap(BaseModel):
+    id: str
+    from_address: str
+    to_address: str
+    amount: float
+    expiration_time: datetime
+    secret: str
+    atomic_swap_router = APIRouter()
+
+    @atomic_swap_router.post("/swap")
+    async def swap_atomic_swap(atomic_swap: AtomicSwap):
+        # Check if the atomic swap is valid (expiration time, secret)
+        # If it's valid, process the transaction and update the blockchain state.
+        # For demonstration purposes, we'll just return a success message
+        return {"message": "Atomic swap processed successfully"}
+
+    # Example exception handling for validation error
+    @atomic_swap_router.post("/swap")
+    async def swap_atomic_swap(atomic_swap: AtomicSwap):
+        if atomic_swap.expiration_time < datetime.now():
+            raise HTTPException(status_code=400, detail="Expiration time has passed")
+            return {"message": "Atomic swap processed successfully"}
+        # To run the endpoint, you would call:
+        # @atomic_swap_router.get("/endpoint")
+        # async def endpoint():
+        #     return {"result": "value"}
