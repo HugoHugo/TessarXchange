@@ -3298,3 +3298,36 @@ async def test_create_oracle():
                 with pytest.raises(HTTPException) as ex:
                     app.test_client().put("/oracle/test_id")
                     assert ex.value.status_code == 404
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app, FeeOptimizationInput
+
+
+def test_fee_optimization():
+    client = TestClient(app)
+    # Mock input_data with specific values.
+    input_data = FeeOptimizationInput(
+        token0_price=1.5,
+        token1_price=2.3,
+        reserve0_amount=1000,
+        reserve1_amount=1200,
+        fee_cemented=0.001,
+        slippage_percentage=0.05,
+    )
+    response = client.post("/fee_optimization", json=input_data.json())
+    assert response.status_code == 200
+
+    def test_fee_optimization_unprocessable_input():
+        client = TestClient(app)
+        # Mock input_data with invalid values.
+        input_data = FeeOptimizationInput(
+            token0_price=-1.5,
+            token1_price=2.3,
+            reserve0_amount=1000,
+            reserve1_amount=-1200,  # Invalid value
+            fee_cemented=0.001,
+            slippage_percentage=0.05,
+        )
+        response = client.post("/fee_optimization", json=input_data.json())
+        assert response.status_code == 422

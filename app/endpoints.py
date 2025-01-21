@@ -3192,3 +3192,33 @@ class ReputationOracle(BaseModel):
             # Check if the oracle exists and update it
             # Add logic to update the reputation oracle's score
             raise HTTPException(status_code=404, detail="Oracle not found")
+from fastapi import APIRouter, Path, Query
+from fastapi.params import Body
+from pydantic import BaseModel
+import math
+
+router = APIRouter()
+
+
+class FeeOptimizationInput(BaseModel):
+    token0_price: float
+    token1_price: float
+    reserve0_amount: float
+    reserve1_amount: float
+    fee_cemented: float
+    slippage_percentage: float
+
+    @router.post("/fee_optimization")
+    async def fee_optimization(input_data: FeeOptimizationInput):
+        token0 = input_data.token0_price
+        token1 = input_data.token1_price
+        reserve0 = input_data.reserve0_amount
+        reserve1 = input_data.reserve1_amount
+        slippage_percentage = input_data.slippage_percentage
+        fee_cemented = input_data.fee_cemented
+        # Calculate optimal fees based on AMM algorithm
+        mid = (token0 + token1) / 2
+        sqrt_k = math.sqrt(reserve0 / reserve1)
+        fee_0 = sqrt_k * fee_cemented - mid * slippage_percentage / 2000
+        fee_1 = sqrt_k * fee_cemented + mid * slippage_percentage / 2000
+        return {"fee_0": fee_0, "fee_1": fee_1}
