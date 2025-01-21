@@ -3256,3 +3256,19 @@ def test_get_inventory_hedging():
             content = response.content
             assert content
             assert response.status_code == 404
+import pytest
+from main import app
+
+
+@pytest.mark.parametrize(
+    "endpoint, method, expected_status_code",
+    [
+        ("/collaterals", "POST", 200),
+        ("/collaterals", "GET", 200),
+        ("/collaterals/{chain}", "PUT", 200),
+    ],
+)
+def test_api_responses(endpoint, method, expected_status_code):
+    client = TestClient(app)
+    response = getattr(client, method)(f"/endpoint{endpoint}")
+    assert response.status_code == expected_status_code

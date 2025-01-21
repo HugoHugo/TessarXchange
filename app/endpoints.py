@@ -3125,3 +3125,43 @@ class InventoryHedgingItem(BaseModel):
                 hedging_item = InventoryHedgingItem(**item)
                 hedging_items.append(hedging_item)
                 return hedging_items
+from fastapi import APIRouter, Path
+from pydantic import BaseModel
+import json
+
+
+class Collateral(BaseModel):
+    chain: str
+    amount: float
+    collateral_router = APIRouter()
+
+    @app.post("/collaterals")
+    async def create_collateral(collateral_data: Collateral):
+        with open("collaterals.json", "r") as file:
+            data = json.load(file)
+            data.append(collateral_data.dict())
+            with open("collaterals.json", "w") as file:
+                json.dump(data, file)
+                return {
+                    "message": f"Collateral for chain {collateral_data.chain} added successfully."
+                }
+
+            @app.get("/collaterals")
+            async def get_collaterals():
+                with open("collaterals.json", "r") as file:
+                    data = json.load(file)
+                    return data
+
+                @app.put("/collaterals/{chain}")
+                async def update_collateral(chain: str):
+                    with open("collaterals.json", "r") as file:
+                        data = json.load(file)
+                        for index, collateral in enumerate(data):
+                            if collateral["chain"] == chain:
+                                data[index] = Collateral(**data[index])
+                                break
+                            with open("collaterals.json", "w") as file:
+                                json.dump(data, file)
+                                return {
+                                    "message": f"Collateral updated successfully for chain {chain}."
+                                }
