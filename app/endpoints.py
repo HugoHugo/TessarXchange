@@ -3391,3 +3391,35 @@ class SystemHealth(BaseModel):
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
             return health
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import datetime
+
+
+class LiquiditySnapshot(BaseModel):
+    snapshot_time: datetime.datetime
+    token_liquidity: float
+    router = APIRouter()
+
+    @app.post("/liquidity_snapshot")
+    def create_snapshot(snapshot_data: LiquiditySnapshot):
+        """Create a new liquidity snapshot."""
+        # Append the new snapshot to the list of snapshots
+        # Add your implementation here
+        return "Snapshot created successfully."
+
+    @app.get("/liquidity_snapshots", response_model=list[LiquiditySnapshot])
+    def get_snapshots():
+        """Fetch all the liquidity snapshots."""
+        # Retrieve and return the list of snapshots
+        # Implement your logic here to fetch and return the snapshots
+        return [
+            LiquiditySnapshot(
+                snapshot_time=datetime.datetime(2023, 1, 1, 0, 0, 0),
+                token_liquidity=100.0,
+            ),
+            LiquiditySnapshot(
+                snapshot_time=datetime.datetime(2023, 1, 1, 2, 0, 0),
+                token_liquidity=150.0,
+            ),
+        ]

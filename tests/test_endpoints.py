@@ -3491,3 +3491,21 @@ def client():
                 response = client.get("/system-health", status_code=500)
                 content = response.content
                 assert b"Internal Server Error" in content
+import pytest
+from fastapi.testclient import TestClient
+
+
+def test_create_snapshot():
+    client = TestClient(app)
+    response = client.post(
+        "/liquidity_snapshot",
+        json={"snapshot_time": "2023-01-01T00:00:00Z", "token_liquidity": 100.0},
+    )
+    assert response.status_code == 200
+    assert b"Snapshot created successfully." in response.content
+
+    def test_get_snapshots():
+        client = TestClient(app)
+        response = client.get("/liquidity_snapshots")
+        assert response.status_class == "200 OK"
+        assert len(response.json()) == 2
