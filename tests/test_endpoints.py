@@ -3633,3 +3633,22 @@ def client():
             assert isinstance(result_data, dict)
             assert "portfolio_return" in result_data
             assert "portfolio_volatility" in result_data
+from fastapi.testclient import TestClient
+import pytest
+from main import app, ProofOfReserves
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_create_proof_of_reserves(client):
+            data = {"stablecoin_total": 1000000, "bank_balance": 1100000}
+            response = client.post("/proof_of_reserves", json=data)
+            assert response.status_code == 200
+            attestation_data = response.json()
+            stablecoin_total = attestation_data["attestation_data"]["stablecoin_total"]
+            bank_balance = attestation_data["attestation_data"]["bank_balance"]
+            assert stablecoin_total == data["stablecoin_total"]
+            assert bank_balance == data["bank_balance"]

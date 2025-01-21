@@ -3534,3 +3534,23 @@ def calculate_stress_portflio(portfolio_data):
             if not isinstance(portfolio_data, dict) or "prices" not in portfolio_data:
                 raise HTTPException(status_code=400, detail="Invalid data format")
                 return calculate_stress_portflio(portfolio_data)
+from fastapi import FastAPI
+from datetime import datetime
+
+app = FastAPI()
+
+
+class ProofOfReserves:
+    def __init__(self, stablecoin_total: float, bank_balance: float):
+        self.stablecoin_total = stablecoin_total
+        self.bank_balance = bank_balance
+
+        @app.post("/proof_of_reserves")
+        def attest_proof(proof: ProofOfReserves):
+            timestamp = datetime.now().isoformat()
+            attestation_data = {
+                "timestamp": timestamp,
+                "stablecoin_total": proof.stablecoin_total,
+                "bank_balance": proof.bank_balance,
+            }
+            return {"attestation_data": attestation_data}
