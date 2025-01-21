@@ -2554,3 +2554,17 @@ class LiquidityPoolIn(BaseModel):
                         status_code=404, detail="Liquidity pool not found"
                     )
                     return liquidity_pool
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+# A custom UUID based model for handling data with a unique identifier.
+class PrimeBrokerageID(BaseModel):
+    id: str = str(uuid.uuid4())
+
+    class InstitutionalPrimeBrokers(BaseModel):
+        id: PrimeBrokerageID
+        name: str
+        address: str
+        contact_number: str

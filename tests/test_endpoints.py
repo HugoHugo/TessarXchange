@@ -2667,3 +2667,27 @@ async def test_create_liquidity_pool(test_pool):
         # This tests would be implemented here using the provided
         # get_liquidity_pool_endpoint function from the given API implementation.
         pass  # Placeholder for test implementation
+import pytest
+from fastapi import HTTPException
+from main import app, InstitutionalPrimeBrokers
+
+
+class TestInstitutionalPrimeBrokers:
+    def test_valid_institutional_prime_brokers_creation(self):
+        id = "123"
+        name = "ABC Prime Brokerage"
+        address = "123 Main St. New York, NY 10001"
+        contact_number = "212-555-0123"
+        pb_id = InstitutionalPrimeBrokers(
+            id=id, name=name, address=address, contact_number=contact_number
+        ).dict()
+        assert pb_id["id"] == id
+        assert pb_id["name"] == name
+        assert pb_id["address"] == address
+        assert pb_id["contact_number"] == contact_number
+
+        def test_invalid_institutional_prime_brokers_creation(self):
+            with pytest.raises(HTTPException):
+                InstitutionalPrimeBrokers(
+                    id="123", name="", address="", contact_number=""
+                )
