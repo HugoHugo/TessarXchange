@@ -2413,3 +2413,29 @@ class AuctionData(BaseModel):
             # Implement retrieval of auction details based on auction_id
             # Return the retrieved auction data for demonstration purposes
             return {"auction_id": auction_id, "status": "active"}
+from fastapi import FastAPI
+import requests
+
+app = FastAPI()
+
+
+class WalletSecurity:
+    def __init__(self, url: str):
+        self.url = url
+        self.response = None
+
+        def fetch_scores(self):
+            if self.response is not None:
+                return self.response
+            response = requests.get(url=self.url)
+            if response.status_code == 200:
+                self.response = response.json()
+            else:
+                self.response = {"error": "Failed to fetch scores."}
+                return self.response
+
+            @app.post("/wallet-security-score")
+            def wallet_security_score(wallet_url: str):
+                security_check = WalletSecurity(url=wallet_url)
+                latest_scores = security_check.fetch_scores()
+                return {"wallet_url": wallet_url, "scores": latest_scores}

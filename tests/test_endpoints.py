@@ -2535,3 +2535,22 @@ def client():
                 "/start_liquidation", json={"auction_id": "test_auction"}
             )
             assert response.status_code == 200
+import pytest
+from main import app, WalletSecurity
+
+
+def test_fetch_scores():
+    security_check = WalletSecurity("https://fakeurl.com")
+    latest_scores = security_check.fetch_scores()
+    assert isinstance(latest_scores, dict)
+    assert "error" not in latest_scores or latest_scores["error"] is None
+    assert "scores" in latest_scores
+
+    @pytest.mark.asyncio
+    async def test_wallet_security_score():
+        response = await app.test_client().post(
+            "/wallet-security-score", json={"wallet_url": "https://fakeurl.com"}
+        )
+        result = response.json()
+        assert result["wallet_url"] == "https://fakeurl.com"
+        assert isinstance(result["scores"], dict)
