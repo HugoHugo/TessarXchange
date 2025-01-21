@@ -4476,3 +4476,54 @@ def test_create_bridges(sample_bridge):
                                 "/bridge", data=sample_bridge
                             )
                             assert str(ex.value).startswith("New bridge created")
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.mark.parametrize(
+    "token0, token1, expected",
+    [
+        (
+            {"id": 1},
+            {"id": 2},
+            {
+                "token0": {
+                    "id": 1,
+                    "amount_shares": 500,
+                    "liquidity_pool_address": "0x...",
+                },
+                "token1": {
+                    "id": 2,
+                    "amount_shares": 200,
+                    "liquidity_pool_address": "0x...",
+                },
+            },
+        ),
+        (
+            {"id": 3},
+            {"id": 4},
+            {
+                "token0": {
+                    "id": 3,
+                    "amount_shares": 300,
+                    "liquidity_pool_address": "0x...",
+                },
+                "token1": {
+                    "id": 4,
+                    "amount_shares": 100,
+                    "liquidity_pool_address": "0x...",
+                },
+            },
+        ),
+    ],
+)
+def test_get_concentrated_liquidity(token0, token1, expected):
+    client = TestClient(app)
+    response = client.get("/amm/concentrated-liquidity")
+    assert response.status_code == 200
+    data = json.loads(response.text)
+    assert data["token0"]["id"] == token0["id"]
+    assert data["token0"]["amount_shares"] == token0["amount_shares"]
+    assert data["token1"]["id"] == token1["id"]
+    assert data["token1"]["amount_shares"] == token1["amount_shares"]
