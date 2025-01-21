@@ -2623,3 +2623,26 @@ class OrderBook:
                 bids = []
                 asks = []
                 return OrderBook(bids, asks)
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import time
+
+
+class Deposit(BaseModel):
+    amount: float
+    timestamp: datetime = None
+    deposit_router = APIRouter()
+
+    @app.post("/deposits")
+    def deposit(deposit_data: Deposit):
+        if deposit_data.timestamp is not None:
+            raise HTTPException(status_code=400, detail="Timestamp cannot be provided")
+            current_time = time.time()
+            deposit_data.timestamp = datetime.fromtimestamp(current_time)
+            return deposit_data
+
+        @deposit_router.get("/deposits/{deposit_id}")
+        def get_deposit(deposit_id: int):
+            # This is a placeholder for demonstration purposes.
+            # In practice, you would store and retrieve deposits from your backend storage system.
+            return {"deposit_id": deposit_id}

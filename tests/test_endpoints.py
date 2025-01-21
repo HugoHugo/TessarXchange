@@ -2739,3 +2739,28 @@ def test_client():
                 assert isinstance(order_book, OrderBook)
                 assert len(order_book.bids) == 0
                 assert len(order_book.asks) == 0
+import pytest
+from main import app, Deposit
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _client:
+        yield _
+        _client.close()
+
+        def test_deposit_timestamp(client):
+            deposit_data = Deposit(amount=100)
+            response = client.post("/deposits", json=deposit_data.dict())
+            assert response.status_code == 200
+
+            def test_deposit_no_timestamp(client):
+                deposit_data = Deposit(amount=200, timestamp=None)
+                response = client.post("/deposits", json=deposit_data.dict())
+                assert response.status_code == 400
+                assert "Timestamp cannot be provided" in str(response.content)
+
+                def test_get_deposit_by_id(client):
+                    response = client.get("/deposits/1")
+                    assert response.status_code == 200
+                    assert "deposit_id" in response.json()
