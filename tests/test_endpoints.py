@@ -3860,3 +3860,68 @@ class LPRebalancer:
                                 assert "Liquidity pool rebalanced." in str(
                                     rebalance_result
                                 )
+import pytest
+from main import app
+from models.collateral import Collateral
+from models.position import Position
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_create_collateral(client):
+            response = client.post(
+                "/collaterals", json={"type": "Equity", "amount": 100000}
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert isinstance(data, Collateral)
+            assert data.id is not None
+            assert len(data.collaterals) == 0
+
+            def test_get_collaterals(client):
+                create_collateral(client, type="Equity", amount=100000)
+                response = client.get("/collaterals")
+                assert response.status_code == 200
+                data = response.json()
+                assert isinstance(data, list)
+                assert all(isinstance(item, Collateral) for item in data)
+
+                def test_create_position(client):
+                    create_collateral(client, type="Equity", amount=100000)
+                    position_data = {
+                        "type": "Long",
+                        "collateral_id": "new_collateral",
+                        "underlying_asset_id": "new_underlying",
+                        "margin_ratio": 0.4,
+                        "position_size": 50000,
+                    }
+                    response = client.post("/positions", json=position_data)
+                    assert response.status_code == 200
+                    data = response.json()
+                    assert isinstance(data, Position)
+                    assert data.type is not None
+                    assert len(data.collaterals) == 1
+                    assert data.collaterals[0].id == position_data["collateral_id"]
+                    assert (
+                        data.underlying_asset_id == position_data["underlying_asset_id"]
+                    )
+
+                    def test_get_positions(client):
+                        create_collateral(client, type="Equity", amount=100000)
+                        create_position(
+                            client,
+                            type="Long",
+                            collateral_id="new_collateral",
+                            underlying_asset_id="new_underlying",
+                            margin_ratio=0.4,
+                            position_size=50000,
+                        )
+                        response = client.get("/positions")
+                        assert response.status_code == 200
+                        data = response.json()
+                        assert isinstance(data, list)
+                        assert all(isinstance(item, Position) for item in data)

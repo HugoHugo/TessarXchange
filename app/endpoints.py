@@ -3741,3 +3741,63 @@ class LPRebalancer:
                 def rebalance_liquidity_pools():
                     loop = asyncio.get_event_loop()
                     return {"message": "Liquidity pool rebalancing initiated."}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class Collateral(BaseModel):
+    id: str
+    type: str
+    amount: float
+    timestamp: datetime
+
+    class Position(BaseModel):
+        id: str
+        collateral_id: str
+        underlying_asset_id: str
+        margin_ratio: float
+        position_size: float
+        timestamp: datetime
+
+        class MarginLendingSystem:
+            def __init__(self):
+                self.collaterals = []
+                self.positions = []
+
+                def create_collateral(self, data: Collateral) -> Collateral:
+                    if not isinstance(data, Collateral):
+                        raise HTTPException(
+                            status_code=400, detail="Invalid collateral data."
+                        )
+                        self.collaterals.append(data)
+                        return data
+
+                    def create_position(self, data: Position) -> Position:
+                        if not isinstance(data, Position):
+                            raise HTTPException(
+                                status_code=400, detail="Invalid position data."
+                            )
+                            available_collaterals = [
+                                c
+                                for c in self.collaterals
+                                if c.id == data.collateral_id
+                            ]
+                            if len(available_collaterals) == 0:
+                                raise HTTPException(
+                                    status_code=404,
+                                    detail=f"Collateral with ID {data.collateral_id} not found.",
+                                )
+                                position = data
+                                self.positions.append(position)
+                                return position
+
+                            def get_positions(self, collateral_id: str):
+                                positions = [
+                                    p
+                                    for p in self.positions
+                                    if p.collateral_id == collateral_id
+                                ]
+                                return positions
