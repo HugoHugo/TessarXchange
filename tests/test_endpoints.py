@@ -3417,3 +3417,49 @@ def test_tax_report_endpoint():
     )
     assert response.status_code == 400
     assert b"Invalid start_date or end_date format" in response.content
+import pytest
+from main import app
+from main import create_alert
+from main import get_alerts
+
+
+@pytest.mark.parametrize(
+    "alert",
+    [
+        PriceAlert(
+            product_id=1,
+            target_price=50.00,
+            trigger_time="2023-01-01 10:00",
+            notification_type="email",
+        ),
+        PriceAlert(
+            product_id=2,
+            target_price=75.00,
+            trigger_time="2023-02-01 15:30",
+            notification_type="sms",
+        ),
+    ],
+)
+def test_create_alert(alert):
+    response = create_alert(alert)
+    assert response.status_code == 200
+    assert response.json() == {"message": "Price alert created successfully."}
+
+    @pytest.mark.parametrize("alert_id", [1, 2])
+    def test_get_alerts(alert_id):
+        response = get_alerts(alert_id)
+        assert response.status_code == 200
+        assert response.json() == [
+            {
+                "product_id": 1,
+                "target_price": 50.0,
+                "trigger_time": "2023-01-01T10:00:00Z",
+                "notification_type": "email",
+            },
+            {
+                "product_id": 2,
+                "target_price": 75.0,
+                "trigger_time": "2023-02-01T15:30:00Z",
+                "notification_type": "sms",
+            },
+        ]

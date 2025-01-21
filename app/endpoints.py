@@ -3317,3 +3317,43 @@ class TaxReportParams(BaseModel):
                     return tax_reports
             except ValueError as e:
                 raise ValueError("Invalid start_date or end_date format") from e
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uvicorn
+
+app = FastAPI()
+
+
+class PriceAlert(BaseModel):
+    product_id: int
+    target_price: float
+    trigger_time: str
+    notification_type: str  # 'email' or 'sms'
+
+    def __init__(self, **data):
+        super().__init__(**data)
+
+        async def create_alert(alert_data: PriceAlert):
+            # Implement the logic to store the alert in a database.
+            # For simplicity, we'll just simulate storing the alert.
+            print(f"Created price alert for product ID {alert_data.product_id}.")
+
+            async def get_alerts():
+                # Simulate fetching alerts from a database.
+                return [
+                    PriceAlert(
+                        product_id=1,
+                        target_price=50.00,
+                        trigger_time="2023-01-01 10:00",
+                        notification_type="email",
+                    ),
+                    PriceAlert(
+                        product_id=2,
+                        target_price=75.00,
+                        trigger_time="2023-02-01 15:30",
+                        notification_type="sms",
+                    ),
+                ]
+
+            if __name__ == "__main__":
+                uvicorn.run(app, host="0.0.0.0", port=8000)
