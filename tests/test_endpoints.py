@@ -2476,3 +2476,19 @@ def client():
                         assert "The email address is already registered." in str(
                             response.content
                         )
+import pytest
+from your_module import CurveInput, optimize_curve
+
+
+def test_optimize_curve():
+    curve_input = CurveInput(amount_in=10000, amount_out=11000, fee_rate=0.0003)
+    optimized_output = optimize_curve(curve_input)
+    assert isinstance(optimized_output, dict)
+    assert "x_curve" in optimized_output
+    assert "y_curve" in optimized_output
+
+    def test_endpoint():
+        client = TestClient(app)
+        response = client.get("/optimize_curve")
+        assert response.status_code == 200
+        assert b'{"x_curve": [...]}' in response.content

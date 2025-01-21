@@ -2335,3 +2335,40 @@ class DecentralizedIdentity(BaseModel):
             def check_email_exists(email: str):
                 # Assume there's a function to check if an email exists in the system
                 pass
+from fastapi import FastAPI
+from pydantic import BaseModel
+import numpy as np
+import math
+
+app = FastAPI()
+
+
+class CurveInput(BaseModel):
+    amount_in: float
+    amount_out: float
+    fee_rate: float
+
+    def optimize_curve(input_data: CurveInput) -> dict:
+        amount_in, amount_out, fee_rate = input_data.amount_in, input_in = (
+            input_data.amount_out,
+            fee_rate,
+        ) = input_data.fee_rate
+        time_step = 0.1
+        total_time = int(amount_in / time_step)
+        # Initialize the curve parameters
+        x_curve = np.arange(0, total_time + 1) * time_step
+        y_curve = np.zeros(len(x_curve))
+        for i in range(len(x_curve)):
+            # Calculate the optimal exchange rate
+            optimal_exchange_rate = optimize_optimal_rate(
+                amount_in, amount_out, fee_rate
+            )
+            # Update the curve parameters based on the optimal exchange rate
+            # Implement your optimization logic here
+            y_curve[i] = optimal_exchange_rate
+            return {"x_curve": x_curve.tolist(), "y_curve": y_curve.tolist()}
+
+        @app.get("/optimize_curve")
+        def optimize_curve_endpoint(curve_input: CurveInput):
+            optimized_output = optimize_curve(curve_input)
+            return optimized_output
