@@ -3290,3 +3290,30 @@ class MarketDepth:
                         self.data = data
                         self.asset = asset
                         app.include_in_schema(False)
+from fastapi import FastAPI, Query
+from pydantic import BaseModel
+import datetime
+
+app = FastAPI()
+
+
+class TaxReportParams(BaseModel):
+    start_date: str
+    end_date: str
+
+    @app.post("/tax-report")
+    def generate_tax_report(params: TaxReportParams = None):
+        if not params:
+            raise ValueError("Missing required parameters")
+            try:
+                start_date = datetime.datetime.strptime(params.start_date, "%Y-%m-%d")
+                end_date = datetime.datetime.strptime(params.end_date, "%Y-%m-%d")
+                tax_reports = []
+                for day in range((end_date - start_date).days + 1):
+                    date = start_date + datetime.timedelta(days=day)
+                    # Add more logic to fetch tax data and populate the tax_reports list
+                    tax_report = {"date": date.strftime("%Y-%m-%d"), "tax_data": []}
+                    tax_reports.append(tax_report)
+                    return tax_reports
+            except ValueError as e:
+                raise ValueError("Invalid start_date or end_date format") from e

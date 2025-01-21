@@ -3391,3 +3391,29 @@ def test_market_depth():
     assert "asset" in data
     assert "buy" in data
     assert "sell" in data
+from datetime import datetime
+import pytest
+from main import app
+
+
+def test_tax_report_endpoint():
+    client = TestClient(app)
+    # Test case 1: Valid start_date and end_date
+    start_date_str = "2022-01-01"
+    end_date_str = "2022-12-31"
+    response = client.get(
+        f"/tax-report?start_date={start_date_str}&end_date={end_date_str}"
+    )
+    assert response.status_code == 200
+    # Test case 2: Missing required parameters
+    response = client.get("/tax-report")
+    assert response.status_code == 400
+    assert b"Missing required parameters" in response.content
+    # Test case 3: Invalid start_date or end_date format
+    invalid_start_date_str = "2022-13-01"
+    valid_end_date_str = "2022-12-31"
+    response = client.get(
+        f"/tax-report?start_date={invalid_start_date_str}&end_date={valid_end_date_str}"
+    )
+    assert response.status_code == 400
+    assert b"Invalid start_date or end_date format" in response.content
