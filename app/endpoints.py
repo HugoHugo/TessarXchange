@@ -3257,3 +3257,36 @@ class DarkPool(BaseModel):
                     "buy_amount": dark_pool.buy_amount,
                     "sell_amount": dark_pool.sell_amount,
                 }
+from fastapi import FastAPI, File, UploadFile
+from pycoingecko.coingecko_api import CoinGeckoApi
+
+app = FastAPI()
+
+
+class MarketDepth:
+    def __init__(self, asset: str):
+        self.api = CoinGeckoApi()
+        self.asset = asset
+        self.market_depth = None
+
+        def get_market_depth(self):
+            if self.asset not in self.api.get_supported_vs_currencies():
+                raise ValueError(f"Unsupported asset: {self.asset}")
+                market_data = self.api.get_coin(self.asset, "market_data")
+                market_details = self.api.get_coin(self.asset, "metrics")
+                if market_details["total_volume_usd"] > 0:
+                    market_depth = self.api.get_market_chart(
+                        self.asset, "Daily", "market_data", days=100
+                    )
+                else:
+                    market_depth = []
+                    self.market_depth = MarketDepthResponse(
+                        data=market_depth, asset=self.asset
+                    )
+                    return {"market_depth": self.market_depth}
+
+                class MarketDepthResponse:
+                    def __init__(self, data, asset):
+                        self.data = data
+                        self.asset = asset
+                        app.include_in_schema(False)

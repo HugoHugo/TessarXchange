@@ -3380,3 +3380,14 @@ def test_create_dark_pool(dark_pool):
             with pytest.raises(HTTPException) as context:
                 _ = dark_pool.get_dark_pool(id)
                 assert str(context.value) == "Dark pool not found."
+import pytest
+from main import app
+
+
+def test_market_depth():
+    response = app.test_client().get("/market_depth")
+    assert response.status_code == 200
+    data = response.json()
+    assert "asset" in data
+    assert "buy" in data
+    assert "sell" in data
