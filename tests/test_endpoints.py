@@ -2853,3 +2853,35 @@ def test_update_trading_strategy_params():
         "updated_params": params.dict(),
     }
     assert data == expected_data
+import pytest
+from main import app, LiquiditySnapshot
+
+
+def test_load_snapshot():
+    snapshot = LiquiditySnapshot.load_snapshot()
+    assert isinstance(snapshot, LiquiditySnapshot)
+
+    def test_save_snapshot():
+        timestamp = datetime.datetime.now()
+        new_snapshot = LiquiditySnapshot(
+            timestamp=timestamp,
+            total_liquidity=0.5,
+            rewards_earned=0.02,
+        )
+        original_snapshot = LiquiditySnapshot.load_snapshot()
+        app.save_snapshot(new_snapshot)
+        saved_snapshot = LiquiditySnapshot.load_snapshot()
+        assert saved_snapshot == new_snapshot
+        assert saved_snapshot != original_snapshot
+
+        def test_daily_snapshots():
+            client = TestClient(app)
+            response = client.get("/liquidity-snapshot")
+            assert response.status_code == 200
+            data = response.json()
+            assert isinstance(data, dict)
+            assert "snapshot" in data
+            snapshot_data = data["snapshot"]
+            assert isinstance(snapshot_data, dict)
+            for field_name in ["timestamp", "total_liquidity", "rewards_earned"]:
+                assert field_name in snapshot_data

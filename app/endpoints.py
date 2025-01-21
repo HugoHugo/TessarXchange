@@ -2735,3 +2735,43 @@ class TradingStrategyParams(BaseModel):
             "status": "parameters updated successfully",
             "updated_params": params.dict(),
         }
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import datetime
+
+app = FastAPI()
+
+
+class LiquiditySnapshot(BaseModel):
+    timestamp: datetime.datetime
+    total_liquidity: float
+    rewards_earned: float
+    SPSNAPSHOT_FILE_NAME = "liquidity_snapshot.json"
+
+    def load_snapshot():
+        try:
+            with open(SPSNAPSHOT_FILE_NAME, "r") as file:
+                data = file.json()
+                return LiquiditySnapshot(**data)
+        except FileNotFoundError:
+            return LiquiditySnapshot(
+                timestamp=datetime.datetime.now(),
+                total_liquidity=0.0,
+                rewards_earned=0.0,
+            )
+
+        def save_snapshot(snapshot):
+            with open(SPSNAPSHOT_FILE_NAME, "w") as file:
+                file.write(snapshot.json())
+
+                @app.get("/liquidity-snapshot")
+                async def liquidity_snapshot():
+                    snapshot = load_snapshot()
+                    # Simulate daily liquidity change
+                    snapshot.total_liquidity += 0.01
+                    rewards_percentage = 0.05
+                    snapshot.rewards_earned = (
+                        snapshot.total_liquidity * rewards_percentage
+                    )
+                    save_snapshot(snapshot)
+                    return {"snapshot": snapshot.dict()}
