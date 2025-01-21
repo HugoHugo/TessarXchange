@@ -3272,3 +3272,29 @@ def test_api_responses(endpoint, method, expected_status_code):
     client = TestClient(app)
     response = getattr(client, method)(f"/endpoint{endpoint}")
     assert response.status_code == expected_status_code
+import pytest
+from main import ReputationOracle, app
+
+
+@pytest.mark.anyio
+async def test_create_oracle():
+    new_oracle = ReputationOracle(id="new_id", domain="test_domain", score=100)
+    response = app.test_client().post("/oracle", json=new_oracle.dict())
+    assert response.status_code == 200
+    assert "new_id" in response.json()
+
+    @pytest.mark.anyio
+    async def test_get_oracle():
+        oracles = ReputationOracle(id="test_id", domain="test_domain", score=100)
+        with pytest.raises(HTTPException) as ex:
+            app.test_client().get("/oracle/test_id")
+            assert ex.value.status_code == 404
+
+            @pytest.mark.anyio
+            async def test_update_oracle():
+                oracles = ReputationOracle(
+                    id="test_id", domain="test_domain", score=100
+                )
+                with pytest.raises(HTTPException) as ex:
+                    app.test_client().put("/oracle/test_id")
+                    assert ex.value.status_code == 404

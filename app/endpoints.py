@@ -3165,3 +3165,30 @@ class Collateral(BaseModel):
                                 return {
                                     "message": f"Collateral updated successfully for chain {chain}."
                                 }
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+
+class ReputationOracle(BaseModel):
+    id: str
+    domain: str
+    score: int = 0
+    router = APIRouter()
+
+    @router.post("/oracle")
+    async def create_oracle(reputation_oracle: ReputationOracle):
+        # Add logic to add reputation oracle to the system
+        return reputation_oracle
+
+    @router.get("/oracle/{id}")
+    async def get_oracle(id: str, reputation_oracle: ReputationOracle = Depends()):
+        if not reputation_oracle.id or reputation_oracle.id != id:
+            raise HTTPException(status_code=404, detail="Oracle not found")
+            # Add logic to return the reputation oracle with its score
+            return reputation_oracle
+
+        @router.put("/oracle/{id}")
+        async def update_oracle(id: str, updated_oracle: ReputationOracle):
+            # Check if the oracle exists and update it
+            # Add logic to update the reputation oracle's score
+            raise HTTPException(status_code=404, detail="Oracle not found")
