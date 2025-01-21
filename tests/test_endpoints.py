@@ -3961,3 +3961,21 @@ def test_create_liquidator_bot(sample_bot_data):
                     bot_name = "LiquidatorBot1"
                     response = client.put(f"/bots/{bot_name}")
                     assert response.status_code == 200
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as client:
+        yield client
+
+        def test_get_market_depth_endpoint(client):
+            response = client.get("/market-depth")
+            assert response.status_code == 200
+            data = response.json()
+            assert "ticker" in data
+            assert "ask" in data
+            assert "bid" in data

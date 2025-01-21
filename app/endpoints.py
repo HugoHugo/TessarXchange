@@ -3837,3 +3837,21 @@ class LiquidatorBot(BaseModel):
                         "message": "Liquidator bot has been successfully updated.",
                         "bot": updated_bot,
                     }
+from fastapi import FastAPI, File, UploadFile
+import pyupbit
+import uvicorn
+
+app = FastAPI()
+
+
+def get_market_depth(ticker: str):
+    market_data = pyupbit.get_orderbook(ticker)
+    ask_price = market_data["orderbook_units"][0]["ask"]
+    bid_price = market_data["orderbook_units"][-1]["bid"]
+    return {"ask": round(ask_price, 4), "bid": round(bid_price, 4)}
+
+
+@app.get("/market-depth")
+def get_market_depth_endpoint(ticker: str):
+    data = get_market_depth(ticker)
+    return {"ticker": ticker, **data}
