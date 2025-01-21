@@ -4321,3 +4321,30 @@ def test_create_otc_quote_request():
     response = client.post("/otc_quote_request", json=req_data)
     assert response.status_code == 200
     assert "desk_id" in response.json()
+import pytest
+from your_module import LiquidityBridge, LiquidityBridgeManager
+
+
+def test_encrypt_decrypt():
+    private_key = b"my_private_key"
+    bridge = LiquidityBridge("public_key", private_key)
+    encrypted_data = bridge.encrypt(b"data_to_be_encrypted")
+    decrypted_data = bridge.decrypt(base64.b64encode(encrypted_data).decode())
+    assert len(decrypted_data) == len(b"data_to_be_encrypted")
+    assert decrypted_data == b"data_to_be_encrypted"
+
+    def test_add_bridge():
+        manager = LiquidityBridgeManager()
+        manager.add_bridge(public_key="public1", private_key="private1")
+        manager.add_bridge(public_key="public2", private_key="private2")
+        bridge1 = LiquidityBridge("public1", "private1")
+        bridge2 = LiquidityBridge("public2", "private2")
+        assert manager.get_bridge_by_public_key("public1") == bridge1
+        assert manager.get_bridge_by_public_key("public2") == bridge2
+
+        def test_get_bridge_by_public_key():
+            manager = LiquidityBridgeManager()
+            manager.add_bridge(public_key="public1", private_key="private1")
+            with pytest.raises(HTTPException) as exc:
+                manager.get_bridge_by_public_key("invalid_public_key")
+                assert str(exc.value) == "Bridge not found"

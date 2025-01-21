@@ -4129,3 +4129,59 @@ class QuoteRequest(BaseModel):
                         otc_desk = OTCDeskQuote(desk_id)
                         otc_desk.add_quote(quote)
                         return {"desk_id": quote.request_id, "success": True}
+from fastapi import APIRouter, HTTPException
+from pycryptodome.Cipher import AES
+from typing import List
+import base64
+
+router = APIRouter()
+
+
+class LiquidityBridge:
+    def __init__(self, public_key: str, private_key: str):
+        self.public_key = public_key
+        self.private_key = private_key
+
+        def encrypt(self, data: bytes) -> bytes:
+            cipher = AES.new(self.private_key.encode(), AES.MODE_EAX)
+            cipher.encrypt(data)
+            return base64.b64encode(cipher.nonce + cipher.data).decode("utf-8")
+
+        def decrypt(self, encrypted_data: str) -> bytes:
+            nonce_and_ciphertext = base64.b64decode(encrypted_data)
+            cipher = AES.new(
+                self.private_key.encode(), AES.MODE_EAX, nonce=nonce_and_ciphertext[:16]
+            )
+            return cipher.decrypt(nonce_and_ciphertext[16:])
+
+        class LiquidityBridgeManager:
+            def __init__(self):
+                self.bridge_list: List[LiquidityBridge] = []
+
+                def add_bridge(self, public_key: str, private_key: str):
+                    if not public_key or not private_key:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="public_key and private_key are required",
+                        )
+                        bridge = LiquidityBridge(public_key, private_key)
+                        self.bridge_list.append(bridge)
+
+                        def get_bridge_by_public_key(
+                            self, public_key: str
+                        ) -> LiquidityBridge:
+                            for bridge in self.bridge_list:
+                                if bridge.public_key == public_key:
+                                    return bridge
+                                raise HTTPException(
+                                    status_code=404, detail="Bridge not found"
+                                )
+                                # Main
+                                manager = LiquidityBridgeManager()
+                                if __name__ == "__main__":
+                                    manager.add_bridge(
+                                        public_key="public1", private_key="private1"
+                                    )
+                                    manager.add_bridge(
+                                        public_key="public2", private_key="private2"
+                                    )
