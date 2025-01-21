@@ -4006,3 +4006,47 @@ class Exposure(BaseModel):
                                 )
                             except HTTPException as e:
                                 print(e.detail)
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class SignatureRequest(BaseModel):
+    address: str
+    required_signatures: int
+    signatures: list[str] = []
+
+    @app.post("/request_signatures")
+    def request_signatures(signature_request: SignatureRequest):
+        if len(signature_request.signatures) < signature_request.required_signatures:
+            raise HTTPException(
+                status_code=400, detail="Not enough signatures received."
+            )
+            return {
+                "message": "Signatures requested successfully.",
+                "address": signature_request.address,
+            }
+
+        @app.post("/approve_signatures")
+        def approve_signatures(signature_request: SignatureRequest):
+            if (
+                len(signature_request.signatures)
+                < signature_request.required_signatures
+            ):
+                raise HTTPException(
+                    status_code=400, detail="Not enough signatures received."
+                )
+                signatures = []
+                for sig in signature_request.signatures:
+                    if sig == signature_request.address:
+                        signatures.append(sig)
+                        if len(signatures) == signature_request.required_signatures:
+                            return {
+                                "message": "Signatures approved successfully.",
+                                "address": signature_request.address,
+                            }
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Insufficient valid signatures received.",
+                        )

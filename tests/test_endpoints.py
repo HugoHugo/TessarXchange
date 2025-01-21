@@ -4205,3 +4205,50 @@ def test_monitor_exposure(mocker):
                                                     exposure_in_user_format.current_exposure
                                                     == 500.0
                                                 )
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app
+
+
+def test_request_signatures():
+    client = TestClient(app)
+    signature_request_data = {
+        "address": "test_address",
+        "required_signatures": 2,
+        "signatures": [],
+    }
+    response = client.post("/request_signatures", json=signature_request_data)
+    assert response.status_code == 200
+    data = response.json()
+    assert "message" in data and "address" in data
+
+    def test_approve_signatures():
+        client = TestClient(app)
+        signature_request_data = {
+            "address": "test_address",
+            "required_signatures": 2,
+            "signatures": ["sig1", "sig2"],
+        }
+        response = client.post("/request_signatures", json=signature_request_data)
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data and "address" in data
+
+        def test_approve_signatures_with_insufficient_signatures():
+            client = TestClient(app)
+            with pytest.raises(HTTPException):
+                signature_request_data = {
+                    "address": "test_address",
+                    "required_signatures": 2,
+                    "signatures": ["sig1"],
+                }
+                response = client.post(
+                    "/request_signatures", json=signature_request_data
+                )
+                assert response.status_code == 400
+                data = response.json()
+                assert (
+                    "detail" in data
+                    and data["detail"] == "Not enough signatures received."
+                )
