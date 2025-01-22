@@ -5099,3 +5099,57 @@ def client():
                         assert response.json() == {
                             "detail": f"User ID {user_id} has been successfully deleted."
                         }
+import pytest
+from fastapi.testclient import TestClient
+
+
+def test_list_collaterals():
+    client = TestClient(app)
+    response = client.get("/collaterals")
+    assert response.status_code == 200
+    # Check if the response contains a list of Collateral objects with expected properties.
+    data = response.json()
+    for collateral in data:
+        assert isinstance(collateral, dict)
+        assert "chain" in collateral
+        assert "token_address" in collateral
+        assert "token_symbol" in collateral
+        assert "amount" in collateral
+
+        def test_deposit_collateral():
+            client = TestClient(app)
+            response = client.post(
+                "/deposit-collateral",
+                json={
+                    "chain": "Binance Smart Chain",
+                    "token_symbol": "DAI",
+                    "amount": "5000000",
+                },
+            )
+            assert response.status_code == 200
+            # Check if the response contains a Collateral object with expected properties.
+            data = response.json()
+            assert isinstance(data, dict)
+            assert "chain" in data
+            assert "token_address" in data
+            assert "token_symbol" in data
+            assert "amount" in data
+
+            def test_request_collateral():
+                client = TestClient(app)
+                response = client.post(
+                    "/request-collateral",
+                    json={
+                        "chain": "Ethereum",
+                        "token_symbol": "DAI",
+                        "amount": "5000000",
+                    },
+                )
+                assert response.status_code == 200
+                # Check if the response contains a Collateral object with expected properties.
+                data = response.json()
+                assert isinstance(data, dict)
+                assert "chain" in data
+                assert "token_address" in data
+                assert "token_symbol" in data
+                assert "amount" in data
