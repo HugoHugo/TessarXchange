@@ -6137,3 +6137,29 @@ def aggregate_oracle_prices():
                     new_oracle_prices = aggregate_oracle_prices()
                     for name, price in new_oracle_prices:
                         yield {"name": name, "price": float(price)}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class Transaction(BaseModel):
+    id: str
+    from_account: str
+    to_account: str
+    amount: float
+    timestamp: datetime = None
+    app = FastAPI()
+
+    def generate_transaction_id():
+        return str(uuid.uuid4())
+
+    @app.post("/transaction")
+    async def create_transaction(transaction_data: Transaction):
+        transaction.id = generate_transaction_id()
+        return transaction
+
+    @app.get("/transaction/{id}")
+    async def get_transaction(transaction_id: str):
+        if not transaction_id:
+            raise HTTPException(status_code=400, detail="Transaction ID is required.")
+            return {"result": "Transaction details."}

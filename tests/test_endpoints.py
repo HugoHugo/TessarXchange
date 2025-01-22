@@ -6072,3 +6072,58 @@ async def test_update_oracle_prices():
             client = TestClient(app)
             response = client.get("/endpoint")
             assert response.status_code == 200
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime, timezone
+
+
+def test_create_transaction():
+    app = FastAPI()
+
+    @app.post("/transaction")
+    async def create_transaction(transaction_data: Transaction):
+        transaction.id = str(uuid.uuid4())
+        return transaction
+
+    client = TestClient(app)
+    response = client.post(
+        "/transaction",
+        json={
+            "id": str(uuid.uuid4()),
+            "from_account": "Account1",
+            "to_account": "Account2",
+            "amount": 100.0,
+        },
+    )
+    assert response.status_code == 200
+    transaction = response.json()
+    assert "id" in transaction
+
+    def test_get_transaction():
+        app = FastAPI()
+
+        @app.post("/transaction")
+        async def create_transaction(transaction_data: Transaction):
+            transaction.id = str(uuid.uuid4())
+            return transaction
+
+        client = TestClient(app)
+        # Create a new transaction
+        response = client.post(
+            "/transaction",
+            json={
+                "id": str(uuid.uuid4()),
+                "from_account": "Account1",
+                "to_account": "Account2",
+                "amount": 100.0,
+            },
+        )
+        assert response.status_code == 200
+        transaction_data = response.json()
+        # Test fetching the transaction details using the transaction ID
+        response = client.get(
+            "/transaction/{id}", params={"id": transaction_data["id"]}
+        )
+        assert response.status_code == 200
+        fetched_transaction = response.json()
+        assert fetched_transaction == transaction_data
