@@ -4600,3 +4600,51 @@ async def options_hedge(
                 "expiration_date": expiration_date,
                 "quantity": quantity,
             }
+from fastapi import FastAPI, HTTPException
+import datetime
+
+app = FastAPI()
+
+
+class CustodyRotation:
+    def __init__(self):
+        self.rotation_events = []
+
+        @property
+        def last_rotation_event(self) -> dict or None:
+            return self.rotation_events[-1] if self.rotation_events else None
+
+        def add_rotation_event(
+            self,
+            event_id: str,
+            start_date: datetime,
+            end_date: datetime,
+            custodian: str,
+        ):
+            new_event = {
+                "event_id": event_id,
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "custodian": custodian,
+            }
+            self.rotation_events.append(new_event)
+
+            def get_rotation_events(self):
+                return self.rotation_events
+
+            @app.post("/rotation")
+            def create_rotation_event(
+                custodian: str,
+                event_id: str = "",
+                start_date: datetime = None,
+                end_date: datetime = None,
+            ):
+                if not start_date:
+                    raise HTTPException(
+                        status_code=400, detail="Start date is required."
+                    )
+                    new_rotation = CustodyRotation()
+                    new_rotation.add_rotation_event(
+                        event_id, start_date, end_date, custodian
+                    )
+                    return {"rotation_id": event_id}

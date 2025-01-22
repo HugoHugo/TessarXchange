@@ -4804,3 +4804,66 @@ def options_hedge_endpoint():
                             client = TestClient(app)
                             test_options_hedge_success(client)
                             test_options_hedge_failure(client)
+import pytest
+from main import CustodyRotation, app
+
+
+@pytest.fixture
+def new_rotation():
+    return CustodyRotation()
+
+
+def test_create_rotation_event():
+    event_id = "rotation1"
+    start_date = datetime(2023, 5, 15)
+    end_date = datetime(2023, 6, 15)
+    response = app.test_client().post(
+        "/rotation",
+        json={
+            "custodian": "ABC Corp",
+            "event_id": event_id,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat(),
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, dict)
+    assert "rotation_id" in data
+
+    def test_last_rotation_event():
+        rotation_events = [
+            {
+                "event_id": "rotation1",
+                "start_date": "2023-05-15",
+                "end_date": "2023-06-15",
+                "custodian": "ABC Corp",
+            },
+            {
+                "event_id": "rotation2",
+                "start_date": "2023-07-10",
+                "end_date": "2023-08-10",
+                "custodian": "DEF Ltd",
+            },
+        ]
+        rotation = CustodyRotation()
+        rotation.rotation_events = rotation_events
+        assert rotation.last_rotation_event() == {
+            "event_id": "rotation2",
+            "start_date": "2023-07-10",
+            "end_date": "2023-08-10",
+            "custodian": "DEF Ltd",
+        }
+
+        def test_add_rotation_event():
+            new_rotation = CustodyRotation()
+            event_id = "rotation1"
+            start_date = datetime(2023, 5, 15)
+            end_date = datetime(2023, 6, 15)
+            assert new_rotation.last_rotation_event() is None
+            new_rotation.add_rotation_event(event_id, start_date, end_date, "ABC Corp")
+            assert new_rotation.last_rotation_event().get("event_id") == "rotation1"
+            assert (
+                newRotation.get_rotation_events()[-1].get("start_date")
+                == start_date.isoformat()
+            )
