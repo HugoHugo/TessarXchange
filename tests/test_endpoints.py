@@ -4978,3 +4978,32 @@ def client():
                 assert response.status_code == 200
                 data = response.json()
                 assert "risk_per_trade" in data and "trade_frequency" in data
+import os
+import tempfile
+from typing import IO
+import pytest
+import csv
+from main import bulk_order_import
+
+
+@pytest.fixture
+def test_csv():
+    data = b"header1,header2,order_id\nvalue1,value2,123\nvalue3,value4,456"
+    return IO[data]
+
+
+def test_bulk_order_import(test_csv):
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        temp_file_path = os.path.join(tmpdirname, "bulk_order_import.csv")
+        with open(temp_file_path, mode="w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["header1", "header2", "order_id"])
+            writer.writerow(["value1", "value2", "123"])
+            writer.writerow(["value3", "value4", "456"])
+            response = bulk_order_import(
+                files=[File(io=temp_file_path, filename="bulk_order_import.csv")]
+            )
+            assert response.status_code == 200
+            assert os.path.exists(
+                os.path.join(tmpdirname, "bulk_order_data", "bulk_order_import.csv")
+            )

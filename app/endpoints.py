@@ -4800,3 +4800,22 @@ class TradingParameter(BaseModel):
                 @app.get("/parameters")
                 async def get_trading_parameters():
                     return self.trading_parameters
+from fastapi import File, UploadFile, HTTPException
+from fastapi.responses import FileResponse
+import csv
+import os
+
+app = FastAPI()
+
+
+async def bulk_order_import(file: UploadFile):
+    content = await file.read()
+    temp_file_path = "/tmp/bulk_order_import.csv"
+    with open(temp_file_path, "wb") as buffer:
+        writer = csv.writer(buffer)
+        writer.write(content.decode("utf-8"))
+        if not os.path.exists("/bulk_order_data"):
+            os.makedirs("/bulk_order_data")
+            target_file_path = f"/bulk_order_data/{file.filename}"
+            os.rename(temp_file_path, target_file_path)
+            return FileResponse(target_file_path, filename=file.filename)
