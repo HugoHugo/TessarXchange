@@ -6465,3 +6465,31 @@ def strategy():
         assert response.status_code == 200
         assert "strategy_id" in response.json()
         assert isinstance(response.json()["strategy_id"], str)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as FastAPIClient:
+        yield FastAPIClient
+
+        def test_create_execution(client):
+            response = client.post(
+                "/algorithmic-execution", json={"symbol": "AAPL", "quantity": 100}
+            )
+            assert response.status_code == 200
+            execution_data = response.json()
+            assert "id" in execution_data
+
+            def test_get_execution(client):
+                first_response = client.post(
+                    "/algorithmic-execution", json={"symbol": "AAPL", "quantity": 100}
+                )
+                second_response = client.get(
+                    f"/algorithmic-execution/{first_response.json()['id']}]"
+                )
+                assert second_response.status_code == 200
+                execution_data = second_response.json()
+                assert "id" in execution_data

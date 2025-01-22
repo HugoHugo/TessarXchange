@@ -6447,3 +6447,34 @@ class YieldStrategy:
                 yield_str = YieldStrategy()
                 yield_str.execute(data)
                 return {"strategy_id": yield_str.id}
+from fastapi import FastAPI, HTTPException
+import uuid
+
+
+class InstitutionalAlgorithmicExecution:
+    def __init__(self):
+        self.execution_id = str(uuid.uuid4())
+
+        class AlgorithmExecutionManager(FastAPI):
+            def __init__(self):
+                super().__init__()
+                self.execution_data_store = {}
+
+                @property
+                def current_time(self):
+                    return datetime.utcnow()
+
+                async def create_execution(self, symbol: str, quantity: int):
+                    if symbol not in self.execution_data_store:
+                        new_exec = InstitutionalAlgorithmicExecution()
+                        self.execution_data_store[symbol] = new_exec
+                        execution_id = self.execution_data_store[symbol].execution_id
+                        return {"id": execution_id}
+
+                    async def get_execution(self, execution_id: str):
+                        if execution_id not in self.execution_data_store:
+                            raise HTTPException(
+                                status_code=404, detail="Execution not found"
+                            )
+                            return self.execution_data_store[execution_id]
+                        app = AlgorithmExecutionManager()
