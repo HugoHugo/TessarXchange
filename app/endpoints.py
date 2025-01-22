@@ -5440,3 +5440,39 @@ class DIDDocument(BaseModel):
                     if did not in self.dids:
                         raise HTTPException(status_code=404, detail="DID not found.")
                         return self.dids[did]
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+import json
+
+
+class Identity(BaseModel):
+    id: str
+    email: str
+    name: str
+    address: str
+    phone_number: str
+    recovery_question: str
+    recovery_answer: str
+
+    class DecentralizedIdentityRecoveryApp(FastAPI):
+        def __init__(self):
+            self.identity_store = {}
+
+            async def get_identity(self, identity_id: str):
+                if identity_id not in self.identity_store:
+                    raise HTTPException(status_code=404, detail="Identity not found")
+                    return Identity(**self.identity_store[identity_id])
+
+                async def post_recovery_question_answer(
+                    self, identity_id: str, recovery_question: str, recovery_answer: str
+                ):
+                    if identity_id not in self.identity_store:
+                        raise HTTPException(
+                            status_code=404, detail="Identity not found"
+                        )
+                        identity = self.identity_store[identity_id]
+                        identity.recovery_question = recovery_question
+                        identity.recovery_answer = recovery_answer
+                        self.identity_store[identity_id] = identity
+                        return identity

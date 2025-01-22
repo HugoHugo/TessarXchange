@@ -5611,3 +5611,42 @@ def test_create_did(did_manager):
             authenticationMethod="http://example.com/authentication",
         )
         assert response == expected_response
+import pytest
+from fastapi import HTTPException
+from main import Identity, DecentralizedIdentityRecoveryApp
+
+
+@pytest.fixture
+def identity_app():
+    app = DecentralizedIdentityRecoveryApp()
+    yield app
+    # Clean up the test client, which can have side-effects
+    app.client.close()
+
+    def test_get_identity(identity_app):
+        identity_id = str(uuid.uuid4())
+        identity = Identity(id=identity_id)
+        identity_app.identity_store[identity_id] = identity
+        response = identity_app.get_identity(identity_id)
+        assert response == identity
+
+        def test_post_recovery_question_answer(identity_app):
+            identity_id = str(uuid.uuid4())
+            email = "testuser@example.com"
+            recovery_question = "What is your favorite color?"
+            recovery_answer = "Blue"
+            identity = Identity(id=identity_id, email=email)
+            identity_app.identity_store[identity.id] = identity
+            with pytest.raises(HTTPException):
+                identity_app.post_recovery_question_answer(
+                    identity_id, recovery_question, recovery_answer
+                )
+                recovery_identity = identity_app.post_recovery_question_answer(
+                    identity_id, recovery_question, recovery_answer
+                )
+                assert (
+                    recovery_identity.recovery_question
+                    == "What is your favorite color?"
+                )
+                assert recovery_identity.recovery_answer == "Blue"
+                assert recovery_identity.id != identity_id
