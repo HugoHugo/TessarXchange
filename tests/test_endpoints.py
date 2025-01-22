@@ -5210,3 +5210,23 @@ def test_generate_stress_test_data():
         # Assert that data is a list and not empty
         assert isinstance(data, list)
         assert len(data) > 0
+from fastapi import HTTPException
+import pytest
+from main import MigrationRequest, router
+
+
+@pytestmark
+class TestMigration:
+    def setup_method(self):
+        self.migration_request = MigrationRequest(
+            source_pool_id=str(uuid.uuid4()), target_pool_id="target_pool_id"
+        )
+
+        def test_migration_source_target_different(self):
+            with pytest.raises(HTTPException) as e:
+                router.post("/migration", request=self.migration_request)
+                assert str(e.value) == "Source and target pool IDs must be different."
+
+                def test_migration_no_error(self):
+                    response = router.post("/migration", request=self.migration_request)
+                    assert response.status_code == 200
