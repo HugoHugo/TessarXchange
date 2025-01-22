@@ -5057,3 +5057,37 @@ class MigrationRequest(BaseModel):
                 "source_pool_id": source_pool_id,
                 "target_pool_id": target_pool_id,
             }
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class InsuranceClaim(BaseModel):
+    claim_id: str
+    policy_number: int
+    claim_amount: float
+    claim_status: str
+    user_id: str
+    date_claimed: datetime
+
+    @classmethod
+    def generate_claim(cls, policy_number: int) -> "InsuranceClaim":
+        return cls(
+            claim_id=str(uuid.uuid4()),
+            policy_number=policy_number,
+            claim_amount=0.0,
+            claim_status="pending",
+            user_id=None,
+            date_claimed=datetime.now(),
+        )
+
+    def process_claim(claim: InsuranceClaim):
+        # This function would simulate the processing of a claim
+        if claim.claim_status != "pending":
+            raise HTTPException(status_code=400, detail="Invalid Claim Status")
+            # Process and update the claim status
+            new_status = "approved" if claim.claim_amount > 0 else "denied"
+            claim.claim_status = new_status
+            return claim

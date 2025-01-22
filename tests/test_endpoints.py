@@ -5230,3 +5230,98 @@ class TestMigration:
                 def test_migration_no_error(self):
                     response = router.post("/migration", request=self.migration_request)
                     assert response.status_code == 200
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime, timedelta
+from main import app
+
+
+def create_app():
+    return app
+
+
+@pytest.fixture
+def client():
+    app = create_app()
+    with TestClient(app) as C:
+        yield C
+
+        def test_generate_claim(client):
+            response = client.get(
+                "/insurance-claim/generate", params={"policy_number": 123}
+            )
+            assert response.status_code == 200
+            data = response.json()
+            expected_data = {
+                "claim_id": str(uuid.uuid4()),
+                "policy_number": 123,
+                "claim_amount": 0.0,
+                "claim_status": "pending",
+                "user_id": None,
+                "date_claimed": datetime.now(),
+            }
+            assert data == expected_data
+
+            def test_process_claim(client):
+                response = client.get(
+                    "/insurance-claim/process",
+                    params={"claim_id": "f2e4c1b-5d3a-4f8b-a9ab-fdfc0b1d9c6"},
+                )
+                data = response.json()
+                assert response.status_code == 200
+                expected_data = {
+                    "claim_id": "f2e4c1b-5d3a-4f8b-a9ab-fdfc0b1d9c6",
+                    "policy_number": None,
+                    "claim_amount": 500.0,
+                    "claim_status": "approved",
+                    "user_id": None,
+                    "date_claimed": datetime(2022, 12, 10, 15, 30),
+                }
+                assert data == expected_data
+
+                def test_invalid_claim(client):
+                    response = client.get(
+                        "/insurance-claim/process",
+                        params={"claim_id": "f2e4c1b-5d3a-4f8b-a9ab-fdfc0b1d9c6"},
+                    )
+                    data = response.json()
+                    assert response.status_code == 400
+                    expected_data = {
+                        "detail": "Invalid Claim Status",
+                        "code": 400,
+                    }
+                    assert data == expected_data
+
+                    def test_claim_status(client):
+                        claims = [
+                            InsuranceClaim.generate_claim(123),
+                            InsuranceClaim.generate_claim(456),
+                        ]
+                        response = client.post(
+                            "/insurance-claim", json=claims[0]._asdict()
+                        )
+                        data = response.json()
+                        assert response.status_code == 200
+                        expected_data = {
+                            "claim_id": str(uuid.uuid4()),
+                            "policy_number": claims[0].policy_number,
+                            "claim_amount": claims[0].claim_amount,
+                            "claim_status": claims[0].claim_status,
+                            "user_id": None,
+                            "date_claimed": datetime.now(),
+                        }
+                        assert data == expected_data
+                        response = client.post(
+                            "/insurance-claim", json=claims[1]._asdict()
+                        )
+                        data = response.json()
+                        assert response.status_code == 200
+                        expected_data = {
+                            "claim_id": str(uuid.uuid4()),
+                            "policy_number": claims[1].policy_number,
+                            "claim_amount": claims[1].claim_amount,
+                            "claim_status": claims[1].claim_status,
+                            "user_id": None,
+                            "date_claimed": datetime.now(),
+                        }
+                        assert data == expected_data
