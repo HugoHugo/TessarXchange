@@ -6282,3 +6282,83 @@ def test_create_token_event():
                 data = response.json()
                 assert isinstance(data, list)
                 assert len(data) == 0
+import uuid
+from fastapi import HTTPException
+import pytest
+from main import StateVerifier, app
+
+
+@pytest.fixture
+def state_verifier():
+    return StateVerifier()
+
+
+def test_state_verifier_creation(state_verifier):
+    assert isinstance(state_verifier, StateVerifier)
+
+    def test_verify_state(state_verifier: StateVerifier, monkeypatch):
+        requested_chain_id = "test"
+        requested_state_root = "root"
+
+        def mock_network_is_valid_chain(chain):
+            if chain == requested_chain_id:
+                return True
+            return False
+
+        monkeypatch.setattr("main.Network.is_valid_chain", mock_network_is_valid_chain)
+        with pytest.raises(HTTPException):
+            verify_response = state_verifier.verify_state(
+                requested_chain_id, requested_state_root
+            )
+            assert isinstance(verify_response, dict)
+
+            def test_verify_state_no_chain(state_verifier: StateVerifier, monkeypatch):
+                requested_chain_id = "non_existent"
+
+                def mock_network_is_valid_chain(chain):
+                    return False
+
+                monkeypatch.setattr(
+                    "main.Network.is_valid_chain", mock_network_is_valid_chain
+                )
+                with pytest.raises(HTTPException):
+                    verify_response = state_verifier.verify_state(
+                        requested_chain_id, "root"
+                    )
+
+                    def test_verify_state_invalid_chain(
+                        state_verifier: StateVerifier, monkeypatch
+                    ):
+                        requested_chain_id = "test"
+
+                        def mock_network_is_valid_chain(chain):
+                            return False
+
+                        monkeypatch.setattr(
+                            "main.Network.is_valid_chain", mock_network_is_valid_chain
+                        )
+                        with pytest.raises(HTTPException):
+                            verify_response = state_verifier.verify_state(
+                                requested_chain_id, "root"
+                            )
+
+                            def test_verify_state_success(
+                                state_verifier: StateVerifier, monkeypatch
+                            ):
+                                requested_chain_id = "test"
+                                requested_state_root = "root"
+
+                                def mock_network_is_valid_chain(chain):
+                                    return True
+
+                                monkeypatch.setattr(
+                                    "main.Network.is_valid_chain",
+                                    mock_network_is_valid_chain,
+                                )
+                                verify_response = state_verifier.verify_state(
+                                    requested_chain_id, requested_state_root
+                                )
+                                assert (
+                                    isinstance(verify_response, dict)
+                                    and "state_hash" in verify_response
+                                )

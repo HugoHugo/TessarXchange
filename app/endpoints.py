@@ -6304,3 +6304,33 @@ class TokenEvent:
                 if not data or not isinstance(data, list):
                     raise HTTPException(status_code=404, detail="No token events found")
                     return data
+from fastapi import FastAPI, HTTPException
+from pyonchain import Network
+import uuid
+
+
+class StateVerifier:
+    def __init__(self):
+        self.state_verifiers = {}
+
+        async def verify_state(self, chain_id: str, state_root: str) -> dict:
+            network = Network(chain=chain_id)
+            if not network.is_valid_chain(chain_id):
+                raise HTTPException(
+                    status_code=404, detail=f"Chain {chain_id} does not exist."
+                )
+                state_verifier = StateVerifier()
+                self.state_verifiers[uuid.uuid4().hex] = state_verifier
+                verified_state = state_verifier.verify_state(chain_id, state_root)
+                return {"state_hash": verified_state}
+            app = FastAPI()
+            state_verifier: StateVerifier = None
+
+            @app.post("/verify-state")
+            async def verify_state(state_verifier_obj: StateVerifier = None):
+                global state_verifier
+                if not state_verifier_obj:
+                    state_verifier = StateVerifier()
+                    return await state_verifier.verify_state(
+                        requested_chain_id, requested_state_root
+                    )
