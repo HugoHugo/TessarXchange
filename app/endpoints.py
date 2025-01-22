@@ -5503,3 +5503,36 @@ class LiquidityRequest(BaseModel):
                     "timestamp": liquidity_timestamp,
                     "amount_provided": request_data.amount,
                 }
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class Wallet(BaseModel):
+    password_strength: int
+    two_factor_enabled: bool
+
+    class SecurityScore:
+        def __init__(self, wallet: Wallet):
+            self.wallet = wallet
+            self.score = 0
+            # Add more scoring logic based on the wallet attributes
+            if self.wallet.password_strength >= 7:
+                self.score += 10
+                if not self.wallet.two_factor_enabled:
+                    self.score -= 5
+
+                    # More scoring logic can be added here
+                    def get_score(self):
+                        return self.score
+
+                    @app.post("/wallet-score")
+                    def process_wallet(wallet: Wallet):
+                        security_score = SecurityScore(wallet)
+                        score = security_score.get_score()
+                        if score < 0 or score > 50:
+                            raise HTTPException(
+                                status_code=400, detail="Invalid wallet security score."
+                            )
+                            return {"wallet": str(wallet), "security_score": score}

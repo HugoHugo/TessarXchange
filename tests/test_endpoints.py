@@ -5668,3 +5668,29 @@ def test_provide_liquidity():
     assert "Amount must be a positive value." in str(response.content)
     if __name__ == "__main__":
         pytest.main()
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_process_wallet(client):
+            response = client.post(
+                "/wallet-score",
+                json={"password_strength": 8, "two_factor_enabled": False},
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert isinstance(data, dict)
+            assert "wallet" in data.keys()
+            assert "security_score" in data.keys()
+
+            def test_invalid_wallet_security_score(client):
+                response = client.post(
+                    "/wallet-score",
+                    json={"password_strength": 1, "two_factor_enabled": False},
+                )
+                assert response.status_code == 400
