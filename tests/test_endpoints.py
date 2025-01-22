@@ -5694,3 +5694,46 @@ def client():
                     json={"password_strength": 1, "two_factor_enabled": False},
                 )
                 assert response.status_code == 400
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _app:
+        yield _app
+
+        def test_verify_state(client):
+            response = client.get("/verify-state")
+            assert response.status_code == 405
+            assert "Method Not Allowed" in str(response.content)
+
+            def test_verify_state_valid_response(client):
+                response = client.post(
+                    "/verify-state",
+                    content_type="application/json",
+                    data=json.dumps({"result": "state verified successfully"}),
+                )
+                assert response.status_code == 200
+                assert "state verified successfully" in str(response.content)
+
+                def test_verify_state_missing_fields(client):
+                    with pytest.raises(HTTPException) as exc:
+                        client.post(
+                            "/verify-state",
+                            content_type="application/json",
+                            data=json.dumps(
+                                {"sender_chain": "ABC", "receiver_chain": "XYZ"}
+                            ),
+                        )
+                        assert "Missing required fields" in str(exc.value)
+
+                        def test_verify_state_invalid_response(client):
+                            with pytest.raises(HTTPException) as exc:
+                                client.post(
+                                    "/verify-state",
+                                    content_type="application/json",
+                                    data=json.dumps({}),
+                                )
+                                assert "Method Not Allowed" in str(exc.value)
