@@ -5476,3 +5476,30 @@ class Identity(BaseModel):
                         identity.recovery_answer = recovery_answer
                         self.identity_store[identity_id] = identity
                         return identity
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import time
+
+app = FastAPI()
+
+
+class LiquidityRequest(BaseModel):
+    amount: float
+
+    class Config:
+        schema_extra = {"example": {"amount": 1000.0}}
+
+        def get_liquidity():
+            return round(time.time() * 1000)
+
+        @app.post("/provide-liquidity")
+        async def provide_liquidity(request_data: LiquidityRequest):
+            if request_data.amount <= 0:
+                raise HTTPException(
+                    status_code=400, detail="Amount must be a positive value."
+                )
+                liquidity_timestamp = get_liquidity()
+                return {
+                    "timestamp": liquidity_timestamp,
+                    "amount_provided": request_data.amount,
+                }

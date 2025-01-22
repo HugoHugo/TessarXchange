@@ -5650,3 +5650,21 @@ def identity_app():
                 )
                 assert recovery_identity.recovery_answer == "Blue"
                 assert recovery_identity.id != identity_id
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_provide_liquidity():
+    client = TestClient(app)
+    # Test with positive amount
+    response = client.post("/provide-liquidity", json={"amount": 1000.0})
+    assert response.status_code == 200
+    assert "timestamp" in response.json()
+    assert "amount_provided" in response.json()
+    # Test with negative amount
+    response = client.post("/provide-liquidity", json={"amount": -500.0})
+    assert response.status_code == 400
+    assert "Amount must be a positive value." in str(response.content)
+    if __name__ == "__main__":
+        pytest.main()
