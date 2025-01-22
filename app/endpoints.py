@@ -4532,3 +4532,47 @@ class DebtPosition(BaseModel):
                     ]
                 ]
                 return DebtPositions(positions=positions)
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class CollateralPosition(BaseModel):
+    position_id: str
+    asset: str
+    protocol: str
+    amount: float
+    timestamp: datetime = None
+    collateral_positions_router = APIRouter()
+
+    @app.post("/positions")
+    async def create_position(position: CollateralPosition):
+        position.position_id = str(uuid.uuid4())
+        return {"result": "Collateral Position added", "position": position.dict()}
+
+    @app.get("/positions/{position_id}")
+    async def get_position(
+        position_id: str, collateral_positions: list[CollateralPosition] = []
+    ):
+        for position in collateral_positions:
+            if position.position_id == position_id:
+                return {
+                    "result": "Collateral Position found",
+                    "position": position.dict(),
+                }
+            raise HTTPException(status_code=404, detail="Collateral Position not found")
+
+            @app.put("/positions/{position_id}")
+            async def update_position(
+                position_id: str, updated_position: CollateralPosition
+            ):
+                for position in collateral_positions:
+                    if position.position_id == position_id:
+                        position.update(unpacked=True)
+                        return {
+                            "result": "Collateral Position updated",
+                            "updated_position": position.dict(),
+                        }
+                    raise HTTPException(
+                        status_code=404, detail="Collateral Position not found"
+                    )

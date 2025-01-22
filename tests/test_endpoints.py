@@ -4697,3 +4697,53 @@ def test_get_positions():
                     )
                     assert response.status_code == 404
                     assert "Position not found." in str(response.content)
+import uuid
+from fastapi.testclient import TestClient
+from main import app
+
+
+def test_create_position():
+    client = TestClient(app)
+    position_data = CollateralPosition(
+        position_id=str(uuid.uuid4()),
+        asset="Asset",
+        protocol="Protocol",
+        amount=100.0,
+        timestamp=datetime.now(),
+    )
+    response = client.post("/positions", json=position_data.dict())
+    assert response.status_code == 200
+    assert "result" in response.json()
+    assert "position" in response.json()
+
+    def test_update_position():
+        client = TestClient(app)
+        position_data = CollateralPosition(
+            position_id=str(uuid.uuid4()),
+            asset="Asset",
+            protocol="Protocol",
+            amount=100.0,
+            timestamp=datetime.now(),
+        )
+        # create the initial position
+        response = client.post("/positions", json=position_data.dict())
+        assert response.status_code == 200
+        new_position_data = CollateralPosition(
+            position_id=str(uuid.uuid4()),
+            asset="Asset",
+            protocol="Protocol",
+            amount=200.0,
+        )
+        response = client.put(
+            f"/positions/{position_data.position_id}", json=new_position_data.dict()
+        )
+        assert response.status_code == 200
+        assert "result" in response.json()
+        assert "updated_position" in response.json()
+
+        def test_get_position_not_found():
+            client = TestClient(app)
+            response = client.get("/positions/nonexistingpositionid")
+            assert response.status_code == 404
+            assert "detail" in response.json()
+            assert "Collateral Position not found" == response.json()["detail"]
