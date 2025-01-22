@@ -5294,3 +5294,32 @@ class Trade(BaseModel):
 
     class UserTrades(BaseModel):
         user_trades: list[Trade]
+from fastapi import APIRouter, HTTPException
+from typing import List
+from datetime import datetime
+
+router = APIRouter()
+
+
+class TradingPair:
+    def __init__(self, id: str, currency_pair: str):
+        self.id = id
+        self.currency_pair = currency_pair
+        self.last_checked_at = datetime.now()
+
+        def is_delisted(self) -> bool:
+            # Define delisting criteria here
+            return False
+
+        async def delist_trading_pairs():
+            trading_pairs = [
+                TradingPair("BTC-USD", "BTC/USD"),
+                TradingPair("ETH-BTC", "ETH/BTC"),
+            ]
+            for pair in trading_pairs:
+                if not pair.is_delisted():
+                    print(f"Delisting {pair.id} - {pair.currency_pair}")
+
+                    # This function should be called periodically to check for new delistings.
+                    async def main():
+                        await delist_trading_pairs()

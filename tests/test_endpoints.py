@@ -5497,3 +5497,29 @@ def test_endpoint():
         # Check if the same trade amount is not present multiple times
         for trade in user_trades:
             assert trade["amount"] != amount_2
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+
+
+@pytest.mark.asyncio
+async def test_is_delisted_returns_false():
+    trading_pair = TradingPair("BTC-USD", "BTC/USD")
+    assert trading_pair.is_delisted() is False
+
+    @pytest.mark.asyncio
+    async def test_delist_trading_pairs_not_all_delisted():
+        trading_pairs = [
+            TradingPair("BTC-USD", "BTC/USD"),
+            TradingPair("ETH-BTC", "ETH/BTC"),
+        ]
+
+        async def mock_system():
+            return AsyncMock()
+
+        system_mock = mock.System()
+        trading_pair1 = MagicMock()
+        trading_pair2 = MagicMock()
+        trading_pairs[0] = trading_pair1
+        trading_pairs[1] = trading_pair2
+        with pytest.raises(AsyncIOError):
+            await delist_trading_pairs(system_mock)
