@@ -5951,3 +5951,52 @@ class RebalanceRequest(BaseModel):
         # Logic to perform token rebalancing, including updating weights
         # This should be replaced with your actual implementation logic.
         return {"operation_id": operation_id}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class SubAccount(BaseModel):
+    id: str
+    parent_id: str
+    name: str
+    owner_id: str
+
+    class Config:
+        arbitrary_types_allowed = True
+        schema_extra = {
+            "example": {
+                "id": str(uuid.uuid4()),
+                "parent_id": None,
+                "name": "Sub-Account 1",
+                "owner_id": "user123",
+            }
+        }
+        app = FastAPI()
+
+        class Account(BaseModel):
+            id: str
+            name: str
+            owner_id: str
+
+            async def get_account(account_id: str):
+                for account in accounts:
+                    if account.id == account_id:
+                        return account
+                    raise HTTPException(status_code=404, detail="Account not found")
+
+                    @app.post("/delegations", response_model=SubAccount)
+                    def create_delegation(subaccount: SubAccount):
+                        subaccount.id = str(uuid.uuid4())
+                        subaccount.parent_id = subaccount.id
+                        accounts.append(subaccount)
+                        return subaccount
+
+                    @app.get("/accounts/{account_id}", response_model=Account)
+                    async def get_account_by_id(account_id: str):
+                        account = await get_account(account_id)
+                        if not account:
+                            raise HTTPException(
+                                status_code=404, detail="Account not found"
+                            )
+                            return account

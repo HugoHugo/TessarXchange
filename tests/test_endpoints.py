@@ -5925,3 +5925,59 @@ from main import rebalance_tokens
 def test_rebalance_tokens(token_id, new_weight, expected_response):
     response = rebalance_tokens(token_id=token_id, new_weight=new_weight)
     assert response == expected_response
+import pytest
+from fastapi.testclient import TestClient
+
+app = FastAPI()
+accounts = [
+    Account(id="1", name="Main Account", owner_id="user123"),
+]
+
+
+class Account(BaseModel):
+    id: str
+    name: str
+    owner_id: str
+
+    @staticmethod
+    async def get_account(account_id: str):
+        for account in accounts:
+            if account.id == account_id:
+                return account
+            raise HTTPException(status_code=404, detail="Account not found")
+
+            @pytest.fixture(autospec=True)
+            def create_delegation(client):
+                def _create_delegation(subaccount):
+                    response = client.post(
+                        "/delegations",
+                        json=subaccount,
+                    )
+                    assert response.status_code == 200
+                    return response.json()
+
+                return _create_delegation
+
+            def test_create_sub_account(create_delegation, client):
+                subaccount = SubAccount(
+                    id=str(uuid.uuid4()),
+                    parent_id=None,
+                    name="Sub-Account",
+                    owner_id="user123",
+                )
+                response = create_delegation(subaccount)
+                assert response["id"] == str(uuid.uuid4())
+                assert response["parent_id"] is None
+                assert response["name"] == "Sub-Account"
+                assert response["owner_id"] == "user123"
+
+                def test_create_main_account(client):
+                    main_account = Account(
+                        id="1", name="Main Account", owner_id="user123"
+                    )
+                    response = client.get("/accounts/1")
+                    assert response.status_code == 200
+                    account = response.json()
+                    assert account["id"] == "1"
+                    assert account["name"] == "Main Account"
+                    assert account["owner_id"] == "user123"
