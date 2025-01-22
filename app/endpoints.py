@@ -5323,3 +5323,42 @@ class TradingPair:
                     # This function should be called periodically to check for new delistings.
                     async def main():
                         await delist_trading_pairs()
+from fastapi import FastAPI
+from pydantic import BaseModel
+import random
+
+app = FastAPI()
+
+
+class TradingSignal(BaseModel):
+    signal_id: int
+    symbol: str
+    action: str  # 'buy' or 'sell'
+    price: float
+    timestamp: datetime
+
+    class SignalGenerator:
+        def __init__(self, symbols=["BTC-USD"]):
+            self.symbols = symbols
+            self.signals = []
+
+            def generate_signal(self):
+                # Generate random trading signals (example implementation)
+                for symbol in self.symbols:
+                    action = random.choice(["buy", "sell"])
+                    price = random.uniform(1000, 5000)
+                    timestamp = datetime.now()
+                    signal = TradingSignal(
+                        signal_id=len(self.signals) + 1,
+                        symbol=symbol,
+                        action=action,
+                        price=price,
+                        timestamp=timestamp,
+                    )
+                    self.signals.append(signal)
+
+                    @app.post("/generate-signal")
+                    def generate_signal(request_data: SignalGenerator):
+                        # Generate signals from the provided generator
+                        request_data.generate_signal()
+                        return {"status": "signals generated successfully"}

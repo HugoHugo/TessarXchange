@@ -5523,3 +5523,20 @@ async def test_is_delisted_returns_false():
         trading_pairs[1] = trading_pair2
         with pytest.raises(AsyncIOError):
             await delist_trading_pairs(system_mock)
+from fastapi.testclient import TestClient
+import pytest
+from main import app, TradingSignal
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_generate_signal(client):
+            response = client.post("/generate-signal")
+            assert response.status_code == 200
+            data = response.json()
+            assert (
+                "status" in data and data["status"] == "signals generated successfully"
+            )
