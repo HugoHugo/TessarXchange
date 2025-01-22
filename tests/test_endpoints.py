@@ -6452,3 +6452,16 @@ def delegation_pool():
                             )
                             get_delegation_pool(delegation_pool.id())
                             assert True
+import pytest
+from main import app, YieldStrategy
+
+
+@pytest.fixture
+def strategy():
+    yield Strategy()
+
+    def test_create_yield_strategy():
+        response = app.test_client().post("/yield-strategy", json={})
+        assert response.status_code == 200
+        assert "strategy_id" in response.json()
+        assert isinstance(response.json()["strategy_id"], str)

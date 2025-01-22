@@ -6426,3 +6426,24 @@ class DelegationPool(BaseModel):
                         status_code=404, detail="Delegation pool not found."
                     )
                     return DELEGATION_POOLS[pool_id]
+from fastapi import FastAPI
+import uuid
+
+app = FastAPI()
+
+
+class YieldStrategy:
+    def __init__(self):
+        self.id: str = str(uuid.uuid4())
+
+        def execute(self, data: dict):
+            # This is a placeholder method to indicate that
+            # the 'execute' method of this class should handle the
+            # execution logic for the yield strategy based on the provided JSON data.
+            pass
+
+            @app.post("/yield-strategy")
+            def create_yield_strategy(data: dict):
+                yield_str = YieldStrategy()
+                yield_str.execute(data)
+                return {"strategy_id": yield_str.id}
