@@ -5981,3 +5981,47 @@ class Account(BaseModel):
                     assert account["id"] == "1"
                     assert account["name"] == "Main Account"
                     assert account["owner_id"] == "user123"
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app, DIDDocument, DIDsRepository
+
+
+def test_create_did():
+    dids_repository = DidsRepository()
+    client = TestClient(app)
+    response = client.post("/dids")
+    assert response.status_code == 200
+    assert "message" in response.json()
+
+    def test_get_did():
+        dids_repository = DidsRepository()
+        client = TestClient(app)
+        # Create a new DID
+        response = client.post("/dids")
+        new_did_id = response.json()["did"]
+        # Get the created DID
+        get_response = client.get(f"/dids/{new_did_id}")
+        assert get_response.status_code == 200
+        assert "verificationMethod" in get_response.json()
+        # Try to get a non-existing DID
+        unknown_did_id = uuid.uuid4().hex
+        unknown_get_response = client.get(f"/dids/{unknown_did_id}")
+        assert unknown_get_response.status_code == 404
+
+        def test_create_duplicate_did():
+            dids_repository = DidsRepository()
+            # Try to create a new DID while it already exists
+            response = client.post("/dids")
+            assert "409" in str(response.content)
+            with pytest.raises(HTTPException):
+                _ = response.json()
+                with pytest.raises(ValueError):
+                    _ = DIDDocument(id=None)
+
+                    def test_generate_did_document():
+                        did_document = generate_did_document()
+                        assert isinstance(did_document, DIDDocument)
+                        assert did_document.id
+                        assert did_document.verificationMethod
+                        assert did_document.authentication

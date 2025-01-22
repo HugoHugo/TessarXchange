@@ -6000,3 +6000,71 @@ class SubAccount(BaseModel):
                                 status_code=404, detail="Account not found"
                             )
                             return account
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class DIDDocument(BaseModel):
+    id: str
+    verificationMethod: dict
+    authentication: list
+
+    class DIDsRepository:
+        def __init__(self):
+            self.dids = {}
+
+            def add_did(self, did_document: DIDDocument):
+                if not did_document.id:
+                    raise ValueError("DID ID is required.")
+                    if did_document.id in self.dids:
+                        raise HTTPException(
+                            status_code=409, detail="DID already exists."
+                        )
+                        self.dids[did_document.id] = did_document
+
+                        def get_did(self, did_id: str):
+                            return self.dids.get(did_id)
+
+                        def generate_did_document():
+                            verification_method = {
+                                "@context": "http://w3id.org/did/v1",
+                                "@type": "VerificationMethod",
+                                "id": str(uuid.uuid4()),
+                                "publicKeyBase64Encoded": "base64encoded_public_key",
+                            }
+                            authentication = [
+                                {
+                                    "@context": "http://w3id.org/auth/v2",
+                                    "@type": "AuthenticationRequest",
+                                    "requestedAttributes": [
+                                        {
+                                            "id": "https://schema.org/name",
+                                            "types": ["VerifiableCredential"],
+                                        }
+                                    ],
+                                }
+                            ]
+                            return DIDDocument(
+                                id=str(uuid.uuid4()),
+                                verificationMethod=verification_method,
+                                authentication=authentication,
+                            )
+
+                        def create_did(dids_repository: DIDsRepository):
+                            new_did = generate_did_document()
+                            did_id = str(new_did.id)
+                            if did_id in does_repository.dids:
+                                raise HTTPException(
+                                    status_code=409, detail="DID already exists."
+                                )
+                                does_repository.add_did(new_did)
+
+                                @app.post("/dids")
+                                def create_did(
+                                    dids_repository: DIDsRepository = Depends(),
+                                ):
+                                    create_did(dids_repository)
+                                    return {"message": "New DID created successfully"}
