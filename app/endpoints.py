@@ -6599,3 +6599,35 @@ async def get_reward_snapshot():
             percentage = (snapshot.reward_percentage / 100) * snapshot.total_staked
             rewards.append(percentage)
             return rewards
+from fastapi import APIRouter, HTTPException
+from pylomi.seder.seder import Seder
+from typing import Dict
+
+router = APIRouter()
+
+
+class MarginTransfer:
+    def __init__(self, sender_account_id: str, receiver_account_id: str):
+        self.sender_account_id = sender_account_id
+        self.receiver_account_id = receiver_account_id
+        # Additional properties as needed.
+        seder = Seder()
+
+        @seder.register("margin_transfer")
+        def margin_transfer_endpoint():
+            @router.post("/transfer/")
+            async def transfer_margin_position(request: request = None):
+                data = await request.json()
+                sender_account_id = data.get("sender_account_id")
+                receiver_account_id = data.get("receiver_account_id")
+                if not (sender_account_id and receiver_account_id):
+                    raise HTTPException(status_code=400, detail="Missing account IDs")
+                    margin_transfer = MarginTransfer(
+                        sender_account_id, receiver_account_id
+                    )
+                    # Perform additional validation or processing as needed
+                    return {
+                        "message": "Margin transfer request processed successfully",
+                        "margin_transfer": margin_transfer.__dict__,
+                    }
+                return margin_transfer_endpoint

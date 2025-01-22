@@ -6605,3 +6605,27 @@ def test_create_reward_snapshot():
                 assert data["timestamp"].replace(
                     microsecond=0
                 ) != datetime.utcnow().replace(microsecond=0)
+import pytest
+from main import app, MarginTransfer
+
+
+def test_margin_transfer_endpoint():
+    with pytest.raises(HTTPException):
+        response = app.test_client().post("/transfer/")
+        assert response.status_code == 400
+        data = {"sender_account_id": "sender1", "receiver_account_id": "receiver2"}
+        margin_transfer = MarginTransfer(
+            sender_account_id="sender1", receiver_account_id="receiver2"
+        )
+        response = app.test_client().post("/transfer/", json=data)
+        assert response.status_code == 200
+        expected_response = {
+            "message": "Margin transfer request processed successfully",
+            "margin_transfer": margin_transfer.__dict__,
+        }
+        assert response.json() == expected_response
+
+        def test_margin_transfer_validation():
+            data = {"sender_account_id": "invalid", "receiver_account_id": "valid"}
+            with pytest.raises(HTTPException):
+                MarginTransfer(sender_account_id="invalid", receiver_account_id="valid")
