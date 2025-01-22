@@ -5752,3 +5752,21 @@ def client():
         data = json.loads(response.text)
         assert "events" in data
         assert len(data["events"]) > 0
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    yield TestClient(app)
+
+    def test_add_token_vesting(client):
+        with pytest.raises(HTTPException) as context:
+            client.get("/token_vestings")
+            assert "Invalid lockup period" in str(context.value)
+
+            def test_get_all_token_vestings(client):
+                response = client.get("/token_vestings")
+                all_vestings = response.json()
+                assert len(all_vestings) > 0

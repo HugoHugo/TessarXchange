@@ -5616,3 +5616,39 @@ class SmartContract(BaseModel):
                     event = f"Event {_}"
                     event_data["events"].append(event)
                     return event_data
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import time
+
+app = FastAPI()
+
+
+class TokenVesting(BaseModel):
+    id: int
+    user_id: int
+    start_date: datetime
+    end_date: datetime
+    lockup_duration: int
+    vesting_percentage: float
+    vested_amount: float = 0.0
+
+    def is_lockup_period(self) -> bool:
+        current_time = time.time()
+        start_seconds = self.start_date.replace(tzinfo=None).timestamp() * 1000
+        end_seconds = self.end_date.replace(tzinfo=None).timestamp() * 1000
+        return (current_time > start_seconds and current_time < end_seconds) or (
+            current_time >= end_seconds
+        )
+
+    class TokenVestingAPI:
+        def __init__(self):
+            self.vestings: list[TokenVesting] = []
+
+            def get_all_token_vestings(self) -> list[TokenVestings]:
+                return self.vestings
+
+            def add_token_vesting(self, token_vesting: TokenVesting):
+                if not token_vesting.is_lockup_period():
+                    raise HTTPException(status_code=400, detail="Invalid lockup period")
+                    self.vestings.append(token_vesting)
+                    app.include_router(TokenVestingAPI.router)
