@@ -6112,3 +6112,28 @@ class Position(BaseModel):
                             status_code=404, detail="Position not found"
                         )
                         return {"id": position_id, "data": POSITIONS[position_id]}
+from fastapi import FastAPI, BackgroundTasks
+import time
+
+app = FastAPI()
+
+
+def aggregate_oracle_prices():
+    while True:
+        # Placeholder function to simulate fetching oracle prices from external APIs.
+        oracles_prices = {"Oracle1": 100.0, "Oracle2": 150.0, "Oracle3": 200.0}
+        # Update the timestamp for each price
+        updated_oracle_prices = {}
+        for name, price in oracles_prices.items():
+            updated_price = {"name": name, "price": price}
+            updated_oracle_prices[datetime.now().isoformat()] = updated_price
+            yield from updated_oracle_prices.items()
+
+            @app.background
+            async def update_oracle_prices():
+                while True:
+                    await app.update_oracle_prices()
+                    # Yield the updated oracle prices to be used by other endpoints.
+                    new_oracle_prices = aggregate_oracle_prices()
+                    for name, price in new_oracle_prices:
+                        yield {"name": name, "price": float(price)}

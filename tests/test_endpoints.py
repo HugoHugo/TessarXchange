@@ -6050,3 +6050,25 @@ def setup_module(module):
 
         def teardown_module(module):
             del app.dependency_overrides[app.get]
+import asyncio
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+@pytest.mark.asyncio
+async def test_update_oracle_prices():
+    start = time.time()
+    async with TestClient(app) as client:
+        response = await client.get("/update_oracle_prices")
+        assert response.status_code == 200
+        result_data = response.json()
+        end = time.time()
+        elapsed_time = end - start
+        assert "new_oracle_prices" in result_data
+        assert isinstance(result_data["new_oracle_prices"], list)
+
+        def test_endpoint():
+            client = TestClient(app)
+            response = client.get("/endpoint")
+            assert response.status_code == 200
