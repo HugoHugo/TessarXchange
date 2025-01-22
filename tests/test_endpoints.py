@@ -4527,3 +4527,33 @@ def test_get_concentrated_liquidity(token0, token1, expected):
     assert data["token0"]["amount_shares"] == token0["amount_shares"]
     assert data["token1"]["id"] == token1["id"]
     assert data["token1"]["amount_shares"] == token1["amount_shares"]
+import pytest
+from fastapi.testclient import TestClient
+from main import app, CrossChainState
+
+
+def test_verify_state():
+    state = CrossChainState(
+        chain_id="test_chain",
+        sender="0x1234567890123456789012345678901234",
+        recipient="0x0987654321098765432109876543210987",
+        amount=100,
+        timestamp=datetime.utcnow(),
+    )
+    assert CrossChainState.verify_state(state) == True
+
+    def test_verify_and_process_state():
+        state = CrossChainState(
+            chain_id="test_chain",
+            sender="0x1234567890123456789012345678901234",
+            recipient="0x0987654321098765432109876543210987",
+            amount=100,
+            timestamp=datetime.utcnow(),
+        )
+        # Test if the state verification works
+        assert CrossChainState.verify_state(state) == True
+        # Test if exception is raised when an invalid state is received
+        with pytest.raises(HTTPException):
+            with pytest.delegates() as delegates:
+                CrossChainState.verify_and_process_state(state)
+                raise Exception("Test exception")
