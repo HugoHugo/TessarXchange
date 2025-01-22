@@ -5570,3 +5570,49 @@ class StateVerificationRequest(BaseModel):
             if not is_state_verified:
                 raise HTTPException(status_code=503, detail="State verification failed")
                 return {"result": "state verified successfully"}
+from fastapi import FastAPI, HTTPException
+from fastapi_limiter import Limiter
+from pydantic import BaseModel
+import json
+from typing import List
+import asyncio
+
+
+class SmartContract(BaseModel):
+    id: int
+    name: str
+    state: str = None
+
+    class MonitoringEndpoint(BaseModel):
+        contract_id: int
+        start_block: int
+        end_block: int
+        app = FastAPI()
+        limiter = Limiter(app, key_generator=lambda: str(asyncio.get_running_loop()))
+
+        async def get_smart_contract(contract_id: int) -> SmartContract:
+            # Replace with actual logic to fetch smart contract details
+            return SmartContract(id=contract_id, name="Sample Contract", state="Active")
+
+        @app.post("/monitoring")
+        async def monitoring_endpoint(monitoring_data: MonitoringEndpoint):
+            if not await limiter.authorize():
+                raise HTTPException(
+                    status_code=403, detail="Too many requests. Please try again later."
+                )
+                start_block = monitoring_data.start_block
+                end_block = monitoring_data.end_block
+                # Fetch smart contract details
+                smart_contract = await get_smart_contract(monitoring_data.contract_id)
+                # Placeholder for logic to perform real-time monitoring
+                event_data = {
+                    "contract_id": smart_contract.id,
+                    "state": smart_contract.state,
+                    "events": [],
+                }
+                # Placeholder for logic to simulate fetching events from the smart contract
+                for _ in range(start_block, end_block + 1):
+                    # Replace with actual logic to fetch events from the smart contract
+                    event = f"Event {_}"
+                    event_data["events"].append(event)
+                    return event_data

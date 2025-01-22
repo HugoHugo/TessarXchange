@@ -5737,3 +5737,18 @@ def client():
                                     data=json.dumps({}),
                                 )
                                 assert "Method Not Allowed" in str(exc.value)
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+@pytest.fixture
+def client():
+    yield TestClient(app)
+
+    def test_realtime_smart_contract_monitoring(client):
+        response = client.get("/monitoring")
+        assert response.status_code == 200
+        data = json.loads(response.text)
+        assert "events" in data
+        assert len(data["events"]) > 0
