@@ -6493,3 +6493,27 @@ def client():
                 assert second_response.status_code == 200
                 execution_data = second_response.json()
                 assert "id" in execution_data
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.mark.parametrize("status", ["created", "cancelled"])
+def test_cancel_order(client, status):
+    order_id = str(uuid.uuid4())
+    response = client.post("/orders", json={"items": [], "status": "created"})
+    created_order = OrderRepository().get_order_by_id(response.json()["id"])
+    # Test successful cancellation of an existing order
+    response = client.put(f"/orders/{created_order.id}", json={"status": status})
+    assert response.status_code == 200
+    cancelled_order = OrderRepository().get_order_by_id(response.json()["id"])
+    assert cancelled_order["status"] == status
+
+    def test_cancel_order_not_found(client):
+        order_id = str(uuid.uuid4())
+        # Test cancellation of a non-existing order
+        try:
+            response = client.put(f"/orders/{order_id}", json={"status": "cancelled"})
+            assert False, f"Expected HTTP 404 but got HTTP {response.status_code}"
+        except HTTPException as e:
+            pass

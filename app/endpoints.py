@@ -6478,3 +6478,29 @@ class InstitutionalAlgorithmicExecution:
                             )
                             return self.execution_data_store[execution_id]
                         app = AlgorithmExecutionManager()
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class Order(BaseModel):
+    id: str
+    items: list
+    status: str
+
+    class OrderRepository:
+        def __init__(self):
+            self.orders = []
+
+            def create_order(self, order_data: dict):
+                new_id = str(uuid.uuid4())
+                order_data["id"] = new_id
+                self.orders.append(order_data)
+
+                def get_order_by_id(self, order_id: str) -> Order:
+                    for order in self.orders:
+                        if order["id"] == order_id:
+                            return order
+                        raise HTTPException(status_code=404, detail="Order not found")
