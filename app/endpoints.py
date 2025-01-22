@@ -6705,3 +6705,26 @@ class ProofOfReserves:
                     "stablecoins": stablecoins.stablecoins,
                     "reserves": stablecoins.reserves,
                 }
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from datetime import datetime
+
+
+class DepositWithdrawalBatch(BaseModel):
+    id: str
+    type: str  # "deposit" or "withdrawal"
+    amount: float
+    timestamp: datetime
+    router = APIAPIRouter()
+
+    @router.post("/batch/")
+    def create_batch(batch_data: DepositWithdrawalBatch):
+        if batch_data.type not in ["deposit", "withdrawal"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid type. Must be 'deposit' or 'withdrawal'.",
+            )
+            # Simulate batch processing
+            return {
+                "message": f"Batch with ID '{batch_data.id}' processed successfully."
+            }

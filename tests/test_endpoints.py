@@ -6723,3 +6723,71 @@ def client():
                     assert response.status_code == 400
                     data = response.json()
                     assert "Not a valid date" == data["detail"]
+import pytest
+from fastapi.testclient import TestClient
+from main import app, DepositWithdrawalBatch
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_valid_deposit(client):
+            data = {
+                "type": "deposit",
+                "id": "1234567890",
+                "amount": 100.00,
+                "timestamp": datetime.now(),
+            }
+            response = client.post("/batch/", json=data)
+            assert response.status_code == 200
+            result = response.json()
+            assert (
+                "message" in result
+                and result["message"]
+                == "Batch with ID '1234567890' processed successfully."
+            )
+
+            def test_valid_withdrawal(client):
+                data = {
+                    "type": "withdrawal",
+                    "id": "0987654321",
+                    "amount": 50.00,
+                    "timestamp": datetime.now(),
+                }
+                response = client.post("/batch/", json=data)
+                assert response.status_code == 200
+                result = response.json()
+                assert (
+                    "message" in result
+                    and result["message"]
+                    == "Batch with ID '0987654321' processed successfully."
+                )
+
+                def test_invalid_type(client):
+                    data = {
+                        "type": "invalidType",
+                        "id": "0123456789",
+                        "amount": 30.00,
+                        "timestamp": datetime.now(),
+                    }
+                    response = client.post("/batch/", json=data)
+                    assert response.status_code == 400
+                    result = response.json()
+                    assert (
+                        "detail" in result
+                        and result["detail"]
+                        == "Invalid type. Must be 'deposit' or 'withdrawal'."
+                    )
+
+                    def test_empty_request(client):
+                        data = {}
+                        response = client.post("/batch/", json=data)
+                        assert response.status_code == 400
+                        result = response.json()
+                        assert (
+                            "description" in result
+                            and result["description"]
+                            == "invalid request: Empty JSON body."
+                        )
