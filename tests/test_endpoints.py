@@ -6146,3 +6146,31 @@ def client():
             assert response.status_code == 200
             data = response.json()
             assert isinstance(data, dict) and "id" in data
+import pytest
+from fastapi.testclient import TestClient
+from your_main import app, KycDocument, UserKyc, KYCManager
+
+
+def create_test_client():
+    return TestClient(app)
+
+
+@pytest.fixture
+def test_kyc_document():
+    yield KycDocument(type="SSN", content="123-45-6789")
+
+    @pytest.fixture
+    def test_user_kyc(test_kyc_document):
+        user_kyc = UserKyc(name="John Doe", documents=[test_kyc_document])
+        return user_kyc
+
+    def test_create_user_kyc_valid():
+        client = create_test_client()
+        response = client.get("/create_user_kyc")
+        assert response.status_code == 200
+        created_user_kyc = response.json()
+        assert isinstance(created_user_kyc, UserKyc)
+
+        def test_create_user_kyc_invalid(test_user_kyc):
+            with pytest.raises(HTTPException):
+                create_user_kyc(user_kyc=test_user_kyc)

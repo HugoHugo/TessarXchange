@@ -6183,3 +6183,47 @@ class SolvencyProof:
             proof = generate_solvency_proof(data)
             proof.proof_data[file.filename] = await file.read()
             return {"id": proof.id}
+from fastapi import FastAPI, HTTPException
+from fastapi.params import Depends
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class KycDocument(BaseModel):
+    type: str
+    content: str
+
+    class UserKyc(BaseModel):
+        user_id: str
+        name: str
+        documents: list[KycDocument]
+
+        class KYCManager:
+            def __init__(self):
+                self.users_kyc = {}
+
+                async def verify_kyc(self, user_kyc: UserKyc) -> bool:
+                    if not all(doc.content for doc in user_kyc.documents):
+                        return False
+                    return True
+
+                @app.post("/kyc")
+                async def create_user_kyc(user_kyc: UserKyc = Depends(...)) -> UserKyc:
+                    manager = KYCManager()
+                    try:
+                        is_valid = await manager.verify_kyc(user_kyc)
+                        if is_valid:
+                            user_id = uuid.uuid4().hex
+                            user_kyc.user_id = user_id
+                            self.users_kyc[user_id] = user_kyc
+                            return user_kyc
+                        raise HTTPException(
+                            status_code=400, detail="KYC verification failed."
+                        )
+                    except Exception as e:
+                        print(e)
+                        raise HTTPException(
+                            status_code=500, detail="Internal server error"
+                        )
