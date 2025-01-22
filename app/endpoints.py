@@ -5127,3 +5127,27 @@ class RiskFactor(BaseModel):
     @app.get("/risk_factors")
     async def risk_factor_list():
         return {"riskFactors": risk_factors}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class WithdrawalRequest(BaseModel):
+    destination_address: str
+    amount: float
+
+    @app.post("/withdraw")
+    def withdraw(request_data: WithdrawalRequest):
+        user_balance = 1000.0  # Assuming a default balance of $1000.
+        if request_data.amount > user_balance:
+            raise HTTPException(
+                status_code=400,
+                detail="Insufficient balance to process the withdrawal.",
+            )
+            user_balance -= request_data.amount
+            return {
+                "message": "Withdrawal successful!",
+                "amount": request_data.amount,
+                "balance": user_balance,
+            }

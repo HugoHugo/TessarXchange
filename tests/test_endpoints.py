@@ -5340,3 +5340,33 @@ def client():
         result = response.json()
         risk_factors = result["riskFactors"]
         assert len(risk_factors) > 0
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as TC:
+        yield TC
+
+        def test_withdraw(client):
+            request_data = WithdrawalRequest(
+                destination_address="123 Main St", amount=500.0
+            )
+            response = client.post("/withdraw", json=request_data.dict())
+            assert response.status_code == 200
+            result = response.json()
+            assert "message" in result
+            assert "amount" in result
+            assert "balance" in result
+
+            def test_withdraw_insufficient_balance(client):
+                request_data = WithdrawalRequest(
+                    destination_address="123 Main St",
+                    amount=1500.0,  # More than the balance
+                )
+                response = client.post("/withdraw", json=request_data.dict())
+                assert response.status_code == 400
+                result = response.json()
+                assert "detail" in result
