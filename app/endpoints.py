@@ -5245,3 +5245,38 @@ class TransactionCosts(BaseModel):
     def get_transaction_costs(trcs: TransactionCosts):
         result = calculate_transaction_costs(trcs)
         return {"transaction_costs": result}
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from datetime import datetime
+
+otc_router = APIRouter()
+
+
+class QuoteRequest(BaseModel):
+    request_id: str
+    trader_name: str
+    settlement_date: datetime
+
+    class Settlement(BaseModel):
+        settlement_id: str
+        request_id: str
+        amount: float
+        settlement_date: datetime
+
+        @otc_router.get("/quote-request", tags=["OTC"])
+        async def quote_request(request_id: str, trader_name: str):
+            if request_id not in ["req1", "req2"]:
+                raise HTTPException(status_code=400, detail="Invalid request ID")
+                return QuoteRequest(
+                    request_id=request_id,
+                    trader_name=trader_name,
+                    settlement_date=datetime.now(),
+                )
+
+            @otc_router.post("/settlement", tags=["OTC"])
+            async def settle(settlement: Settlement):
+                if settlement.request_id not in ["req1", "req2"]:
+                    raise HTTPException(
+                        status_code=400, detail="Invalid request ID for settlement"
+                    )
+                    return settlement

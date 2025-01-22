@@ -5434,3 +5434,27 @@ def test_calculate_transaction_costs():
         assert "total_cost" in result
         assert "base_fee" in result
         assert "spread_cost" in result
+import pytest
+from fastapi import HTTPException
+from main import otc_router, QuoteRequest
+
+
+def test_invalid_request_id():
+    with pytest.raises(HTTPException):
+        otc_router.quote_request("invalid_req")
+
+        def test_quote_request():
+            req = QuoteRequest(
+                request_id="req1",
+                trader_name="TraderA",
+            )
+            assert req.request_id == "req1"
+            assert req.trader_name == "TraderA"
+
+            def test_settlement():
+                settlement = QuoteRequest(
+                    request_id="req2",
+                    trader_name="TraderB",
+                )
+                with pytest.raises(HTTPException):
+                    otc_router.settle(settlement)
