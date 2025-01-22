@@ -6629,3 +6629,36 @@ def test_margin_transfer_endpoint():
             data = {"sender_account_id": "invalid", "receiver_account_id": "valid"}
             with pytest.raises(HTTPException):
                 MarginTransfer(sender_account_id="invalid", receiver_account_id="valid")
+import pytest
+from main import (
+    PaymentChannel,
+    create_payment_channel,
+    get_payment_channel,
+    update_payment_channel,
+    delete_payment_channel,
+)
+
+
+@pytest.fixture
+def payment_channel():
+    return PaymentChannel(id=1, network_id="NetworkA", last_update=datetime.now())
+
+
+def test_create_payment_channel(payment_channel):
+    new_payment_channel = create_payment_channel(payment_channel)
+    assert new_payment_channel.id == 1
+    assert new_payment_channel.network_id == "NetworkA"
+    assert new_payment_channel.last_update == datetime.now()
+
+    def test_get_payment_channel():
+        # Test for get_payment_channel function
+        pass
+
+        def test_update_payment_channel(payment_channel):
+            updated_payment_channel = PaymentChannel(
+                id=1, network_id="NetworkB", last_update=datetime.now()
+            )
+            response = update_payment_channel(1, updated_payment_channel)
+            assert response.id == 1
+            assert response.network_id == "NetworkB"
+            assert response.last_update == datetime.now()

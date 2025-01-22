@@ -6631,3 +6631,36 @@ class MarginTransfer:
                         "margin_transfer": margin_transfer.__dict__,
                     }
                 return margin_transfer_endpoint
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+
+class PaymentChannel(BaseModel):
+    id: int
+    network_id: str
+    last_update: datetime
+    payment_channels_router = APIRouter()
+
+    @app.post("/payment-channels", response_model=PaymentChannel)
+    async def create_payment_channel(payment_channel: PaymentChannel):
+        # Implement logic to add a new payment channel to the system
+        # This function will return the newly created payment channel object
+        pass
+
+        @app.get("/payment-channels/{id}", response_model=PaymentChannel)
+        async def get_payment_channel(id: int):
+            # Implement logic to retrieve a specific payment channel by its ID
+            # This function should return the requested payment channel object if found, or raise an HTTPException with status code 404 (Not Found) if not found.
+            pass
+
+            @app.put("/payment-channels/{id}", response_model=PaymentChannel)
+            async def update_payment_channel(id: int, payment_channel: PaymentChannel):
+                # Implement logic to update a specific payment channel by its ID
+                # This function should return the updated payment channel object if successful, or raise an HTTPException with status code 404 (Not Found) if not found.
+                pass
+
+                @app.delete("/payment-channels/{id}")
+                async def delete_payment_channel(id: int):
+                    # Implement logic to delete a specific payment channel by its ID
+                    # This function should return True if the deletion was successful, or raise an HTTPException with status code 404 (Not Found) if not found.
+                    pass
