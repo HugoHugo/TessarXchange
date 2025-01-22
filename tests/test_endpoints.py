@@ -4903,3 +4903,17 @@ def client():
         assert response.status_code == 200
         data = response.json()
         assert "message" in data
+import pytest
+from fastapi.testclient import TestClient
+
+
+def test_audit_log_endpoint():
+    client = TestClient(app)
+    response = client.get("/audit-log")
+    assert response.status_code == 200
+    assert len(response.json()["audits"]) >= 5
+    for audit in response.json()["audits"]:
+        assert isinstance(audit["timestamp"], datetime.datetime)
+        assert isinstance(audit["event_type"], str)
+        assert isinstance(audit["user_id"], int)
+        assert isinstance(audit["description"], str)
