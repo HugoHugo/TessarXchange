@@ -5007,3 +5007,39 @@ def test_bulk_order_import(test_csv):
             assert os.path.exists(
                 os.path.join(tmpdirname, "bulk_order_data", "bulk_order_import.csv")
             )
+from datetime import datetime, timedelta
+from main import generate_compliance_report, app
+
+importpytest
+
+
+def test_generate_compliance_report():
+    report_data = generate_compliance_report()
+    assert isinstance(report_data, dict)
+    assert "report_due_date" in report_data
+
+    @pytest.mark.asyncio
+    async def test_compliance_report_endpoint():
+        client = TestClient(app)
+        response = await client.get("/compliance-report")
+        assert response.status_code == 200
+        assert isinstance(response.json(), dict)
+
+        @pytest.mark.asyncio
+        async def test_schedule_compliance_report_endpoint():
+            client = TestClient(app)
+            report_data = {"report_due_date": "2023-01-20T12:00:00Z"}
+            response = await client.post(
+                "/schedule-compliance-report", json=report_data
+            )
+            assert response.status_code == 200
+            assert isinstance(response.json(), dict)
+
+            @pytest.mark.asyncio
+            async def test_endpoint():
+                client = TestClient(app)
+                with pytest.raises(asyncio.TimeoutError):
+                    response = await client.get("/endpoint")
+                    assert (
+                        False
+                    ), f"Expected asyncio timeout error but got status code {response.status_code}"

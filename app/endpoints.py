@@ -4819,3 +4819,28 @@ async def bulk_order_import(file: UploadFile):
             target_file_path = f"/bulk_order_data/{file.filename}"
             os.rename(temp_file_path, target_file_path)
             return FileResponse(target_file_path, filename=file.filename)
+from fastapi import FastAPI
+from datetime import datetime, timedelta
+
+app = FastAPI()
+
+
+def generate_compliance_report():
+    current_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+    report_due_date = current_time + timedelta(days=7)
+    return {"report_due_date": str(report_due_date)}
+
+
+@app.get("/compliance-report")
+def compliance_report():
+    report_data = generate_compliance_report()
+    return report_data
+
+
+@app.post("/schedule-compliance-report")
+def schedule_compliance_report(report_data: dict):
+    report_due_date = datetime.strptime(
+        report_data["report_due_date"], "%Y-%m-%d %H:%M:%S"
+    )
+    # Implement your logic to send the scheduled email for compliance report
+    return {"status": "Compliance Report Scheduled"}
