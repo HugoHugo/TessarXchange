@@ -5175,3 +5175,47 @@ class AuditLog(BaseModel):
                 f"{audit_log_data.action} completed. Result: {audit_log_data.data}"
             )
             return {"log_id": len(AUDIT_LOGS), "result": final_result}
+from fastapi import FastAPI, HTTPException
+import asyncio
+from datetime import time
+import uvicorn
+
+app = FastAPI()
+
+
+class MaintenanceMode:
+    def __init__(self):
+        self.mode = False
+        self.lock = asyncio.Lock()
+
+        async def enter_mode(self):
+            if not self.mode:
+                await self.lock.acquire()
+                print("Entering maintenance mode...")
+                self.mode = True
+                print("Maintenance mode entered successfully.")
+            else:
+                raise HTTPException(
+                    status_code=500, detail="Already in maintenance mode."
+                )
+                return self.mode
+
+            async def leave_mode(self):
+                if self.mode:
+                    await self.lock.release()
+                    print("Exiting maintenance mode...")
+                    self.mode = False
+                    print("Maintenance mode exited successfully.")
+                else:
+                    raise HTTPException(
+                        status_code=500, detail="Not currently in maintenance mode."
+                    )
+
+                    # Endpoint to check the status of the maintenance mode
+                    @app.get("/maintenance")
+                    async def get_maintenance_mode():
+                        return await MaintenanceMode().enter_mode()
+
+                    # Main program entry point
+                    if __name__ == "__main__":
+                        uvicorn.run(app, host="0.0.0.0", port=8000)

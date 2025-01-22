@@ -5390,3 +5390,27 @@ def test_add_audit_log(client):
     response = client.post("/audit-log", json=audit_log_data)
     assert response.status_code == 200
     assert AuditLog.AUDIT_LOGS[0].data["result"] == "success"
+from fastapi import TestClient
+import asyncio
+from datetime import datetime, time
+from main import app
+
+
+def test_enter_leave_maintenance_mode():
+    client = TestClient(app)
+    # Test entering maintenance mode
+    response = client.get("/maintenance")
+    assert response.status_code == 200
+    content = response.json()
+    assert content["mode"] is True
+    assert asyncio.Lock().acquired() is True
+
+    # Test leaving maintenance mode
+    async def _leave_mode():
+        return await MaintenanceMode().leave_mode()
+
+    loop = asyncio.get_event_loop()
+    response = loop.run_until_complete(_leave_mode())
+    assert response.status_code == 200
+    content = response.json()
+    assert "mode" not in content or content["mode"] is False
