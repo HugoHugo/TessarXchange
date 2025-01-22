@@ -6662,3 +6662,26 @@ def test_create_payment_channel(payment_channel):
             assert response.id == 1
             assert response.network_id == "NetworkB"
             assert response.last_update == datetime.now()
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+from datetime import datetime
+from unittest.mock import patch
+
+
+def test_create_compliance_report():
+    with pytest.raises(HTTPException):
+        response = TestClient(app).post(
+            "/compliance-report",
+            json={"report_id": 123, "date_created": datetime.now()},
+        )
+        assert response.status_code == 400
+
+        @patch("main.datetime")
+        def test_get_current_date(mock_datetime):
+            # Setting the current date to a fixed value
+            mock_datetime.now.return_value = datetime(2023, 1, 5, 10, 30)
+            with pytest.raises(HTTPException):
+                response = TestClient(app).get("/current-date")
+                assert response.status_code == 200
+                # Note: The above test assumes that the "/current-date" endpoint is implemented in the main application code. This implementation detail should be considered while writing further tests.

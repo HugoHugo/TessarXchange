@@ -6664,3 +6664,22 @@ class PaymentChannel(BaseModel):
                     # Implement logic to delete a specific payment channel by its ID
                     # This function should return True if the deletion was successful, or raise an HTTPException with status code 404 (Not Found) if not found.
                     pass
+from fastapi import APIRouter, HTTPException
+from datetime import datetime
+
+router = APIRouter()
+
+
+class ComplianceReport:
+    def __init__(self, report_id: int, date_created: datetime):
+        self.report_id = report_id
+        self.date_created = date_created
+
+        @app.post("/compliance-report")
+        def create_compliance_report(compliance_report_data: ComplianceReport):
+            # In a real scenario, this would be a database operation to save the compliance report.
+            return {
+                "message": "Compliance Report has been created successfully.",
+                "report_id": compliance_report_data.report_id,
+                "date_created": compliance_report_data.date_created,
+            }
