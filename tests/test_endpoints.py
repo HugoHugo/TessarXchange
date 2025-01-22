@@ -5573,3 +5573,41 @@ def test_vesting_schedule_creation():
                     assert response.json() == {
                         "message": f"Vested {vesting_amount} tokens."
                     }
+import pytest
+from fastapi.testclient import TestClient
+from main import app, DIDManager
+
+
+@pytest.fixture()
+def did_manager():
+    return DIDManager()
+
+
+def test_create_did(did_manager):
+    new_did = uuid.uuid4().hex
+    expected_did_doc = DIDDocument(
+        did=new_did,
+        verificationMethod="http://example.com/verification",
+        authenticationMethod="http://example.com/authentication",
+    )
+    assert did_manager.dids == {}
+    response = did_manager.create_did(expected_did_doc)
+    assert response == new_did
+    assert did_manager.dids != {}
+
+    def test_get_did(did_manager):
+        new_did = uuid.uuid4().hex
+        expected_did_doc = DIDDocument(
+            did=new_did,
+            verificationMethod="http://example.com/verification",
+            authenticationMethod="http://example.com/authentication",
+        )
+        response = did_manager.create_did(expected_did_doc)
+        assert response == new_did
+        response = did_manager.get_did(new_did)
+        expected_response = DIDDocument(
+            did=new_did,
+            verificationMethod="http://example.com/verification",
+            authenticationMethod="http://example.com/authentication",
+        )
+        assert response == expected_response

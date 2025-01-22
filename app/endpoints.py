@@ -5409,3 +5409,34 @@ class VestingSchedule:
                                 )
                                 schedule.vest(amount)
                                 return {"message": f"Vested {amount} tokens."}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class DIDDocument(BaseModel):
+    did: str
+    verificationMethod: str
+    authenticationMethod: str
+
+    @classmethod
+    def from_did_document_json(cls, json_data):
+        return cls(**json_data)
+
+    class DIDManager:
+        def __init__(self):
+            self.dids = {}
+
+            async def create_did(self, did_doc: DIDDocument) -> str:
+                if not did_doc.did:
+                    raise HTTPException(status_code=400, detail="DID is missing.")
+                    new_did = uuid.uuid4().hex
+                    self.dids[new_did] = did_doc
+                    return new_did
+
+                async def get_did(self, did: str) -> DIDDocument:
+                    if did not in self.dids:
+                        raise HTTPException(status_code=404, detail="DID not found.")
+                        return self.dids[did]
