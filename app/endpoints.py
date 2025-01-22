@@ -6683,3 +6683,25 @@ class ComplianceReport:
                 "report_id": compliance_report_data.report_id,
                 "date_created": compliance_report_data.date_created,
             }
+from fastapi import FastAPI, HTTPException
+from datetime import datetime
+
+app = FastAPI()
+
+
+class ProofOfReserves:
+    def __init__(self, stablecoins, reserves):
+        self.stablecoins = stablecoins
+        self.reserves = reserves
+
+        @app.post("/proof-of-reserves")
+        def generate_proof_of_reserves(stablecoins: ProofOfReserves):
+            if datetime.now().day < 15:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Proof of Reserves generation period is from day 1 to day 14.",
+                )
+                return {
+                    "stablecoins": stablecoins.stablecoins,
+                    "reserves": stablecoins.reserves,
+                }

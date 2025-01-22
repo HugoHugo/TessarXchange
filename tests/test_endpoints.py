@@ -6685,3 +6685,41 @@ def test_create_compliance_report():
                 response = TestClient(app).get("/current-date")
                 assert response.status_code == 200
                 # Note: The above test assumes that the "/current-date" endpoint is implemented in the main application code. This implementation detail should be considered while writing further tests.
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime
+from main import app
+
+
+def create_app():
+    return app
+
+
+@pytest.fixture()
+def client():
+    app = create_app()
+    with TestClient(app) as c:
+        yield c
+
+        def test_generate_proof_of_reserves(client):
+            response = client.post(
+                "/proof-of-reserves",
+                json={
+                    "stablecoins": {"USD": 1000, "EUR": 500},
+                    "reserves": {"USD": 2000, "EUR": 1500},
+                },
+            )
+            assert response.status_code == 400
+            data = response.json()
+            assert (
+                "Proof of Reserves generation period is from day 1 to day 14."
+                == data["detail"]
+            )
+
+            def test_generate_proof_of_reserves_invalid_date():
+                client = TestClient(create_app())
+                with pytest.raises(HTTPException):
+                    response = client.get("/proof-of-reserves")
+                    assert response.status_code == 400
+                    data = response.json()
+                    assert "Not a valid date" == data["detail"]
