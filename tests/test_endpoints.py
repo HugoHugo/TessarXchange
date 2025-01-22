@@ -4954,3 +4954,27 @@ def client():
                 )
                 result = response.json()
                 assert "trailing_stop_price" in result
+import pytest
+from fastapi.testclient import TestClient
+from your_app import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_set_trading_parameters(client):
+            response = client.post(
+                "/parameters",
+                json={"risk_per_trade": 0.7, "trade_frequency": 15},
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert "status" in data and data["status"] == "trading_parameters_updated"
+
+            def test_get_trading_parameters(client):
+                response = client.get("/parameters")
+                assert response.status_code == 200
+                data = response.json()
+                assert "risk_per_trade" in data and "trade_frequency" in data

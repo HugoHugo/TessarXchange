@@ -4770,3 +4770,33 @@ class StopLossOrder(BaseModel):
 
     class OrderResponse(BaseModel):
         order_id: str
+from fastapi import FastAPI, Path, Query
+from pydantic import BaseModel
+import random
+
+app = FastAPI()
+
+
+class TradingParameter(BaseModel):
+    risk_per_trade: float
+    trade_frequency: int
+    stop_loss_percent: float
+
+    class AutomatedTradingEndpoint(FastAPI):
+        def __init__(self):
+            self.trading_parameters = TradingParameter(
+                risk_per_trade=0.5,
+                trade_frequency=12,
+                stop_loss_percent=2.0,
+            )
+
+            @app.post("/parameters")
+            async def set_trading_parameters(trading_params: TradingParameter = None):
+                if trading_params is not None:
+                    self.trading_parameters.update(trading_params.dict())
+                    print(f"Updated trading parameters: {self.trading_parameters}")
+                    return {"status": "trading_parameters_updated"}
+
+                @app.get("/parameters")
+                async def get_trading_parameters():
+                    return self.trading_parameters
