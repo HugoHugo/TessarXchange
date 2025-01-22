@@ -4591,3 +4591,19 @@ def test_validate_compliance_attestation():
                 )
                 with pytest.raises(HTTPException):
                     assert attest_compliance_attestation(attestation) == False
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+def test_calculate_rebalance_ratio():
+    assert calculate_rebalance_ratio(10, 20, 30) == 0.3333333333333
+    assert calculate_rebalance_ratio(100, 500, 600) == 1 / 6
+
+    def test_startup_function():
+        with pytest.raises(asyncio.CancelledError):
+            startup()
+
+            def test_liquidity_pool_rebalance_endpoint(client: TestClient):
+                response = client.get("/rebalance")
+                assert response.status_code == 200
