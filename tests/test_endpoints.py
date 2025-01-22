@@ -5540,3 +5540,36 @@ def client():
             assert (
                 "status" in data and data["status"] == "signals generated successfully"
             )
+import pytest
+from unittest.mock import patch, MagicMock
+
+
+def test_vesting_schedule_creation():
+    start_date = date(2023, 1, 1)
+    total_tokens = 1000000
+    schedule = VestingSchedule(start_date, total_tokens)
+    assert schedule.start_date == start_date
+    assert schedule.total_tokens == total_tokens
+    assert schedule.vested_tokens == 0
+
+    def test_vesting_schedule_vesting():
+        start_date = date(2023, 1, 1)
+        total_tokens = 1000000
+        vesting_amount = 50000
+        schedule = VestingSchedule(start_date, total_tokens)
+        with pytest.raises(HTTPException) as exc:
+            schedule.vest(vesting_amount)
+            assert str(exc.value) == "Insufficient tokens to vest."
+
+            def test_vesting_schedule_vesting_valid():
+                start_date = date(2023, 1, 1)
+                total_tokens = 1000000
+                vesting_amount = 50000
+                schedule = VestingSchedule(start_date, total_tokens)
+                with patch("main.date") as mock_date:
+                    mock_date.today.return_value = start_date - timedelta(days=10)
+                    response = schedule.vest(vesting_amount)
+                    assert response.status_code == 200
+                    assert response.json() == {
+                        "message": f"Vested {vesting_amount} tokens."
+                    }

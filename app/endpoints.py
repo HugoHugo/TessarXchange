@@ -5362,3 +5362,50 @@ class TradingSignal(BaseModel):
                         # Generate signals from the provided generator
                         request_data.generate_signal()
                         return {"status": "signals generated successfully"}
+from fastapi import APIRouter, HTTPException
+from datetime import date, timedelta
+
+router = APIRouter()
+
+
+class VestingSchedule:
+    def __init__(self, start_date: date, total_tokens: int):
+        self.start_date = start_date
+        self.total_tokens = total_tokens
+        self.vested_tokens = 0
+
+        def vest(self, amount: int):
+            if self.vested_tokens + amount > self.total_tokens:
+                raise HTTPException(
+                    status_code=400, detail="Insufficient tokens to vest."
+                )
+                self.vested_tokens += amount
+
+                def get_vesting_schedule(
+                    start_date: date, total_tokens: int
+                ) -> VestingSchedule:
+                    return VestingSchedule(start_date, total_tokens)
+
+                @app.post("/vesting-schedule")
+                async def create_vesting_schedule(vesting_data: VestingSchedule):
+                    if vesting_data.start_date > date.today():
+                        raise HTTPException(
+                            status_code=400, detail="Start date in the past."
+                        )
+                        return vesting_data
+
+                    @app.get("/vesting-schedules")
+                    async def list_vesting_schedules():
+                        pass  # Implement logic to retrieve and return a list of VestingSchedule objects.
+
+                        @app.put("/vesting-schedule/{schedule_id}/vest")
+                        async def vest_tokens(schedule_id: str, amount: int):
+                            schedule = get_vesting_schedule(
+                                date.today(), total_tokens=1000000
+                            )
+                            if schedule.schedule_id != schedule_id:
+                                raise HTTPException(
+                                    status_code=404, detail="Schedule not found."
+                                )
+                                schedule.vest(amount)
+                                return {"message": f"Vested {amount} tokens."}
