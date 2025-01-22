@@ -6362,3 +6362,29 @@ class MPC:
                     value = generate_random_value()
                     return JSONResponse(content={"value": value}, status_code=200)
                 app.include_router(MPC.as_router())
+from fastapi import FastAPI
+from pydantic import BaseModel
+import json
+
+app = FastAPI()
+
+
+class Oracle(BaseModel):
+    name: str
+    address: str
+    last_updated: datetime
+    # Load Oracles data from a file (JSON)
+    with open("oracles.json", "r") as f:
+        oracles_data = json.load(f)
+        oracles = [Oracle(**o) for o in oracles_data]
+
+        @app.get("/oracles")
+        async def get_oracles():
+            return {"oracles": list(oracles)}
+
+        @app.get("/oracle/{name}")
+        async def get_oracle(name: str):
+            oracle = next((o for o in oracles if o.name == name), None)
+            if not oracle:
+                raise HTTPException(status_code=404, detail="Oracle not found")
+                return {"oracle": oracle}

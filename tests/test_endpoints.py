@@ -6385,3 +6385,24 @@ def test_start_protocol():
 
                 def setup_module(module):
                     module.app.router.include_router(app.MPC.as_router())
+from fastapi.testclient import TestClient
+import pytest
+from main import app, Oracle
+
+client = TestClient(app)
+
+
+def test_get_oracles():
+    response = client.get("/oracles")
+    assert response.status_code == 200
+    assert "oracles" in response.json()
+    assert len(response.json()["oracles"]) > 0
+
+    def test_get_oracle():
+        # Get the first oracle from oracles.json file
+        response = client.get("/oracle/DefaultOracle")
+        assert response.status_code == 200
+        assert "oracle" in response.json()
+        # Check if the returned Oracle matches the one in oracles.json
+        assert response.json()["oracle"].name == "DefaultOracle"
+        assert response.json()["oracle"].address == "123 Main St, Anytown USA"
