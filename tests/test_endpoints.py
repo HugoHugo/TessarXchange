@@ -5788,3 +5788,26 @@ def client():
             def test_get_total_yield_not_found(client):
                 response = client.get("/total-yield/BSC")
                 assert response.status_code == 404
+import asyncio
+from fastapi.testclient import TestClient
+from main import app, LiquidityOptimization
+import pytest
+
+
+@pytest.fixture
+def client():
+    client = TestClient(app)
+    return client
+
+
+async def test_optimize_liquidity(client):
+    response = client.get("/optimize-liquidity")
+    assert response.status_code == 405
+    assert "Method Not Allowed" in str(response.content)
+
+    def test_optimized_endpoint_returns_status_and_details(client):
+        with pytest.raises(HTTPException):
+            response = client.get("/endpoint")
+            data = response.json()
+            assert data["status"] == "optimized"
+            assert isinstance(data["optimization_details"], list)

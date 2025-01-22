@@ -5707,3 +5707,50 @@ class YieldProtocol(enum.Enum):
                             ]
                         )
                         return await yield_manager.get_total_yield(protocol)
+from fastapi import FastAPI, HTTPException
+import asyncio
+from typing import List
+
+app = FastAPI()
+
+
+class LiquidityOptimization:
+    def __init__(self):
+        self.optimized_liquidity = []
+
+        @property
+        def optimized(self) -> bool:
+            return len(self.optimized_liquidity) > 0
+
+        async def optimize_liquidity(self, token_data: List[dict]):
+            for data in token_data:
+                if "liquidity" in data and "price" in data:
+                    if float(data["liquidity"]) < 1000000.0:
+                        self.optimized_liquidity.append(data)
+
+                        def get_optimized_liquidity(self):
+                            return self.optimized_liquidity
+
+                        async def liquidity_optimization_endpoint():
+                            optimization = LiquidityOptimization()
+                            while True:
+                                data = []  # Replace with actual data source
+                                await asyncio.sleep(
+                                    60
+                                )  # Sleep for 1 minute before fetching data again
+                                optimization.optimize_liquidity(data)
+                                if optimization.optimized:
+                                    return {
+                                        "status": "optimized",
+                                        "optimization_details": optimization.get_optimized_liquidity(),
+                                    }
+                                raise HTTPException(
+                                    status_code=404,
+                                    detail="Optimization endpoint not found",
+                                )
+
+                                @app.get("/optimize-liquidity", include_in_schema=False)
+                                async def optimize_liquidity():
+                                    raise HTTPException(
+                                        status_code=405, detail="Method Not Allowed"
+                                    )
