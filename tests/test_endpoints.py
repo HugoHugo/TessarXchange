@@ -6174,3 +6174,62 @@ def test_kyc_document():
         def test_create_user_kyc_invalid(test_user_kyc):
             with pytest.raises(HTTPException):
                 create_user_kyc(user_kyc=test_user_kyc)
+from fastapi.testclient import TestClient
+import json
+from main import app
+
+
+def test_add_collateral():
+    client = TestClient(app)
+    response = client.post(
+        "/collaterals",
+        content={"chain": "test_chain", "amount": 1.0},
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    data = json.loads(response.text)
+    assert isinstance(data, list)
+    assert len(data) > 0
+    assert isinstance(data[0], dict)
+    assert "chain" in data[0]
+    assert "amount" in data[0]
+
+    def test_get_collaterals():
+        client = TestClient(app)
+        # add a collateral to the json file
+        response_add = client.post(
+            "/collaterals",
+            content={"chain": "test_chain", "amount": 1.0},
+            headers={"Content-Type": "application/json"},
+        )
+        assert response_add.status_code == 200
+        with open("main/collaterals.json", "r") as f:
+            collaterals = json.load(f)
+            assert len(collaterals) > 0
+            assert isinstance(collaterals[0], dict)
+
+            def test_update_collateral():
+                client = TestClient(app)
+                # add a collateral to the json file
+                response_add = client.post(
+                    "/collaterals",
+                    content={"chain": "test_chain", "amount": 1.0},
+                    headers={"Content-Type": "application/json"},
+                )
+                assert response_add.status_code == 200
+                with open("main/collaterals.json", "r") as f:
+                    collaterals = json.load(f)
+                    initial_collateral_data = {c["chain"]: c for c in collaterals}
+                    # update the collateral
+                    response_update = client.put(
+                        "/collaterals/test_chain",
+                        content={"chain": "test_chain", "amount": 2.0},
+                        headers={"Content-Type": "application/json"},
+                    )
+                    assert response_update.status_code == 200
+                    with open("main/collaterals.json", "r") as f:
+                        collaterals = json.load(f)
+                        updated_collateral_data = {c["chain"]: c for c in collaterals}
+                        # check if the collateral has been updated
+                        assert initial_collateral_data["test_chain"]["amount"] == 1.0
+                        assert updated_collateral_data["test_chain"]["amount"] == 2.0

@@ -6227,3 +6227,46 @@ class KycDocument(BaseModel):
                         raise HTTPException(
                             status_code=500, detail="Internal server error"
                         )
+from fastapi import APIRouter, Path
+from pydantic import BaseModel
+import json
+
+
+class Collateral(BaseModel):
+    chain: str
+    amount: float
+    cross_chain_collatels_router = APIRouter()
+
+    @app.post("/collaterals")
+    async def add_collateral(collateral_data: Collateral):
+        with open("collaterals.json", "r") as f:
+            collaterals = json.load(f)
+            new_collateral = {
+                "chain": collateral_data.chain,
+                "amount": collateral_data.amount,
+            }
+            collaterals.append(new_collateral)
+            with open("collaterals.json", "w") as f:
+                json.dump(collaterals, f)
+                return {"message": "Collateral added successfully"}
+
+            @app.get("/collaterals")
+            async def get_collaterals():
+                with open("collaterals.json", "r") as f:
+                    collaterals = json.load(f)
+                    return collaterals
+
+                @app.put("/collaterals/{chain}")
+                async def update_collateral(chain: str, collateral_data: Collateral):
+                    with open("collaterals.json", "r") as f:
+                        collaterals = json.load(f)
+                        for i in range(len(collaterals)):
+                            if collaterals[i]["chain"] == chain:
+                                collaterals[i] = {
+                                    "chain": collateral_data.chain,
+                                    "amount": collateral_data.amount,
+                                }
+                                break
+                            with open("collaterals.json", "w") as f:
+                                json.dump(collaterals, f)
+                                return {"message": "Collateral updated successfully"}
