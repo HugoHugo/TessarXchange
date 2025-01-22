@@ -6558,3 +6558,23 @@ def test_kyc_endpoint():
                                 )
                                 assert b"KYC verification failed" in response.content
                                 assert response.status_code == 400
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    yield TestClient(app)
+
+    def test_get_markets_data(client):
+        response = client.get("/markets")
+        assert response.status_code == 200
+        assert isinstance(response.json(), list)
+        assert all(isinstance(item, dict) for item in response.json())
+
+        def test_execute_arbitrage(client):
+            with pytest.raises(HTTPException):
+                data = {"symbol": "AAPL", "exchange": "NYSE"}
+                response = client.post("/execute_arbitrage", json=data)
+                assert response.status_code == 500

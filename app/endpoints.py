@@ -6523,3 +6523,42 @@ class Document(BaseModel):
         # Validate the content of the document according to legal requirements
         # If the document passes validation, store it in a secure database.
         return {"message": "KYC verification successful"}
+from fastapi import FastAPI, HTTPException
+import asyncio
+import pytrader
+
+app = FastAPI()
+
+
+async def get_markets():
+    markets = await pytrader.markets.get()
+    return markets
+
+
+@app.get("/markets", response_model=list[dict])
+async def get_markets_data():
+    markets = await get_markets()
+    market_data = [
+        {"symbol": market.symbol, "exchange": market.exchange} for market in markets
+    ]
+    return market_data
+
+
+@app.post("/execute_arbitrage")
+async def execute_arbitrage(data: pytrader.arbitrage.Data):
+    try:
+        order = pytrader.order.Order(
+            symbol=data.symbol,
+            exchange=data.exchange,
+            side="sell" if data.sold else "buy",
+            quantity=data.quantity,
+            price=data.price,
+        )
+        await asyncio.sleep(1)  # sleep for 1 second to allow time for other processes
+        executor = pytrader.orderbook.OrderbookExecutor(
+            api=pytrader.api.TradeStationAPI()
+        )
+        await executor.place(order)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        return {"status": "success", "result": "arbitrage order placed"}
