@@ -5892,3 +5892,24 @@ def client():
             def test_get_verification_status(client):
                 response = client.get("/verify", params={"verification_id": "1"})
                 assert response.status_code == 200
+from fastapi.testclient import TestClient
+import pytest
+from main import app, rebalance_pool, rebalance_endpoint
+
+
+def test_rebalance_endpoint():
+    client = TestClient(app)
+    response = client.get("/rebalance")
+    assert response.status_code == 200
+    data = response.json()
+    assert "rebalance_status" in data
+    assert "last_rebalanced_time" in data
+
+    @pytest.mark.asyncio
+    async def test_rebalance_endpoint_async():
+        client = TestClient(app)
+        response = await client.get("/rebalance")
+        assert response.status_code == 200
+        data = response.json()
+        assert "rebalance_status" in data
+        assert "last_rebalanced_time" in data
