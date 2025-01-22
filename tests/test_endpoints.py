@@ -5811,3 +5811,25 @@ async def test_optimize_liquidity(client):
             data = response.json()
             assert data["status"] == "optimized"
             assert isinstance(data["optimization_details"], list)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_withdraw_request():
+    client = TestClient(app)
+    # Test successful withdrawal with sufficient funds
+    data = {"amount": 500, "address": "123 Test St"}
+    response = client.post("/withdraw", json=data)
+    assert response.status_code == 200
+    content = response.json()
+    assert content["amount"] == 500
+    assert content["balance"] > 1000
+    # Test failure due to insufficient funds
+    data_insufficient_funds = {"amount": 600, "address": "123 Test St"}
+    response_insufficient_funds = client.post("/withdraw", json=data_insufficient_funds)
+    assert response_insufficient_funds.status_code == 400
+    content_insufficient_funds = response_insufficient_funds.json()
+    assert (
+        content_insufficient_funds["detail"] == "Insufficient funds for the withdrawal."
+    )

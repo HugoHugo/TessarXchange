@@ -5754,3 +5754,23 @@ class LiquidityOptimization:
                                     raise HTTPException(
                                         status_code=405, detail="Method Not Allowed"
                                     )
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class WithdrawRequest(BaseModel):
+    amount: float
+    address: str
+
+    @app.post("/withdraw", response_model=WithdrawRequest)
+    async def withdraw(request_data: WithdrawRequest):
+        user_balance = 1000.0  # Assuming a default balance of $1000
+        if request_data.amount > user_balance:
+            raise HTTPException(
+                status_code=400, detail="Insufficient funds for the withdrawal."
+            )
+            # Update balance after successful withdrawal
+            updated_balance = user_balance - request_data.amount
+            return request_data
