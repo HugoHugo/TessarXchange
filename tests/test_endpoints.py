@@ -4644,3 +4644,56 @@ def test_position_netting():
                 client = TestClient(app)
                 response = client.get("/endpoint")
                 assert response.status_code == 200
+import pytest
+from main import app, DebtPosition
+
+
+@pytest.main
+def test_get_positions():
+    client = TestClient(app)
+    response = client.get("/positions")
+    assert response.status_code == 200
+    assert isinstance(response.json(), DebtPositions)
+
+    def test_create_position():
+        client = TestClient(app)
+        new_debt_position = DebtPosition(
+            id=str(uuid.uuid4()),
+            creditor_id="C1",
+            debtor_id="D1",
+            amount=1000.0,
+            interest_rate=5.0,
+            maturity_date=datetime(2023, 12, 10),
+        )
+        response = client.post("/positions", json=new_debt_position.dict())
+        assert response.status_code == 200
+        assert "id" in response.json()
+
+        def test_update_position():
+            client = TestClient(app)
+            updated_debt_position = DebtPosition(
+                id=str(uuid.uuid4()),
+                creditor_id="C1",
+                debtor_id="D1",
+                amount=1000.0,
+                interest_rate=5.0,
+                maturity_date=datetime(2023, 12, 10),
+            )
+            response = client.put(
+                "/positions/{position_id}".format(position_id=str(uuid.uuid4())),
+                json=updated_debt_position.dict(),
+            )
+            assert response.status_code == 200
+            assert "id" in response.json()
+
+            def test_update_position_not_found():
+                client = TestClient(app)
+                with pytest.raises(HTTPException):
+                    response = client.put(
+                        "/positions/{position_id}".format(
+                            position_id="nonexistent",
+                        ),
+                        json={"creditor_id": "C1", "debtor_id": "D1"},
+                    )
+                    assert response.status_code == 404
+                    assert "Position not found." in str(response.content)

@@ -4481,3 +4481,54 @@ class CrossMarginPositionNetting:
                         @app.get("/positions")
                         def get_positions(position_netting: CrossMarginPositionNetting):
                             return await position_netting.get_positions_dict()
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class DebtPosition(BaseModel):
+    id: str
+    creditor_id: str
+    debtor_id: str
+    amount: float
+    interest_rate: float
+    maturity_date: datetime
+
+    class DebtPositions(BaseModel):
+        positions: list[DebtPosition]
+
+        @app.post("/positions", response_model=DebtPosition)
+        async def create_position(position: DebtPosition = ...):
+            position.id = str(uuid.uuid4())
+            return position
+
+        @app.put("/positions/{position_id}", response_model=DebtPosition)
+        async def update_position(position_id: str, position: DebtPosition):
+            if not position.id or position_id != position.id:
+                raise HTTPException(status_code=404, detail="Position not found.")
+                return position
+
+            @app.get("/positions", response_model=DebtPositions)
+            async def get_positions():
+                positions = [
+                    DebtPosition(id=str(uuid.uuid4()), **data)
+                    for data in [
+                        {
+                            "creditor_id": "C1",
+                            "debtor_id": "D1",
+                            "amount": 1000.0,
+                            "interest_rate": 5.0,
+                            "maturity_date": datetime(2023, 12, 10),
+                        },
+                        {
+                            "creditor_id": "C2",
+                            "debtor_id": "D2",
+                            "amount": 1500.0,
+                            "interest_rate": 6.0,
+                            "maturity_date": datetime(2024, 1, 15),
+                        },
+                    ]
+                ]
+                return DebtPositions(positions=positions)
