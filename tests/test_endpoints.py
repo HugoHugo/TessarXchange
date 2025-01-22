@@ -4557,3 +4557,37 @@ def test_verify_state():
             with pytest.delegates() as delegates:
                 CrossChainState.verify_and_process_state(state)
                 raise Exception("Test exception")
+import pytest
+from fastapi.testclient import TestClient
+from main import (
+    ComplianceAttestation,
+    validate_compliance_attestation,
+    attest_compliance_attestation,
+)
+
+
+def test_validate_compliance_attestation():
+    attestation = ComplianceAttestation(
+        attester_public_key="attester_public_key",
+        timestamp=datetime.now(),
+        attestation_data="valid_data",
+    )
+    assert validate_compliance_attestation(attestation) == True
+
+    def test_attest_compliance_attestation_valid():
+        attestation = ComplianceAttestation(
+            attester_public_key="attester_public_key",
+            timestamp=datetime.now(),
+            attestation_data="valid_data",
+        )
+        with pytest.raises(HTTPException):
+            assert attest_compliance_attestation(attestation) == True
+
+            def test_attest_compliance_attestation_invalid():
+                attestation = ComplianceAttestation(
+                    attester_public_key="attester_public_key",
+                    timestamp=datetime.now(),
+                    attestation_data="invalid_data",
+                )
+                with pytest.raises(HTTPException):
+                    assert attest_compliance_attestation(attestation) == False
