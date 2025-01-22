@@ -5770,3 +5770,21 @@ def client():
                 response = client.get("/token_vestings")
                 all_vestings = response.json()
                 assert len(all_vestings) > 0
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_get_total_yield(client):
+            response = client.get("/total-yield/ETH")
+            assert response.status_code == 200
+            assert isinstance(response.json(), float)
+
+            def test_get_total_yield_not_found(client):
+                response = client.get("/total-yield/BSC")
+                assert response.status_code == 404

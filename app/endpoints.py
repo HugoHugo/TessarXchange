@@ -5652,3 +5652,58 @@ class TokenVesting(BaseModel):
                     raise HTTPException(status_code=400, detail="Invalid lockup period")
                     self.vestings.append(token_vesting)
                     app.include_router(TokenVestingAPI.router)
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import enum
+
+app = FastAPI()
+
+
+class YieldProtocol(enum.Enum):
+    ETH = "ETH"
+    BSC = "BSC"
+
+    class YieldAggregation(BaseModel):
+        protocol: YieldProtocol
+        token_address: str
+        lp_token_address: str
+        total_yield: float
+
+        class YieldManager:
+            def __init__(self, yield_aggregations: list[YieldAggregation]):
+                self.yield_aggregations = yield_aggregations
+
+                async def get_total_yield(self, protocol: YieldProtocol):
+                    aggregation = next(
+                        (
+                            ag
+                            for ag in self.yield_agregations
+                            if ag.protocol == protocol
+                        ),
+                        None,
+                    )
+                    if not aggregation:
+                        raise HTTPException(
+                            status_code=404, detail="Yield aggregation not found"
+                        )
+                        return aggregation.total_yield
+
+                    @app.get("/total-yield/{protocol}", response_model=float)
+                    async def total_yield(protocol: YieldProtocol):
+                        yield_manager = YieldManager(
+                            [
+                                YieldAggregation(
+                                    protocol=YieldProtocol.ETH,
+                                    token_address="0x...",  # replace with actual address
+                                    lp_token_address="0x...",  # replace with actual address
+                                    total_yield=1234567890.0,  # placeholder value
+                                ),
+                                YieldAggregation(
+                                    protocol=YieldProtocol.BSC,
+                                    token_address="0x...",  # replace with actual address
+                                    lp_token_address="0x...",  # replace with actual address
+                                    total_yield=9876543210.0,  # placeholder value
+                                ),
+                            ]
+                        )
+                        return await yield_manager.get_total_yield(protocol)
