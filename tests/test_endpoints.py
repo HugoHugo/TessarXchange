@@ -5187,3 +5187,26 @@ def test_get_all_pools():
                 )
                 system = LiquidityAggregationSystem()
                 assert system.add_pool(pool)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_generate_stress_test_data():
+    data = generate_stress_test_data()
+    assert isinstance(data, list)
+    assert len(data) > 0
+
+    def test_smart_contract_stress_test_endpoint():
+        client = TestClient(app)
+        response = client.get("/smart-contract-stress-test")
+        # Assert that the correct HTTP method was used
+        assert response.request.method == "GET"
+        # Check that the response status code is 200 (OK)
+        assert response.status_code == 200
+        # Extract data from the JSON response
+        content = response.json()
+        data = content["data"]
+        # Assert that data is a list and not empty
+        assert isinstance(data, list)
+        assert len(data) > 0
