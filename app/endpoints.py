@@ -6068,3 +6068,47 @@ class DIDDocument(BaseModel):
                                 ):
                                     create_did(dids_repository)
                                     return {"message": "New DID created successfully"}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class Position(BaseModel):
+    id: str
+    symbol: str
+    quantity: float
+    price: float
+    timestamp: datetime
+    POSITIONS = {}
+
+    def get_position(position_id: str) -> Position:
+        if position_id not in POSITIONS:
+            raise HTTPException(status_code=404, detail="Position not found")
+            return POSpositions[position_id]
+
+        @app.post("/position")
+        async def create_position(position_data: Position):
+            new_position_id = str(uuid.uuid4())
+            POSITIONS[new_position_id] = position_data
+            return {"id": new_position_id}
+
+        @app.put("/position/{position_id}")
+        async def update_position(position_id: str, updated_position_data: Position):
+            if position_id not in POSITIONS:
+                raise HTTPException(status_code=404, detail="Position not found")
+                original_position = POSITIONS[position_id]
+                for field in original_position.fields():
+                    value = getattr(original_position, field)
+                    setattr(updated_position_data, field, value)
+                    POSITIONS[position_id] = updated_position_data
+                    return {"id": position_id}
+
+                @app.get("/position/{position_id}")
+                async def get_position(position_id: str):
+                    if position_id not in POSITIONS:
+                        raise HTTPException(
+                            status_code=404, detail="Position not found"
+                        )
+                        return {"id": position_id, "data": POSITIONS[position_id]}

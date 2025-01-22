@@ -6025,3 +6025,28 @@ def test_create_did():
                         assert did_document.id
                         assert did_document.verificationMethod
                         assert did_document.authentication
+import pytest
+from main import app
+
+
+def setup_module(module):
+    app.dependency_overrides = {
+        app.get: lambda *_: [
+            {
+                "id": "test_position",
+                "data": {"symbol": "AAPL", "quantity": 10, "price": 150.0},
+            }
+        ]
+    }
+
+    def test_get_position():
+        client = TestClient(app)
+        response = client.get("/position/test_position")
+        assert response.status_code == 200
+        position_data = response.json()
+        assert position_data["symbol"] == "AAPL"
+        assert position_data["quantity"] == 10
+        assert position_data["price"] == 150.0
+
+        def teardown_module(module):
+            del app.dependency_overrides[app.get]
