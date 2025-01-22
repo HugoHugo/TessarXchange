@@ -5325,3 +5325,18 @@ def client():
                             "date_claimed": datetime.now(),
                         }
                         assert data == expected_data
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    yield TestClient(app)
+
+    def test_get_risk_factors(client):
+        response = client.get("/risk_factors")
+        assert response.status_code == 200
+        result = response.json()
+        risk_factors = result["riskFactors"]
+        assert len(risk_factors) > 0

@@ -5091,3 +5091,39 @@ class InsuranceClaim(BaseModel):
             new_status = "approved" if claim.claim_amount > 0 else "denied"
             claim.claim_status = new_status
             return claim
+from fastapi import FastAPI, Path
+from pydantic import BaseModel
+import random
+
+app = FastAPI()
+
+
+# Define Risk Factor Model
+class RiskFactor(BaseModel):
+    id: int
+    name: str
+    value: float
+    category: str
+    weightage: float
+    # Generate a list of risk factors
+    risk_factors = [
+        RiskFactor(
+            id=1,
+            name="Body Mass Index (BMI)",
+            value=random.uniform(18.5, 30),
+            weightage=0.3,
+            category="Health",
+        ),
+        RiskFactor(
+            id=2,
+            name="Smoking status",
+            value="Yes" if random.random() < 0.4 else "No",
+            weightage=0.1,
+            category="Lifestyle",
+        ),
+        ...,
+    ]
+
+    @app.get("/risk_factors")
+    async def risk_factor_list():
+        return {"riskFactors": risk_factors}
