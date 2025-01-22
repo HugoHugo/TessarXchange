@@ -5833,3 +5833,14 @@ def test_withdraw_request():
     assert (
         content_insufficient_funds["detail"] == "Insufficient funds for the withdrawal."
     )
+import pytest
+from fastapi.testclient import TestClient
+
+
+def test_bulk_approve_endpoint():
+    client = TestClient(app)
+    with pytest.raises(HTTPException):
+        response = client.get("/bulk-approve")
+        print(response.status_code)
+        # Check if the endpoint returns an HTTP 200 status code.
+        assert response.status_code == 200

@@ -5774,3 +5774,33 @@ class WithdrawRequest(BaseModel):
             # Update balance after successful withdrawal
             updated_balance = user_balance - request_data.amount
             return request_data
+from fastapi import FastAPI, HTTPException, Path
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class ApprovalRequest(BaseModel):
+    request_id: int
+    user_id: int
+    amount: float
+    status: str
+
+    @app.post("/approval-request", response_model=ApprovalRequest)
+    def add_approval_request(request_data: ApprovalRequest):
+        if not request_data.status == "PENDING":
+            raise HTTPException(
+                status_code=400, detail="The request must be in 'PENDING' state."
+            )
+            return request_data
+
+        @app.put("/bulk-approve")
+        def bulk_approve(approval_ids: list[int]):
+            for approval_id in approval_ids:
+                # Simulate database operation to update the status
+                # of the specific approval ID.
+                print(f"Approved Approval ID: {approval_id}")
+                raise HTTPException(
+                    status_code=200,
+                    detail="Bulk withdrawal approvals have been successfully processed.",
+                )
