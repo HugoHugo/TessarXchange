@@ -4664,3 +4664,54 @@ def cancel_order(order_id: int):
     if not has_valid_order:
         raise HTTPException(status_code=404, detail="Order not found")
         return {"message": "Order cancelled successfully", "order_id": order_id}
+from fastapi import FastAPI, HTTPException
+from alembic.config import Config
+from sqlalchemy import create_engine
+from sqlalchemy.engine import reflection
+import os
+from aiomysql.pool import create_pool as create_mysql_pool
+
+app = FastAPI()
+DATABASE_URL = "sqlite+aiosqlite:///app.db?check_same_file=True"
+
+
+def get_db_url():
+    if os.getenv("RUNNING_IN_DOCKER"):
+        return DATABASE_URL.replace("sqlite", "postgresql")
+    return DATABASE_URL
+
+
+engine = create_engine(get_db_url())
+Base = app.models.Base
+metadata = Base.metadata
+# Migrate the database schema to version 1.
+config_obj = Config(os.path.join("alembic", "versions"))
+mig = config_obj.compare_against_base()
+if mig.version == (1, 0, 0):
+    print("No migration needed.")
+else:
+    # Run Alembic command to upgrade the database schema
+    os.system(f"alembic upgrade head")
+    metadata.create_all(engine)
+    # Close and re-create the engine for connection pooling purposes.
+    mysql_engine = create_mysql_pool(
+        host="localhost",
+        port=3306,
+        user="your_username",
+        password="your_password",
+        mincached=5,
+    )
+
+    @app.get("/migrate")
+    def migrate():
+        if not os.path.exists("alembic"):
+            raise HTTPException(status_code=404, detail="Alembic directory not found.")
+            config_obj = Config(os.path.join("alembic", "versions"))
+            mig = config_obj.compare_against_base()
+            # Run Alembic command to upgrade the database schema
+            os.system(
+                f"alembic revision --autogenerate -m 'Add migration system'"
+                " && alembic upgrade head"
+            )
+            metadata.create_all(engine, checkfirst=True)
+            return {"message": "Database schema has been successfully migrated."}

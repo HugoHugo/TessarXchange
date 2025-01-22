@@ -4886,3 +4886,20 @@ def client():
             response = client.get("/cancel/9999")
             assert response.status_code == 404
             assert "Order not found" in response.text
+import os
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app
+
+
+@pytest.fixture
+def client():
+    yield TestClient(app)
+
+    # This test ensures that running migrations is possible.
+    def test_migrate(client):
+        response = client.get("/migrate")
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data
