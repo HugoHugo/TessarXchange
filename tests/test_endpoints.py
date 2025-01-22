@@ -6578,3 +6578,30 @@ def client():
                 data = {"symbol": "AAPL", "exchange": "NYSE"}
                 response = client.post("/execute_arbitrage", json=data)
                 assert response.status_code == 500
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime
+
+app = FastAPI()
+
+
+def test_create_reward_snapshot():
+    snapshot = create_reward_snapshot(
+        total_staked=100,
+        reward_percentage=5,
+    )
+    assert snapshot.total_staked == 100
+    assert snapshot.reward_percentage == 5
+
+    def test_get_reward_snapshot_unexpected_exception():
+        with pytest.raises(HTTPException):
+            get_reward_snapshot()
+
+            @pytest.mark.asyncio
+            async def test_get_rewards():
+                client = TestClient(app)
+                response = await client.get("/snapshot")
+                data = response.json()
+                assert data["timestamp"].replace(
+                    microsecond=0
+                ) != datetime.utcnow().replace(microsecond=0)

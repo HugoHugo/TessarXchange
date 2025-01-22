@@ -6562,3 +6562,40 @@ async def execute_arbitrage(data: pytrader.arbitrage.Data):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
         return {"status": "success", "result": "arbitrage order placed"}
+from fastapi import FastAPI, HTTPException
+import models
+from models import RewardSnapshot
+
+app = FastAPI()
+
+
+def create_reward_snapshot(
+    total_staked: float,
+    reward_percentage: float,
+) -> RewardSnapshot:
+    snapshot = RewardSnapshot(
+        timestamp=datetime.utcnow(),
+        total_staked=total_staked,
+        reward_percentage=reward_percentage,
+    )
+    return snapshot
+
+
+@app.get("/snapshot", response_model=RewardSnapshot)
+async def get_reward_snapshot():
+    snapshot = create_reward_snapshot(
+        total_staked=models.StakerModel.find_total_staked(),
+        reward_percentage=models.LiquidityMiningContract.rewards_percent(),
+    )
+    if not snapshot.total_staked or not snapshot.reward_percentage:
+        raise HTTPException(status_code=400, detail="Invalid snapshot data")
+        return snapshot
+
+    @app.get("/rewards", response_model=list)
+    async def get_rewards():
+        snapshots = models.RewardSnapshotModel.find_all_snapshots()
+        rewards = []
+        for snapshot in snapshots:
+            percentage = (snapshot.reward_percentage / 100) * snapshot.total_staked
+            rewards.append(percentage)
+            return rewards
