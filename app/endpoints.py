@@ -5219,3 +5219,29 @@ class MaintenanceMode:
                     # Main program entry point
                     if __name__ == "__main__":
                         uvicorn.run(app, host="0.0.0.0", port=8000)
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class TransactionCosts(BaseModel):
+    volume: float
+    spread_percentage: float
+    base_fee: float
+
+    def calculate_transaction_costs(trcs: TransactionCosts):
+        volume = trcs.volume
+        spread_percent = trcs.spread_percentage / 100
+        base_fee = trcs.base_fee
+        bid_ask_spread = (spread_percent * volume) + base_fee
+        return {
+            "total_cost": bid_ask_spread,
+            "base_fee": base_fee,
+            "spread_cost": bid_ask_spread - base_fee,
+        }
+
+    @app.post("/transaction-costs")
+    def get_transaction_costs(trcs: TransactionCosts):
+        result = calculate_transaction_costs(trcs)
+        return {"transaction_costs": result}

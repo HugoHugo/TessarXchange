@@ -5414,3 +5414,23 @@ def test_enter_leave_maintenance_mode():
     assert response.status_code == 200
     content = response.json()
     assert "mode" not in content or content["mode"] is False
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_calculate_transaction_costs():
+    trcs = TransactionCosts(volume=1000, spread_percentage=2, base_fee=0.01)
+    expected_output = {"total_cost": 11.1, "base_fee": 0.01, "spread_cost": 11.1 - 0.01}
+    result = calculate_transaction_costs(trcs)
+    assert result == expected_output
+
+    def test_get_transaction_costs():
+        trcs = TransactionCosts(volume=1000, spread_percentage=2, base_fee=0.01)
+        client = TestClient(app)
+        response = client.post("/transaction-costs", json=trcs.json())
+        result = response.json()
+        assert response.status_code == 200
+        assert "total_cost" in result
+        assert "base_fee" in result
+        assert "spread_cost" in result
