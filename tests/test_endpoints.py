@@ -5153,3 +5153,37 @@ def test_list_collaterals():
                 assert "token_address" in data
                 assert "token_symbol" in data
                 assert "amount" in data
+import pytest
+from fastapi.testclient import TestClient
+from main import app, LiquidityPool
+
+
+def test_get_all_pools():
+    client = TestClient(app)
+    response = client.get("/liquidity-pools")
+    assert response.status_code == 200
+    data = response.json()
+    for item in data:
+        assert isinstance(item, LiquidityPool)
+
+        def test_validate_pool():
+            pool1 = LiquidityPool(
+                chain="ETH",
+                token1="DAI",
+                token2="USDC",
+                liquidity=100,
+            )
+            pool2 = LiquidityPool(chain="BTC", token1="BCH", token2="LTC", liquidity=50)
+            system = LiquidityAggregationSystem()
+            assert system.validate_pool(pool1)
+            assert system.validate_pool(pool2) is False
+
+            def test_add_pool():
+                pool = LiquidityPool(
+                    chain="ETH",
+                    token1="DAI",
+                    token2="USDC",
+                    liquidity=100,
+                )
+                system = LiquidityAggregationSystem()
+                assert system.add_pool(pool)

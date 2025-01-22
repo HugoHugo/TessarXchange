@@ -4961,3 +4961,40 @@ class Collateral(BaseModel):
                     token_symbol="DAI",
                     amount="5000000",
                 )
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import json
+
+app = FastAPI()
+
+
+class LiquidityPool(BaseModel):
+    chain: str
+    token1: str
+    token2: str
+    liquidity: float
+
+    class LiquidityAggregationSystem:
+        def __init__(self):
+            self.pools = []
+
+            @classmethod
+            def load_data(cls, filename="liquidity_pools.json"):
+                with open(filename, "r") as file:
+                    data = json.load(file)
+                    return cls._make(pools=data)
+
+                def add_pool(self, pool: LiquidityPool):
+                    if not self.validate_pool(pool):
+                        raise HTTPException(
+                            status_code=400, detail="Invalid liquidity pool"
+                        )
+                        self.pools.append(pool)
+
+                        def validate_pool(self, pool: LiquidtyPool) -> bool:
+                            # Validation logic for the liquidity pool
+                            return True
+
+                        @app.get("/liquidity-pools", response_model=list[LiquidityPool])
+                        def get_all_pools():
+                            return LiquidityAggregationSystem.load_data().pools
