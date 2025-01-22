@@ -5151,3 +5151,27 @@ class WithdrawalRequest(BaseModel):
                 "amount": request_data.amount,
                 "balance": user_balance,
             }
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import time
+
+app = FastAPI()
+
+
+class AuditLog(BaseModel):
+    timestamp: str
+    user_id: int
+    action: str
+    data: dict
+    AUDIT_LOGS = []
+
+    @app.post("/audit-log")
+    def add_audit_log(audit_log_data: AuditLog):
+        if not audit_log_data.data:
+            raise HTTPException(status_code=400, detail="Data is missing")
+            AUDIT_LOGS.append(audit_log_data)
+            # Simulate data processing and store the final result
+            final_result = (
+                f"{audit_log_data.action} completed. Result: {audit_log_data.data}"
+            )
+            return {"log_id": len(AUDIT_LOGS), "result": final_result}

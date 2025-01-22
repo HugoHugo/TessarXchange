@@ -5370,3 +5370,23 @@ def client():
                 assert response.status_code == 400
                 result = response.json()
                 assert "detail" in result
+import pytest
+from main import app, AuditLog
+from fastapi.testclient import TestClient
+
+
+@pytest.fixture()
+def client():
+    return TestClient(app)
+
+
+def test_add_audit_log(client):
+    audit_log_data = {
+        "timestamp": str(time.time()),
+        "user_id": 123,
+        "action": "completed",
+        "data": {"result": "success"},
+    }
+    response = client.post("/audit-log", json=audit_log_data)
+    assert response.status_code == 200
+    assert AuditLog.AUDIT_LOGS[0].data["result"] == "success"
