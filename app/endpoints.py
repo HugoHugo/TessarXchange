@@ -5934,3 +5934,20 @@ def rebalance_pool(pool: dict, base_asset: str, quote_asset: str) -> None:
             "rebalance_status": "Successful",
             "last_rebalanced_time": datetime.utcnow().isoformat(),
         }
+from fastapi import APIRouter, Path, Query
+from pydantic import BaseModel
+import uuid
+
+
+class RebalanceRequest(BaseModel):
+    token_id: str
+    new_weight: float
+    rebalance_router = APIRouter()
+
+    @rebalance_router.post("/rebalance")
+    async def rebalance_tokens(rebalance_request: RebalanceRequest):
+        # Generate a unique identifier for the current rebalancing operation.
+        operation_id = uuid.uuid4().hex
+        # Logic to perform token rebalancing, including updating weights
+        # This should be replaced with your actual implementation logic.
+        return {"operation_id": operation_id}

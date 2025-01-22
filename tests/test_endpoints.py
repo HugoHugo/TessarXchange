@@ -5913,3 +5913,15 @@ def test_rebalance_endpoint():
         data = response.json()
         assert "rebalance_status" in data
         assert "last_rebalanced_time" in data
+import pytest
+from main import rebalance_tokens
+
+
+@pytest.mark.parametrize(
+    "token_id,new_weight,expected_response",
+    [("abc123", 0.6, {"operation_id": "f3e4d56-7890-a1b2-c3d4-5678e9"})],
+    arguments="token_id new_weight expected_response",
+)
+def test_rebalance_tokens(token_id, new_weight, expected_response):
+    response = rebalance_tokens(token_id=token_id, new_weight=new_weight)
+    assert response == expected_response
