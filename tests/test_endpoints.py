@@ -5043,3 +5043,59 @@ def test_generate_compliance_report():
                     assert (
                         False
                     ), f"Expected asyncio timeout error but got status code {response.status_code}"
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_create_identity(client):
+            identity_data = {"user_id": "test_user1", "public_key": "random_public_key"}
+            response = client.post("/identity", json=identity_data)
+            assert response.status_code == 200
+            assert response.json() == {
+                "user_id": "test_user1",
+                "public_key": "random_public_key",
+            }
+
+            def test_get_identity(client):
+                identity_data = {
+                    "user_id": "test_user2",
+                    "public_key": "random_public_key",
+                }
+                response = client.get("/identity/test_user2")
+                assert response.status_code == 200
+                assert response.json() == {
+                    "user_id": "test_user2",
+                    "public_key": "random_public_key",
+                }
+
+                def test_update_identity(client):
+                    user_id = "test_user3"
+                    updated_identity_data = {
+                        "user_id": user_id,
+                        "public_key": "new_random_public_key",
+                    }
+                    response = client.put(
+                        "/identity/{user_id}".format(user_id=user_id),
+                        json=updated_identity_data,
+                    )
+                    assert response.status_code == 200
+                    assert response.json() == {
+                        "user_id": user_id,
+                        "public_key": "new_random_public_key",
+                    }
+
+                    def test_delete_identity(client):
+                        user_id = "test_user4"
+                        response = client.delete(
+                            "/identity/{user_id}".format(user_id=user_id)
+                        )
+                        assert response.status_code == 200
+                        assert response.json() == {
+                            "detail": f"User ID {user_id} has been successfully deleted."
+                        }
