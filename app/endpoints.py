@@ -5280,3 +5280,17 @@ class QuoteRequest(BaseModel):
                         status_code=400, detail="Invalid request ID for settlement"
                     )
                     return settlement
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import datetime
+
+app = FastAPI()
+
+
+class Trade(BaseModel):
+    timestamp: datetime.datetime
+    user_id: int
+    amount: float
+
+    class UserTrades(BaseModel):
+        user_trades: list[Trade]

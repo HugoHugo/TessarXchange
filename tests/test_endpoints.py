@@ -5458,3 +5458,42 @@ def test_invalid_request_id():
                 )
                 with pytest.raises(HTTPException):
                     otc_router.settle(settlement)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_endpoint():
+    client = TestClient(app)
+    response = client.get("/endpoint")
+    assert response.status_code == 200
+
+    def test_wash_trading():
+        client = TestClient(app)
+        # Setup trades to detect wash trading patterns
+        user_id_1 = 1
+        user_id_2 = 2
+        timestamp = datetime.datetime(2023, 5, 10, 10)
+        amount_1 = 100.0
+        amount_2 = 50.0
+        response = client.post(
+            "/trade",
+            json={"timestamp": timestamp, "user_id": user_id_1, "amount": amount_1},
+        )
+        assert response.status_code == 200
+        trade_1 = response.json()
+        # Perform the same transaction by another user
+        response = client.post(
+            "/trade",
+            json={"timestamp": timestamp, "user_id": user_id_2, "amount": amount_2},
+        )
+        assert response.status_code == 200
+        trade_2 = response.json()
+        # Test to check if wash trading is detected
+        trades = client.get(f"/user_trades/{user_id_1}")
+        assert trades.status_code == 200
+        user_trades = trades.json()
+        assert len(user_trades) > 0
+        # Check if the same trade amount is not present multiple times
+        for trade in user_trades:
+            assert trade["amount"] != amount_2
