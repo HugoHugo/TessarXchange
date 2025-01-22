@@ -6233,3 +6233,52 @@ def test_add_collateral():
                         # check if the collateral has been updated
                         assert initial_collateral_data["test_chain"]["amount"] == 1.0
                         assert updated_collateral_data["test_chain"]["amount"] == 2.0
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_create_token_event():
+    client = TestClient(app)
+    # Test positive case for a valid token event
+    token_event_data = {
+        "event_type": "login",
+        "user_id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+    }
+    response = client.post("/token-event", data=token_event_data)
+    assert response.status_code == 200
+
+    def test_read_token_events():
+        client = TestClient(app)
+        # Test positive case for a valid token event
+        with open("test_token_events.json", "w") as f:
+            json.dump(
+                [
+                    {
+                        "id": "1",
+                        "event_type": "login",
+                        "user_id": "user1234",
+                        "timestamp": "2022-08-01T10:00:00Z",
+                    }
+                ],
+                f,
+            )
+            response = client.get("/token-events")
+            assert response.status_code == 200
+            data = response.json()
+            assert isinstance(data, list)
+            assert len(data) == 1
+            event = data[0]
+            assert event["id"] == "1"
+            assert event["event_type"] == "login"
+            assert event["user_id"] == "user1234"
+            assert event["timestamp"] == "2022-08-01T10:00:00Z"
+
+            def test_read_token_events_no_data():
+                client = TestClient(app)
+                response = client.get("/token-events")
+                assert response.status_code == 200
+                data = response.json()
+                assert isinstance(data, list)
+                assert len(data) == 0

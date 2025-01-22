@@ -6270,3 +6270,37 @@ class Collateral(BaseModel):
                             with open("collaterals.json", "w") as f:
                                 json.dump(collaterals, f)
                                 return {"message": "Collateral updated successfully"}
+from fastapi import FastAPI, HTTPException
+import uuid
+import json
+
+app = FastAPI()
+
+
+class TokenEvent:
+    def __init__(self, event_type: str, user_id: str, timestamp: datetime):
+        self.id = str(uuid.uuid4())
+        self.event_type = event_type
+        self.user_id = user_id
+        self.timestamp = timestamp
+
+        def generate_token_event(event_type: str, user_id: str) -> TokenEvent:
+            now = datetime.now()
+            return TokenEvent(event_type=event_type, user_id=user_id, timestamp=now)
+
+        @app.post("/token-event")
+        async def create_token_event(token_event: TokenEvent):
+            return {
+                "id": token_event.id,
+                "event_type": token_event.event_type,
+                "user_id": token_event.user_id,
+                "timestamp": token_event.timestamp.isoformat(),
+            }
+
+        @app.get("/token-events", response_model=list[dict])
+        async def read_token_events():
+            with open("token_events.json", "r") as f:
+                data = json.load(f)
+                if not data or not isinstance(data, list):
+                    raise HTTPException(status_code=404, detail="No token events found")
+                    return data
