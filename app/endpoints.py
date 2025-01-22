@@ -6388,3 +6388,41 @@ class Oracle(BaseModel):
             if not oracle:
                 raise HTTPException(status_code=404, detail="Oracle not found")
                 return {"oracle": oracle}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class DelegationPool(BaseModel):
+    id: str
+    pool_name: str
+    delegator_address: str
+    validator_address: str
+    start_time: datetime
+    end_time: datetime
+    DELEGATION_POOLS = {}
+
+    def create_delegation_pool(pool_name, delegator_address, validator_address):
+        if pool_name in DELEGATION_POOLS:
+            raise HTTPException(status_code=400, detail="Pool already exists.")
+            new_id = str(uuid.uuid4())
+            start_time = datetime.utcnow()
+            end_time = None
+            delegation_pool = DelegationPool(
+                id=new_id,
+                pool_name=pool_name,
+                delegator_address=delegator_address,
+                validator_address=validator_address,
+                start_time=start_time,
+                end_time=end_time,
+            )
+            DELEGATION_POOLS[new_id] = delegation_pool
+
+            def get_delegation_pool(pool_id):
+                if pool_id not in DELEGATION_POOLS:
+                    raise HTTPException(
+                        status_code=404, detail="Delegation pool not found."
+                    )
+                    return DELEGATION_POOLS[pool_id]

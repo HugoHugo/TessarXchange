@@ -6406,3 +6406,49 @@ def test_get_oracles():
         # Check if the returned Oracle matches the one in oracles.json
         assert response.json()["oracle"].name == "DefaultOracle"
         assert response.json()["oracle"].address == "123 Main St, Anytown USA"
+import pytest
+from main import app
+
+
+@pytest.fixture
+def delegation_pool():
+    DELEGATION_POOLS = {}
+
+    def create_delegation_pool(pool_name, delegator_address, validator_address):
+        if pool_name in DELEGATION_POOLS:
+            raise HTTPException(status_code=400, detail="Pool already exists.")
+            new_id = str(uuid.uuid4())
+            start_time = datetime.utcnow()
+            end_time = None
+            delegation_pool = DelegationPool(
+                id=new_id,
+                pool_name=pool_name,
+                delegator_address=delegator_address,
+                validator_address=validator_address,
+                start_time=start_time,
+                end_time=end_time,
+            )
+            DELEGATION_POOLS[new_id] = delegation_pool
+            return delegation_pool
+        yield
+        for id, pool in DELEGATION_POOLS.items():
+            DELEGATION_POOLS[id].end_time = datetime.utcnow()
+            DELEGATION_POOLS[id].save()
+
+            def test_create_delegation_pool(delegation_pool):
+                create_delegation_pool("pool1", "delegator1", "validator1")
+                assert delegation_pool.pool_name == "pool1"
+                assert delegation_pool.delegator_address == "delegator1"
+                assert delegation_pool.validator_address == "validator1"
+
+                def test_create_duplicate_delegation_pool():
+                    with pytest.raises(HTTPException):
+                        create_delegation_pool("pool1", "delegator2", "validator2")
+                        create_delegation_pool("pool1", "delegator3", "validator3")
+
+                        def test_get_delegation_pool():
+                            delegation_pool = create_delegation_pool(
+                                "pool1", "delegator1", "validator1"
+                            )
+                            get_delegation_pool(delegation_pool.id())
+                            assert True
