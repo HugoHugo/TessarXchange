@@ -6334,3 +6334,31 @@ class StateVerifier:
                     return await state_verifier.verify_state(
                         requested_chain_id, requested_state_root
                     )
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+import uuid
+
+app = FastAPI()
+
+
+def generate_random_value():
+    return str(uuid.uuid4())
+
+
+class MPC:
+    def __init__(self):
+        self.protocol_id = None
+
+        def start_protocol(self, protocol_id: str):
+            if not isinstance(protocol_id, str) or len(protocol_id) == 0:
+                raise ValueError("Protocol ID must be a non-empty string.")
+                self.protocol_id = protocol_id
+                return {"result": "protocol started", "protocol_id": self.protocol_id}
+
+            def get_value(self, party_id: str):
+                if not isinstance(party_id, str) or len(party_id) == 0:
+                    raise ValueError("Party ID must be a non-empty string.")
+                    # This is for demonstration purposes and does not reflect a real multi-party computation system.
+                    value = generate_random_value()
+                    return JSONResponse(content={"value": value}, status_code=200)
+                app.include_router(MPC.as_router())

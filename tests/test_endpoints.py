@@ -6362,3 +6362,26 @@ def test_state_verifier_creation(state_verifier):
                                     isinstance(verify_response, dict)
                                     and "state_hash" in verify_response
                                 )
+import pytest
+from fastapi import HTTPException
+from main import app, generate_random_value
+
+
+def test_start_protocol():
+    response = app.router.start_protocol(app.MPC())
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 200
+
+    def test_get_value_valid_party_id():
+        value = generate_random_value()
+        response = app.router.get_value(app.MPC(), "valid_party_id")
+        assert isinstance(response, JSONResponse)
+        assert response.status_code == 200
+        assert response.content["value"] == value
+
+        def test_get_value_invalid_party_id():
+            with pytest.raises(HTTPException):
+                _ = app.router.get_value(app.MPC(), "invalid_party_id")
+
+                def setup_module(module):
+                    module.app.router.include_router(app.MPC.as_router())
