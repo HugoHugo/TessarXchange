@@ -4917,3 +4917,40 @@ def test_audit_log_endpoint():
         assert isinstance(audit["event_type"], str)
         assert isinstance(audit["user_id"], int)
         assert isinstance(audit["description"], str)
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        @pytest.mark.asyncio
+        async def test_stop_loss_order(client):
+            data = StopLossOrder(
+                symbol="AAPL",
+                quantity=100,
+                price=150,
+                stop_loss_price=None,  # This will be the default value if not provided in request body.
+                trailing_stop_distance=20.0,
+            )
+            response = await client.post("/stop-loss-order", json=data)
+            assert response.status_code == 200
+
+            def test_trailing_stop(client):
+                data = StopLossOrder(
+                    symbol="AAPL",
+                    quantity=100,
+                    price=150,
+                    stop_loss_price=160,  # To trigger the trailing stop logic
+                    trailing_stop_distance=10.0,
+                )
+                response = client.get(
+                    "/stop-loss-order-trailing",
+                    params={"order_id": "test_order"},
+                    json=data,
+                )
+                result = response.json()
+                assert "trailing_stop_price" in result

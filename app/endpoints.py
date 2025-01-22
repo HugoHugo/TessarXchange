@@ -4746,3 +4746,27 @@ class AuditLog(BaseModel):
             )
             logs.append(new_log)
             return {"audits": logs}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import math
+
+app = FastAPI()
+
+
+class StopLossOrder(BaseModel):
+    symbol: str
+    quantity: float
+    price: float
+    stop_loss_price: float | None
+    trailing_stop_distance: float | None = None
+
+    def get_trailing_stop(self, current_price: float) -> float:
+        if self.trailing_stop_distance is None or self.stop_loss_price is None:
+            return self.stop_loss_price
+        distance = self.trailing_stop_distance / 100
+        stop_diff = (current_price - self.stop_loss_price) * distance
+        trailing_stop_price = self.stop_loss_price + stop_diff
+        return trailing_stop_price
+
+    class OrderResponse(BaseModel):
+        order_id: str
