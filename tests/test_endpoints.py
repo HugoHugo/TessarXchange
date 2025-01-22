@@ -5844,3 +5844,31 @@ def test_bulk_approve_endpoint():
         print(response.status_code)
         # Check if the endpoint returns an HTTP 200 status code.
         assert response.status_code == 200
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+def test_create_network():
+    client = TestClient(app)
+    response = client.post("/network", json={"network_id": "test-network", "nodes": []})
+    assert response.status_code == 200
+    created_network = response.json()
+    assert created_network["network_id"] == "test-network"
+    assert len(created_network["nodes"]) == 0
+
+    def test_get_network():
+        client = TestClient(app)
+        response = client.get("/network/test-network")
+        assert response.status_code == 200
+        network = response.json()
+        assert network["network_id"] == "test-network"
+        assert len(network["nodes"]) == 0
+
+        def test_invalid_nodes_create_network():
+            client = TestClient(app)
+            with pytest.raises(HTTPException):
+                response = client.post(
+                    "/network", json={"network_id": "test-network", "nodes": []}
+                )
+                assert response.status_code == 400

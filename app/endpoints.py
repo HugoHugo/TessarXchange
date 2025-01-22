@@ -5804,3 +5804,59 @@ class ApprovalRequest(BaseModel):
                     status_code=200,
                     detail="Bulk withdrawal approvals have been successfully processed.",
                 )
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class PaymentChannelNetwork(BaseModel):
+    network_id: str
+    nodes: list[str]
+
+    class PaymentChannelNetworkRepository:
+        def __init__(self):
+            self.networks = {}
+
+            def get_network(self, network_id: str) -> PaymentChannelNetwork or None:
+                return self.networks.get(network_id)
+
+            def add_network(
+                self, network_id: str, nodes: list[str]
+            ) -> PaymentChannelNetwork:
+                if not nodes:
+                    raise HTTPException(
+                        status_code=400, detail="Nodes cannot be empty."
+                    )
+                    network = PaymentChannelNetwork(network_id=network_id, nodes=nodes)
+                    self.networks[network_id] = network
+                    return network
+
+                class PaymentChannelsAPI:
+                    def __init__(self, repository: PaymentChannelNetworkRepository):
+                        self.repository = repository
+
+                        @app.post("/network", response_model=PaymentChannelNetwork)
+                        async def create_network(
+                            network_api: PaymentChannelsAPI,
+                            network_data: PaymentChannelNetwork,
+                        ):
+                            network_repository = network_api.repository
+                            return network_repository.add_network(
+                                network_data.network_id, network_data.nodes
+                            )
+
+                        @app.get(
+                            "/network/{network_id}",
+                            response_model=PaymentChannelNetwork,
+                        )
+                        async def get_network(
+                            network_id: str, network_api: PaymentChannelsAPI
+                        ):
+                            repository = network_api.repository
+                            network = repository.get_network(network_id)
+                            if not network:
+                                raise HTTPException(
+                                    status_code=404, detail="Network not found."
+                                )
+                                return network
