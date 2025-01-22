@@ -5860,3 +5860,59 @@ class PaymentChannelNetwork(BaseModel):
                                     status_code=404, detail="Network not found."
                                 )
                                 return network
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class VerificationRequest(BaseModel):
+    request_id: uuid.UUID
+    user_identity: str
+    verifier_signature: str
+
+    class VerificationResponse(BaseModel):
+        request_id: uuid(UUID)
+        verification_status: str
+        reason_for_rejection: str | None
+
+        class DecentralizedIdentityVerificationSystem:
+            def __init__(self):
+                self.verifications = []
+
+                async def verify_identity(
+                    self, verification_request: VerificationRequest
+                ) -> VerificationResponse:
+                    if (
+                        not verification_request.user_identity
+                        or not verification_request.verifier_signature
+                    ):
+                        raise HTTPException(
+                            status_code=400,
+                            detail="User Identity and Verifier Signature are required.",
+                        )
+                        verification_response = VerificationResponse(
+                            request_id=verification_request.request_id,
+                            user_identity=verification_request.user_identity,
+                            verification_status="PENDING",
+                            reason_for_rejection=None,
+                        )
+                        self.verifications.append(verification_response)
+                        return verification_response
+
+                    async def get_verification_status(
+                        self, verification_request: VerificationRequest
+                    ) -> VerificationResponse:
+                        for verification in self.verifications:
+                            if (
+                                verification.request_id
+                                == verification_request.request_id
+                            ):
+                                verification.status = "COMPLETED"
+                                if "true" in verification.reason_for_rejection:
+                                    verification.status = "REJECTED"
+                                    return verification
+                                raise HTTPException(
+                                    status_code=404, detail="Verification not found"
+                                )

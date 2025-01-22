@@ -5872,3 +5872,23 @@ def test_create_network():
                     "/network", json={"network_id": "test-network", "nodes": []}
                 )
                 assert response.status_code == 400
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as Client:
+        yield Client
+
+        def test_create_verification_request(client):
+            response = client.post(
+                "/verify",
+                json={"user_identity": "123", "verifier_signature": "abc"},
+            )
+            assert response.status_code == 200
+
+            def test_get_verification_status(client):
+                response = client.get("/verify", params={"verification_id": "1"})
+                assert response.status_code == 200
