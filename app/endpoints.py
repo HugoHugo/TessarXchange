@@ -4408,3 +4408,76 @@ async def startup():
 
         async def main():
             await startup()
+from fastapi import FastAPI
+from datetime import datetime
+
+app = FastAPI()
+
+
+class CrossMarginPositionNetting:
+    def __init__(self):
+        self.positions = {}
+
+        @property
+        def positions_dict(self):
+            return {
+                k: {
+                    "margin_member": v["margin_member"],
+                    "net_position": v["net_position"],
+                }
+                for k, v in self.positions.items()
+            }
+
+        async def create_netting_entry(
+            self, margin_member: str, net_position: float
+        ) -> None:
+            if margin_member not in self.positions.keys():
+                self.positions[margin_member] = {
+                    "margin_member": margin_member,
+                    "net_position": net_position,
+                }
+            else:
+                raise ValueError(f"Margin member {margin_member} already exists.")
+
+                async def update_netting_entry(
+                    self, margin_member: str, new_net_position: float
+                ) -> None:
+                    if margin_member in self.positions.keys():
+                        self.positions[margin_member]["net_position"] = new_net_position
+                    else:
+                        raise ValueError(
+                            f"Margin member {margin_member} does not exist."
+                        )
+
+                        async def get_positions_dict(self):
+                            return self.positions_dict
+
+                        app.include_in_schema = False
+                        app.include_in_schema = False
+
+                        @app.post("/netting_entry")
+                        def create_netting_entry(
+                            position_netting: CrossMarginPositionNetting,
+                            margin_member: str,
+                            net_position: float,
+                        ):
+                            position_netting.create_netting_entry(
+                                margin_member=margin_member, net_position=net_position
+                            )
+                            return {"status": "netting entry created"}
+
+                        @app.put("/netting_entry/{margin_member}")
+                        def update_netting_entry(
+                            position_netting: CrossMarginPositionNetting,
+                            margin_member: str,
+                            new_net_position: float,
+                        ):
+                            position_netting.update_netting_entry(
+                                margin_member=margin_member,
+                                new_net_position=new_net_position,
+                            )
+                            return {"status": "netting entry updated"}
+
+                        @app.get("/positions")
+                        def get_positions(position_netting: CrossMarginPositionNetting):
+                            return await position_netting.get_positions_dict()

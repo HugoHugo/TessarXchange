@@ -4607,3 +4607,40 @@ def test_calculate_rebalance_ratio():
             def test_liquidity_pool_rebalance_endpoint(client: TestClient):
                 response = client.get("/rebalance")
                 assert response.status_code == 200
+import pytest
+from fastapi.testclient import TestClient
+
+app = FastAPI()
+
+
+def test_position_netting():
+    position_netting = CrossMarginPositionNetting()
+    positions_dict = {
+        "member1": {"net_position": 1000},
+        "member2": {"net_position": -500},
+    }
+    # Test for creating netting entry
+    with pytest.raises(ValueError):
+        position_netting.create_netting_entry(
+            margin_member="new_member",
+            net_position=200,
+        )
+        # Test for updating existing netting entry
+        position_netting.positions["member1"]["net_position"] = 500
+        with pytest.raises(ValueError):
+            position_netting.update_netting_entry(
+                margin_member="member1",
+                new_net_position=-300,
+            )
+            positions_dict = position_netting.positions_dict
+            assert len(positions_dict) == 2
+            # Test for getting positions
+            client = TestClient(app)
+            response = client.get("/positions")
+            assert response.status_code == 200
+            assert response.json() == positions_dict
+
+            def test_endpoint():
+                client = TestClient(app)
+                response = client.get("/endpoint")
+                assert response.status_code == 200
