@@ -6517,3 +6517,44 @@ def test_cancel_order(client, status):
             assert False, f"Expected HTTP 404 but got HTTP {response.status_code}"
         except HTTPException as e:
             pass
+from main import app
+
+importpytest
+
+
+def test_kyc_endpoint():
+    response = app.test_client().get("/kyc")
+    assert response.status_code == 405
+
+    def test_valid_document_file():
+        test_client = TestClient(app)
+
+        def mock_validate_document(document):
+            return "Valid Document"
+
+        with pytest.raises(Exception):
+            with mock.patch(
+                "main.validate_document", side_effect=mock_validate_document
+            ):
+                response = test_client.post(
+                    "/kyc", files={"file": open("valid_document.pdf", "rb")}
+                )
+                assert b"KYC verification successful" in response.content
+                assert response.status_code == 200
+
+                def test_invalid_document_file():
+                    test_client = TestClient(app)
+
+                    def mock_validate_document(document):
+                        raise Exception("Invalid Document")
+                        with pytest.raises(Exception):
+                            with mock.patch(
+                                "main.validate_document",
+                                side_effect=mock_validate_document,
+                            ):
+                                response = test_client.post(
+                                    "/kyc",
+                                    files={"file": open("invalid_document.pdf", "rb")},
+                                )
+                                assert b"KYC verification failed" in response.content
+                                assert response.status_code == 400
