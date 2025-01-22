@@ -4576,3 +4576,27 @@ class CollateralPosition(BaseModel):
                     raise HTTPException(
                         status_code=404, detail="Collateral Position not found"
                     )
+from fastapi import FastAPI, HTTPException
+import requests
+
+app = FastAPI()
+
+
+@app.post("/options_hedge")
+async def options_hedge(
+    symbol: str, strike_price: float, expiration_date: datetime, quantity: int
+):
+    if symbol not in ["AAPL", "GOOGL"]:
+        raise HTTPException(status_code=400, detail="Invalid stock symbol.")
+        url = f"https://www.nasdaq.com/markets/options/pricing?symbol={symbol}&strikePrice={strike_price}&expirationDate={expiration_date.strftime('%Y-%m-%d')}"
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=503, detail="Server error while fetching option data."
+            )
+            return {
+                "stock_symbol": symbol,
+                "strike_price": strike_price,
+                "expiration_date": expiration_date,
+                "quantity": quantity,
+            }

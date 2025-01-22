@@ -4747,3 +4747,60 @@ def test_create_position():
             assert response.status_code == 404
             assert "detail" in response.json()
             assert "Collateral Position not found" == response.json()["detail"]
+import pytest
+from unittest import mock
+
+
+@pytest.fixture
+def options_hedge_endpoint():
+    with mock.patch("requests.get") as mock_get:
+        yield mock_get
+
+        def test_options_hedge_success(options_hedge_endpoint):
+            mock_get.return_value.json.return_value = {"delta": 0.1, "price": 50}
+            symbol = "AAPL"
+            strike_price = 100
+            expiration_date = datetime(2023, 12, 15)
+            quantity = 10
+            result = options_hedge_endpoint("AAPL", 100, "2023-12-15", 10)
+            assert result == {
+                "delta": 0.1,
+                "price": 50,
+                "stock_symbol": "AAPL",
+                "strike_price": 100,
+                "expiration_date": datetime(2023, 12, 15),
+                "quantity": 10,
+            }
+
+            def test_options_hedge_failure():
+                symbol = "INVALID_SYMBOL"
+                strike_price = 100
+                expiration_date = datetime(2024, 1, 5)
+                quantity = 10
+                with pytest.raises(HTTPException) as exc:
+                    options_hedge_endpoint("INVALID_SYMBOL", 100, "2024-01-05", 10)
+                    assert str(exc.value) == "Server error while fetching option data."
+
+                    def test_options_hedge_endpoint():
+                        app = FastAPI()
+
+                        @app.post("/options_hedge")
+                        async def options_hedge(
+                            symbol: str,
+                            strike_price: float,
+                            expiration_date: datetime,
+                            quantity: int,
+                        ):
+                            if symbol not in ["AAPL", "GOOGL"]:
+                                raise HTTPException(
+                                    status_code=400, detail="Invalid stock symbol."
+                                )
+                                return {
+                                    "stock_symbol": symbol,
+                                    "strike_price": strike_price,
+                                    "expiration_date": expiration_date,
+                                    "quantity": quantity,
+                                }
+                            client = TestClient(app)
+                            test_options_hedge_success(client)
+                            test_options_hedge_failure(client)
