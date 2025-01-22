@@ -6728,3 +6728,21 @@ class DepositWithdrawalBatch(BaseModel):
             return {
                 "message": f"Batch with ID '{batch_data.id}' processed successfully."
             }
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+
+class LiquidityData(BaseModel):
+    token0: str
+    token1: str
+    concentration: float
+    liquidity_router = APIRouter()
+
+    @liquidity_router.get("/concentrated_liquidity")
+    def get_concentrated_liquidity(data: LiquidityData = None):
+        if data is None:
+            raise HTTPException(status_code=400, detail="Invalid request data.")
+            # Implement AMM logic to calculate the current liquidity price
+            # This example assumes a simple AMM with constant product.
+            # Replace this placeholder code with your actual implementation.
+            return {"concentration": data.concentration}

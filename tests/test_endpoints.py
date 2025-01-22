@@ -6791,3 +6791,21 @@ def client():
                             and result["description"]
                             == "invalid request: Empty JSON body."
                         )
+from main import app, LiquidityData
+
+
+def test_get_concentrated_liquidity():
+    client = TestClient(app)
+    # Prepare the data for testing
+    expected_data = {
+        "concentration": 0.5,
+    }
+    # Send a GET request to the endpoint
+    response = client.get("/concentrated_liquidity")
+    # Check if the HTTP status code is correct (200)
+    assert response.status_code == 200
+    # Parse the JSON data returned by the API
+    json_data = response.json()
+    # Extract and compare the relevant values in the parsed JSON data
+    assert json_data["concentration"] == expected_data["concentration"]
+    print("Test passed.")
