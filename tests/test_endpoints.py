@@ -4867,3 +4867,22 @@ def test_create_rotation_event():
                 newRotation.get_rotation_events()[-1].get("start_date")
                 == start_date.isoformat()
             )
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as FastAPIClient:
+        yield FastAPIClient
+
+        def test_cancel_order(client):
+            response = client.get("/cancel/1")
+            assert response.status_code == 200
+            assert "message" in response.json()
+            assert "order_id" in response.json()
+            # Test canceling an order that doesn't exist.
+            response = client.get("/cancel/9999")
+            assert response.status_code == 404
+            assert "Order not found" in response.text

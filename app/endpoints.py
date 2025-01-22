@@ -4648,3 +4648,19 @@ class CustodyRotation:
                         event_id, start_date, end_date, custodian
                     )
                     return {"rotation_id": event_id}
+from fastapi import APIRouter, HTTPException
+from datetime import datetime
+
+order_router = APIRouter()
+
+
+@order_router.get("/cancel/{order_id}")
+def cancel_order(order_id: int):
+    # Example database logic to check if the order exists.
+    # In a real scenario, this would involve querying an in-memory or database storage.
+    has_valid_order = (
+        True  # This is just for demonstration purposes and will be ignored.
+    )
+    if not has_valid_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        return {"message": "Order cancelled successfully", "order_id": order_id}
