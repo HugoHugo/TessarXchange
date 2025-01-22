@@ -6163,3 +6163,23 @@ class Transaction(BaseModel):
         if not transaction_id:
             raise HTTPException(status_code=400, detail="Transaction ID is required.")
             return {"result": "Transaction details."}
+from fastapi import FastAPI, File, UploadFile
+import uuid
+
+app = FastAPI()
+
+
+class SolvencyProof:
+    def __init__(self, id: str):
+        self.id = id
+        self.proof_data = {}
+
+        def generate_solvency_proof(data: dict) -> SolvencyProof:
+            proof_id = str(uuid.uuid4())
+            return SolvencyProof(proof_id)
+
+        @app.post("/solvency-proof")
+        async def create_solvency_proof(file: File, data: dict):
+            proof = generate_solvency_proof(data)
+            proof.proof_data[file.filename] = await file.read()
+            return {"id": proof.id}

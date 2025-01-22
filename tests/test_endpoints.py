@@ -6127,3 +6127,22 @@ def test_create_transaction():
         assert response.status_code == 200
         fetched_transaction = response.json()
         assert fetched_transaction == transaction_data
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _app:
+        yield _app
+
+        def test_create_solvency_proof(client):
+            response = client.post(
+                "/solvency-proof",
+                files={"file": "test_file"},
+                json={"data": {"name": "John Doe", "dob": "2020-01-01"}},
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert isinstance(data, dict) and "id" in data
