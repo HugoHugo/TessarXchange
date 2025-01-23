@@ -8376,3 +8376,30 @@ def test_mirror_position():
     assert response.status_code == 200
     # Unpack and compare the contents of the response with the expected content
     assert response.json() == expected_response_content
+import pytest
+from main import app, Transaction
+from fastapi.testclient import TestClient
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_create_transaction(client):
+    response = client.post(
+        "/transactions", json={"sender": "Alice", "receiver": "Bob", "amount": 100}
+    )
+    assert response.status_code == 200
+    new_transaction: Transaction = response.json()
+    assert new_transaction.sender == "Alice"
+    assert new_transaction.receiver == "Bob"
+    assert new_transaction.amount == 100
+
+    def test_get_transactions(client):
+        response = client.post(
+            "/transactions", json={"sender": "Alice", "receiver": "Bob", "amount": 100}
+        )
+        response = client.get("/transactions")
+        transactions: Transaction = response.json()
+        assert len(transactions) > 0

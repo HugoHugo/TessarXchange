@@ -8433,3 +8433,41 @@ app = FastAPI()
 @app.post("/mirror_position")
 def mirror_position(data: Dict):
     return {"result": "Position mirrored successfully", "data": data}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class Transaction(BaseModel):
+    id: str
+    sender: str
+    receiver: str
+    amount: float
+    timestamp: datetime
+
+    class TransactionManager:
+        def __init__(self):
+            self.transactions: dict[str, Transaction] = {}
+
+            def create_transaction(
+                self, sender: str, receiver: str, amount: float
+            ) -> Transaction:
+                if sender not in self.transactions or receiver not in self.transactions:
+                    raise HTTPException(
+                        status_code=400, detail="Invalid sender or receiver"
+                    )
+                    new_transaction_id = str(uuid.uuid4())
+                    new_transaction = Transaction(
+                        id=new_transaction_id,
+                        sender=sender,
+                        receiver=receiver,
+                        amount=amount,
+                        timestamp=datetime.now(),
+                    )
+                    self.transactions[new_transaction_id] = new_transaction
+                    return new_transaction
+
+                def get_transactions(self) -> list[Transaction]:
+                    return [value for _, value in self.transactions.items()]
