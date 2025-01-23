@@ -8236,3 +8236,50 @@ class RecurringOrder(BaseModel):
                     raise HTTPException(status_code=400, detail="Invalid data received")
                     asyncio.create_task(create_recurring_order(order_data))
                     return {"result": "recurring order created"}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class OrderBatch(BaseModel):
+    id: str
+    trading_pairs: list
+    orders: list
+    timestamp: datetime
+    ORDER_BATCH_STORAGE = {}
+
+    def generate_order_id():
+        return str(uuid.uuid4())
+
+    def create_order_batch(order_batch: OrderBatch):
+        order_batch.id = generate_order_id()
+        ORDER_BATCH_STORAGE[order_batch.id] = order_batch
+        return order_batch
+
+    @app.post("/order-batch")
+    async def post_order_batch(order_batch: OrderBatch):
+        if order_batch.id in ORDER_BATCH_STORAGE:
+            raise HTTPException(status_code=400, detail="Order batch already exists.")
+            create_order_batch(order_batch)
+            return {
+                "message": "Order batch created successfully.",
+                "order_batch_id": order_batch.id,
+            }
+
+        def get_order_batch(order_batch_id: str):
+            if order_batch_id not in ORDER_BATCH_STORAGE:
+                raise HTTPException(status_code=404, detail="Order batch not found.")
+                return ORDER_BATCH_STORAGE[order_batch_id]
+
+            @app.get("/order-batch/{order_batch_id}")
+            async def get_order_batch_by_id(order_batch_id: str):
+                return get_order_batch(order_batch_id)
+
+            @app.get("/order-batch")
+            async def list_order_batches():
+                order_batches = []
+                for id in ORDER_BATCH_STORAGE:
+                    order_batches.append(get_order_batch(id))
+                    return {"order_batches": order_batches}

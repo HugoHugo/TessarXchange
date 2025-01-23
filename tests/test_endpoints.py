@@ -8205,3 +8205,41 @@ async def test_create_recurring_order():
         data = response.json()
         assert "detail" in data
         assert "Invalid data received" in data["detail"]
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime
+
+
+def test_post_order_batch():
+    client = TestClient(app)
+    order_batch = OrderBatch(
+        id=str(uuid.uuid4()),
+        trading_pairs=["BTC-USD", "ETH-USD"],
+        orders=[],
+        timestamp=datetime.now(),
+    )
+    response = client.post("/order-batch", json=order_batch.dict())
+    assert response.status_code == 200
+    assert "message" in response.json()
+    assert "order_batch_id" in response.json()
+
+    def test_get_order_batches():
+        client = TestClient(app)
+        order_batch1 = OrderBatch(
+            id=str(uuid.uuid4()),
+            trading_pairs=["BTC-USD", "ETH-USD"],
+            orders=[],
+            timestamp=datetime.now(),
+        )
+        order_batch2 = OrderBatch(
+            id=str(uuid.uuid4()),
+            trading_pairs=["LTC-USD", "XRP-USD"],
+            orders=[],
+            timestamp=datetime.now(),
+        )
+        response = client.post("/order-batch", json=order_batch1.dict())
+        assert response.status_code == 200
+        response = client.get("/order-batches")
+        assert response.status_code == 200
+        assert "order_batches" in response.json()
+        assert len(response.json()["order_batches"]) == 2
