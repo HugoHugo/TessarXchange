@@ -1,5 +1,156 @@
-import pytest
 from datetime import datetime
+from datetime import datetime, time
+from datetime import datetime, timedelta
+from datetime import datetime, timezone
+from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException
+from fastapi import TestClient
+from fastapi.testclient import TestClient
+from main import AMMPair, ammpairs_router
+from main import Bridge
+from main import CollateralPosition, app
+from main import (
+    ComplianceAttestation,
+    validate_compliance_attestation,
+    attest_compliance_attestation,
+)
+from main import CrossChainState, StateVerificationError, CrossChainStateService
+from main import CustodyRotation, app
+from main import DIDDocument, AttestationState, AttestationRequest, AttestationResponse
+from main import DarkPool, app
+from main import Derivative, SettlementManager
+from main import Identity, DecentralizedIdentityRecoveryApp
+from main import (
+    LiquidityPool,
+    create_liquidity_pool_endpoint,
+    get_liquidity_pool_endpoint,
+)
+from main import MarketMaker, app
+from main import MigrationRequest, router
+from main import MultiSignatureWallet, approve, disapprove
+from main import Oracle, get_oracles
+from main import OracleData, validate_oracle_data
+from main import (
+    PaymentChannel,
+    create_payment_channel,
+    get_payment_channel,
+    update_payment_channel,
+    delete_payment_channel,
+)
+from main import PositionRiskEndpoint
+from main import ReputationOracle
+from main import ReputationOracle, app
+from main import StateVerifier, app
+from main import TransactionBatch, create_transaction_batch
+from main import app
+from main import app, AMMPair
+from main import app, AssetBridgingValidation
+from main import app, AtomicSwapRequest
+from main import app, AuditLog
+from main import app, BOTS
+from main import app, BridgingRequest, BridgingResponse
+from main import app, Collateral
+from main import app, ComplianceAttestation, DecentralizedComplianceAttestationService
+from main import app, CrossChainState
+from main import app, CryptoWallet
+from main import app, CryptocurrencyWallet
+from main import app, DIDDocument, DIDsRepository
+from main import app, DIDManager
+from main import app, DIDsManager
+from main import app, DebtPosition
+from main import (
+    app,
+    DecentralizedIdentity,
+    IdentityVerificationRequest,
+    VerificationResult,
+)
+from main import app, Deposit
+from main import app, DepositWithdrawalBatch
+from main import app, FeeOptimizationInput
+from main import app, FeeStatement
+from main import app, FeeTier, calculate_fee_tier
+from main import app, HistoricalData
+from main import app, InstitutionalPrimeBrokers
+from main import app, InventoryHedgingItem
+from main import app, LiquidityData
+from main import app, LiquidityOptimization
+from main import app, LiquidityPool
+from main import app, LiquiditySnapshot
+from main import app, MarginTransfer
+from main import app, Oracle
+from main import app, OracleData
+from main import app, Order
+from main import app, OrderBook
+from main import app, Portfolio
+from main import app, Position
+from main import app, ProofOfReserves
+from main import app, RateLimiter
+from main import app, Reputation
+from main import app, ReputationOracle
+from main import app, RiskManager
+from main import app, SidechainValidatorNode
+from main import app, StressTestData
+from main import app, SystemHealth
+from main import app, TaxReportRequest
+from main import app, Trade
+from main import app, TradingFeeRebateSystem
+from main import app, TradingSignal
+from main import app, TradingStrategyParams
+from main import app, Transaction
+from main import app, UserIn, UserOut
+from main import app, Wallet
+from main import app, WalletAddress
+from main import app, WalletSecurity
+from main import app, WithdrawalApproval
+from main import app, YieldStrategy
+from main import app, calculate_optimized_marking_curve
+from main import app, calculate_portfolio_value
+from main import app, generate_random_value
+from main import app, generate_wallet_address
+from main import app, get_db_engine
+from main import app, get_wallet_address
+from main import app, migrate_pool
+from main import app, rebalance_pool, rebalance_endpoint
+from main import app, start_liquidation_auction
+from main import app, stress_test_portfolio
+from main import app, verify_identity
+from main import app, wallet
+from main import bulk_order_import
+from main import create_alert
+from main import generate_compliance_report, app
+from main import generate_wallet_address, BitcoinAddress
+from main import get_alerts
+from main import is_trading_pair_eligible, delist_trading_pair
+from main import netting_groups, NettingGroup
+from main import otc_router, QuoteRequest
+from main import rebalance_tokens
+from models.collateral import Collateral
+from models.position import Position
+from pytest import mark
+from pytest import mark, raises
+from pytest import raises
+from typing import IO
+from unittest import mock
+from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+from your_app import app
+from your_app_validator_node import ValidatorNode, validator_node_router
+from your_main import app, KycDocument, UserKyc, KYCManager
+from your_module import CurveInput, optimize_curve
+from your_module import LiquidityBridge, LiquidityBridgeManager
+from your_module import ValidatorNode, ValidatorNodeService
+import asyncio
+import csv
+import json
+import os
+import pytest
+import re
+import tempfile
+import time
+import ujson
+import uuid
 
 
 @pytest.mark.asyncio
@@ -23,9 +174,6 @@ async def test_time_endpoint():
         assert response.json().get("time") == datetime.strptime(
             input_string, "%Y-%m-%dT%H:%M:%S%Z"
         )
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_register_user(client: TestClient):
@@ -39,9 +187,6 @@ def test_register_user(client: TestClient):
     def test_register_user_invalid(client: TestClient):
         response = client.post("/register", json={"email": "", "password": ""})
         assert response.status_code == 400
-from fastapi.testclient import TestClient
-import pytest
-from main import app, UserIn, UserOut
 
 
 @pytest.fixture
@@ -61,9 +206,6 @@ def test_create_user(client):
         response = client.post("/register", json=data)
         assert response.status_code == 422
         assert "Too many invalid inputs" in str(response.content)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_register_user(client: TestClient):
@@ -77,9 +219,6 @@ def test_register_user(client: TestClient):
     def test_register_user_invalid(client: TestClient):
         response = client.post("/register", json={"email": "", "password": ""})
         assert response.status_code == 400
-from fastapi.testclient import TestClient
-import pytest
-from main import app, UserIn, UserOut
 
 
 @pytest.fixture
@@ -99,9 +238,6 @@ def test_create_user(client):
         response = client.post("/register", json=data)
         assert response.status_code == 422
         assert "Too many invalid inputs" in str(response.content)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -114,9 +250,6 @@ def client():
             assert response.status_code == 200
             data = response.json()
             assert "Address" in data
-from fastapi.testclient import TestClient
-import pytest
-from main import app, get_wallet_address
 
 
 @pytest.fixture
@@ -135,14 +268,10 @@ def client():
                 data = response.json()
                 assert response.status_code == 200
                 assert data == "bT1pK4w3z"
-from fastapi.testclient import TestClient
-import pytest
-from main import app, WalletAddress
 
 
 def test_generate_address_with_valid_data():
     client = TestClient(app)
-    # Set up test data
     currency = "BTC"
     user_id = "user123"
     response = client.get("/generate")
@@ -155,7 +284,6 @@ def test_generate_address_with_valid_data():
 
     def test_generate_address_with_invalid_currency():
         client = TestClient(app)
-        # Set up test data with invalid currency
         currency = ""
         user_id = "user123"
         response = client.get("/generate")
@@ -165,9 +293,8 @@ def test_generate_address_with_valid_data():
 
         def test_generate_address_with_invalid_user_id():
             client = TestClient(app)
-            # Set up test data with invalid user_id
             currency = "BTC"
-            user_id = ""  # Empty string as user id
+            user_id = ""
             response = client.get("/generate")
             assert response.status_code == 400
             content = response.content
@@ -181,9 +308,6 @@ def test_generate_address_with_valid_data():
                 wallet_address = WalletAddress(currency="BTC", user_id="user123")
                 assert result.currency == wallet_address.currency
                 assert result.user_id == wallet_address.user_id
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -210,10 +334,6 @@ def client():
                                 "Failed to initialize the cryptocurrency wallet."
                                 == str(error.value)
                             )
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app, Wallet
 
 
 def test_get_wallet():
@@ -260,26 +380,19 @@ def test_get_wallet():
                                 "address": "bc1q8v5gk7f4tjz3c9h2w8",
                             }
                             assert response.json() == expected_data
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.main
 def test_generate_wallet_address():
     client = TestClient(app)
-    # Test with valid currency and user
     response = client.post("/wallet/Bitcoin/user1")
     assert response.status_code == 200
     data = response.json()
     assert "address" in data
     assert "currency" in data
-    # Test with invalid currency
     response = client.post("/wallet/Ethereum/user2")
     assert response.status_code == 400
     assert response.content.decode() == "Unsupported currency"
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -288,13 +401,7 @@ def client():
         yield TC
 
         def test_generate_wallet(client):
-            response = client.post(
-                "/wallet",
-                json={
-                    "currency": "Btc",
-                    "user_id": 1,
-                },
-            )
+            response = client.post("/wallet", json={"currency": "Btc", "user_id": 1})
             assert response.status_code == 200
             data = response.json()
             assert "currency" in data
@@ -303,8 +410,6 @@ def client():
             private_key = PrivateKey.random()
             wallet_address = Wallet.from_private_key(private_key).address()
             assert data["wallet_address"] == wallet_address
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -312,24 +417,16 @@ def client():
     yield TestClient(app)
 
     def test_generate_wallet_address(client):
-        # Define expected response
         expected_response = {"address": "BTC-123abc"}
-        # Send GET request to endpoint
         response = client.get("/generate_wallet_address")
-        # Assert status code is 200 (OK)
         assert response.status_code == 200
-        # Extract the data from response and compare it with the expected response
         data = response.json()
         assert "address" in data
         assert data["address"] == expected_response["address"]
-import os
-from fastapi.testclient import TestClient
-from main import app, generate_wallet_address
 
 
 def test_generate_wallet_address():
     client = TestClient(app)
-    # Test with supported currency
     response = client.get("/wallet?currency=eth&user=jane")
     result = response.json()
     assert result == {
@@ -337,7 +434,6 @@ def test_generate_wallet_address():
         "user": "jane",
         "address": "0x1234567890123456789012345678901234",
     }
-    # Test with unsupported currency
     response = client.get("/wallet?currency=btc&user=john")
     assert response.status_code == 400
 
@@ -350,10 +446,6 @@ def test_generate_wallet_address():
         address = generate_wallet_address("eth", "jane")
         assert result == {"currency": "eth", "user": "jane", "address": str(address)}
         del os.environ["PRIVATE_KEY"]
-import os
-import pytest
-from fastapi.testclient import TestClient
-from main import app, CryptoWallet
 
 
 def test_valid_currency():
@@ -377,9 +469,6 @@ def test_valid_currency():
                     hex_number = hashlib.sha256(hex_bytes).hexdigest()
                     wallet_address = crypto_wallet._convert_to_address(hex_number)
                     assert len(wallet_address) == address_length
-from fastapi import HTTPException
-import pytest
-from main import app, CryptoWallet
 
 
 @pytest.fixture
@@ -404,10 +493,6 @@ def test_generate_btc_wallet_address(crypto_wallet):
             with pytest.raises(HTTPException):
                 wallet = CryptoWallet("XXX")
                 wallet.generate_wallet_address()
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app
 
 
 @pytest.fixture()
@@ -429,9 +514,6 @@ def client():
                     "detail" in error_data
                     and error_data["detail"] == "Currency not supported"
                 )
-from fastapi.testclient import TestClient
-import pytest
-from main import app, CryptocurrencyWallet
 
 
 def test_generate_wallet_address_btc():
@@ -456,13 +538,11 @@ def test_generate_wallet_address_btc():
                 wallet = CryptocurrencyWallet("XRP")
                 response = client.get("/wallet/xrp")
                 assert response.status_code == 400
-import pytest
-from fastapi.testclient import TestClient
-from main import app, WalletAddress
 
 
 @pytest.fixture()
 def wallet_address():
+
     def _wallet_address(currency: str, user_id: Optional[int] = None):
         if not user_id:
             user_id = secrets.randbits(64)
@@ -483,19 +563,13 @@ def test_generate_wallet_address(wallet_address):
         app.dependency_overrides[WalletAddress.generate_wallet_address] = wallet_address
         with pytest.raises(HTTPException):
             response = app.test_client().get("/generate-wallet-address")
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime
 
 
 @pytest.mark.parametrize(
     "data, expected_status",
     [
         ('{"type":"card_payment","currency":"USD"}', 200),
-        (
-            '{"type":"invalid_type","currency":"EUR"}',
-            400,
-        ),
+        ('{"type":"invalid_type","currency":"EUR"}', 400),
     ],
 )
 def test_payment_callback(data, expected_status):
@@ -527,8 +601,6 @@ def test_payment_callback(data, expected_status):
                         "An error occurred while processing the payment callback."
                         in str(response.content)
                     )
-import pytest
-from unittest import mock
 
 
 @pytest.fixture
@@ -575,9 +647,6 @@ def test_get_trading_pair_by_id(
                             exc_info.value.detail
                             == "ID already exists for an existing trading pair."
                         )
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 def test_add_margin_position():
@@ -621,9 +690,7 @@ def test_add_margin_position():
                 )
                 assert response.status_code == 200
                 assert response.json() == {"status": "success"}
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime
+
 
 app = FastAPI()
 
@@ -663,9 +730,6 @@ def test_attestation():
                 assert "attestation_text" in content
                 attestation_text = content["attestation_text"]
                 assert signer in attestation_text
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.mark.anyio
@@ -710,8 +774,6 @@ async def test_get_gas_optimization_strategies():
                 assert response.status_code == 200
                 assert "message" in response.json()
                 assert "strategy_id" in response.json()
-import pytest
-from main import CrossChainState, StateVerificationError, CrossChainStateService
 
 
 @pytest.fixture
@@ -741,8 +803,6 @@ def test_state_verification_success(state):
 
                 def test_service_all_state_verifications_empty(service):
                     assert len(service.all_state_verifications) == 0
-import pytest
-from main import app, ComplianceAttestation, DecentralizedComplianceAttestationService
 
 
 @pytest.fixture()
@@ -787,7 +847,7 @@ def client():
                             client,
                         ):
                             attestation = ComplianceAttestation(
-                                timestamp="2023-01-32T00:00:00Z",  # Invalid date
+                                timestamp="2023-01-32T00:00:00Z",
                                 organization_id=1,
                                 attesting_party_id=2,
                                 attested_status=True,
@@ -882,7 +942,7 @@ def client():
                                                                 client,
                                                             ):
                                                                 attestation = ComplianceAttestation(
-                                                                    timestamp="2023-01-32T00:00:00Z",  # Invalid date
+                                                                    timestamp="2023-01-32T00:00:00Z",
                                                                     organization_id=1,
                                                                     attesting_party_id=2,
                                                                     attested_status=True,
@@ -944,9 +1004,6 @@ def client():
                                                                                             ex.value
                                                                                         )
                                                                                     )
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -959,21 +1016,13 @@ def client():
         data = response.json()
         assert "correlation_matrix" in data
         corr_matrix = data["correlation_matrix"]
-        # Add assertions for the correlation matrix
-import pytest
-from unittest.mock import MagicMock
 
 
 def test_monitor_smart_contract():
     contract = SmartContract("your_contract_address")
     monitor_smart_contract(contract)
-    expected_state = {
-        "field1": "value1",
-        "field2": "value2",
-    }
+    expected_state = {"field1": "value1", "field2": "value2"}
     assert contract.current_state == expected_state
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -1006,9 +1055,6 @@ def client():
                         with pytest.raises(HTTPException):
                             response = client.get("/bot/999")
                             assert response.status_code == 404
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -1019,8 +1065,6 @@ def client():
         def test_market_maker_profitability_endpoint(client):
             response = client.get("/market_makers/profitability")
             assert response.status_code == 200
-import pytest
-from main import ReputationOracle
 
 
 @pytest.fixture
@@ -1029,9 +1073,6 @@ def reputation_oracle():
     yield oracle
     oracle.oracle_id = None
     oracle.reputation_score = 0
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -1076,9 +1117,6 @@ def client():
                         }
                         response = client.post("/algorithm_executions", json=new_data)
                         assert response.status_code == 400
-import pytest
-from main import app
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture
@@ -1116,51 +1154,33 @@ def test_valid_kyc(client):
         )
         assert response.status_code == 400
         assert "Invalid document type" in str(response.content)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_background_job():
     client = TestClient(app)
-    # Wait for the background job to complete and update the portfolio once
     response = client.get("/portfolio")
     assert response.status_code == 200
     json_content = response.json()
     assert "user_id" in json_content and "portfolio_value" in json_content
-    # The second call will not wait for the background job to finish between calls
-    # but it should return the updated portfolio value from the previous call's data.
     response = client.get("/portfolio")
     assert response.status_code == 200
     json_content = response.json()
     assert "user_id" in json_content and "portfolio_value" in json_content
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app, TaxReportRequest
 
 
 def test_tax_report_endpoint():
     client = TestClient(app)
-    # Test that we receive a 404 error for an invalid endpoint.
     response = client.get("/non_existent_path")
     assert response.status_code == 404
-    # Test the tax report endpoint with valid date range parameters
     response = client.get(
         "/tax-report", params={"start_date": "2023-01-01", "end_date": "2023-02-01"}
     )
     expected_response = {
-        "tax_reports": [
-            {"report_date": "2023-01-01", "tax_amount": 1000},
-            # ... Add more tax reports as needed.
-        ]
+        "tax_reports": [{"report_date": "2023-01-01", "tax_amount": 1000}]
     }
     assert response.status_code == 200
     assert response.json() == expected_response
-    # Additional tests can be added to test edge cases, error handling, and other features.
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime
+
 
 app = FastAPI()
 
@@ -1199,14 +1219,6 @@ class TradingStrategyParams(BaseModel):
                     with pytest.raises(HTTPException):
                         response = client.put("/trading-strategy-params", json=params)
                         assert response.status_code == 400
-import pytest
-from fastapi.testclient import TestClient
-from main import (
-    app,
-    DecentralizedIdentity,
-    IdentityVerificationRequest,
-    VerificationResult,
-)
 
 
 def create_test_client():
@@ -1227,10 +1239,6 @@ def test_identity_verification(identity_public_key, identity_address):
     assert response.status_code == 200
     expected_result = VerificationResult(verified=True, timestamp=datetime.now())
     assert response.json() == expected_result.dict()
-import pytest
-from fastapi import HTTPException
-from main import app, AtomicSwapRequest
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture()
@@ -1249,7 +1257,7 @@ def test_create_atomic_swap(client):
     response = client.post("/atomic-swap", json=request_data.dict())
     assert response.status_code == 200
     result = response.json()
-    assert "swap_id" in result and "status" in result and "transaction_hash" in result
+    assert "swap_id" in result and "status" in result and ("transaction_hash" in result)
 
     def test_get_atomic_swap(client):
         with pytest.raises(HTTPException):
@@ -1260,11 +1268,8 @@ def test_create_atomic_swap(client):
                 with pytest.raises(HTTPException):
                     response = client.get("/atomic-swap/invalid_swap_id")
                     assert response.status_code == 404
-import pytest
-from main import app, Collateral
 
 
-# Define a test client to use with FastAPI
 @pytest.fixture
 def test_client():
     with TestClient(app) as client:
@@ -1297,7 +1302,6 @@ def test_client():
             assert response5.status_code == 204
 
             def test_get_update_delete_non_existent_collateral(test_client):
-                # Test to ensure that getting a non-existent collateral returns a 404 status code
                 response1 = test_client.get("/collaterals/{collateral_id}")
                 assert response1.status_code == 404
                 new_collateral_data = Collateral(
@@ -1306,7 +1310,6 @@ def test_client():
                 response2 = test_client.post("/collaterals", json=new_collateral_data)
                 assert response2.status_code == 200
                 assert response2.json() == new_collateral_data.dict()
-                # Test to ensure that updating a non-existent collateral returns a 404 status code
                 updated_collateral_data = Collateral(
                     id=str(uuid.uuid4()),
                     chain_id="updated_test_chain",
@@ -1318,11 +1321,8 @@ def test_client():
                     json=updated_collateral_data,
                 )
                 assert response3.status_code == 404
-                # Test to ensure that deleting a non-existent collateral returns a 404 status code
                 response4 = test_client.delete(f"/collaterals/{new_collateral_data.id}")
                 assert response4.status_code == 404
-import pytest
-from main import app
 
 
 def test_get_volatility():
@@ -1331,10 +1331,6 @@ def test_get_volatility():
     data = response.json()
     assert response.status_code == 200
     assert "volatility" in data.keys()
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app, SidechainValidatorNode
 
 
 def test_create_validator_node():
@@ -1347,7 +1343,6 @@ def test_create_validator_node():
 
     def test_get_validator_node():
         client = TestClient(app)
-        # Create a validator node.
         response = client.post("/sidechain/validator/node", json={"name": "Test Node"})
         assert response.status_code == 200
         data = response.json()
@@ -1361,7 +1356,6 @@ def test_create_validator_node():
 
         def test_update_validator_node():
             client = TestClient(app)
-            # Create a validator node.
             response = client.post(
                 "/sidechain/validator/node", json={"name": "Test Node"}
             )
@@ -1369,7 +1363,6 @@ def test_create_validator_node():
             data = response.json()
             node: SidechainValidatorNode = data
             new_name = "Updated Test Node"
-            # Update the validator node.
             response = client.put(
                 f"/sidechain/validator/node/{node.id}", json={"name": new_name}
             )
@@ -1381,7 +1374,6 @@ def test_create_validator_node():
 
             def test_delete_validator_node():
                 client = TestClient(app)
-                # Create a validator node.
                 response = client.post(
                     "/sidechain/validator/node", json={"name": "Test Node"}
                 )
@@ -1396,9 +1388,6 @@ def test_create_validator_node():
                 assert node.id != deleted_node.id
                 with pytest.raises(HTTPException):
                     client.get(f"/sidechain/validator/node/{deleted_node.id}")
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -1411,8 +1400,6 @@ def client():
             assert response.status_code == 200
             data = response.json()
             assert "result" in data
-import pytest
-from fastapi.testclient import TestClient
 
 
 def test_zero_kproof_system():
@@ -1458,9 +1445,6 @@ def test_zero_kproof_system():
                             assert response.status_code == 200
                             assert b"Proof generated successfully" in response.content
                             assert isinstance(response.json(), dict)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.main
@@ -1469,9 +1453,6 @@ def test_risk_decomposition_endpoint():
     with pytest.raises(Exception):
         response = client.get("/risk-decomposition")
         assert response.status_code == 404
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.main
@@ -1483,15 +1464,10 @@ def test_optimize_vault_strategy():
     strategy_id = data["strategy_id"]
     num_assets = data["num_assets"]
     asset_allocation = data["asset_allocation"]
-    # Ensure generated random string is of correct length
     assert len(strategy_id) == 8
-    # Assert that the returned number of assets matches the randomly generated value
     assert num_assets >= 5 and num_assets <= 10
-    # Assert that the asset allocation values sum to 1
     total = sum(asset_allocation)
     assert total == 1
-import pytest
-from main import CollateralPosition, app
 
 
 @pytest.fixture()
@@ -1537,13 +1513,9 @@ def test_create_collateral_position(collateral_position):
             "message": "Collateral position retrieved successfully.",
             "position": position,
         }
-import pytest
-from fastapi.testclient import TestClient
 
 
 def test_load_portfolio_data():
-    # This test assumes that load_portfolio_data function is working as expected
-    # It does not cover all possible outcomes but checks if data is loaded correctly.
     portfolio = load_portfolio_data()
     assert isinstance(portfolio, Portfolio)
     assert "symbol_map" in dir(portfolio)
@@ -1562,8 +1534,6 @@ def test_load_portfolio_data():
             with pytest.raises(HTTPException):
                 response = client.get("/scenario/XOM/20.00")
                 assert response.status_code == 404
-from main import app, wallet
-import pytest
 
 
 @pytest.fixture()
@@ -1590,7 +1560,7 @@ def client():
                     raise AssertionError(
                         f"An error occurred while trying to create the wallet: {e}"
                     )
-from main import app, FeeTier, calculate_fee_tier
+
 
 importpytest
 
@@ -1611,9 +1581,6 @@ def test_calculate_fee_tier():
         assert isinstance(fee_tier, FeeTier)
         assert fee_tier.volume == 10000
         assert fee_tier.rate == 0.0015
-import pytest
-from fastapi.testclient import TestClient
-from main import app, TradingStrategyParams
 
 
 @pytest.mark.parametrize(
@@ -1672,8 +1639,6 @@ def test_endpoint(params: TradingStrategyParams, expected_status_code):
         with pytest.raises(expected_exception):
             response = client.post("/trading_strategy_params", json=params.json())
             assert False
-import pytest
-from main import AMMPair, ammpairs_router
 
 
 @pytest.fixture()
@@ -1697,9 +1662,6 @@ def test_add_amm_pair(client, test_amm_pair):
         assert len(response.json()) == 2
         for pair in response.json():
             assert isinstance(pair, AMMPair)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_margin_health_websocket():
@@ -1708,14 +1670,10 @@ def test_margin_health_websocket():
     @pytest.mark.asyncio
     async def test():
         response = await client.get("/ws/margin-health")
-        # Check if the websocket endpoint is opened
         assert b'Event="open"' in response.content
-        # Assert that a WebSocket accept_and_send() event is returned
         await asyncio.sleep(1)
         ws = await response.automate()
-        # Close the connection to simulate a closed state
         await ws.close()
-        # Check if a 'message' with a specific content is received
         assert b"Connection established" in response.content
         test()
 
@@ -1725,8 +1683,6 @@ def test_margin_health_websocket():
             assert response.status_code == 101
             assert response.headers["Upgrade"] == "websocket"
             assert response.headers["Connection"] == "upgrade"
-import pytest
-from datetime import datetime
 
 
 def test_trade_creation():
@@ -1755,9 +1711,6 @@ def test_trade_creation():
             str(trade)
             == "Trade(symbol='AAPL', account_id=1, trade_time=datetime(2022, 4, 5, 10, 0), quantity=100, price=150.0)"
         )
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -1787,9 +1740,6 @@ def client():
             def test_calculate_dynamic_fee_invalid_client():
                 with pytest.raises(HTTPException):
                     calculate_dynamic_fee(None, 1.0, 2.5)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -1801,7 +1751,7 @@ def client():
             response = client.get("/dids")
             assert response.status_code == 200
             assert isinstance(response.json(), list)
-            assert all(isinstance(item, str) for item in response.json())
+            assert all((isinstance(item, str) for item in response.json()))
 
             def test_integrate_did_endpoint(client):
                 response = client.post(
@@ -1811,10 +1761,7 @@ def client():
                 assert response.json() == "DID integration successful."
 
                 @pytest.mark.parametrize(
-                    "input_identifier, status",
-                    [
-                        ("invalid-did", False),
-                    ],
+                    "input_identifier, status", [("invalid-did", False)]
                 )
                 def test_integrate_did_invalid_identifier(
                     client, input_identifier, status
@@ -1824,8 +1771,6 @@ def client():
                     assert "Invalid or unknown decentralized identifier" in str(
                         response.content
                     )
-import pytest
-from main import app, LiquidityData
 
 
 @pytest.fixture
@@ -1835,16 +1780,12 @@ def client():
 
         def test_add_liquidity(client):
             response = client.post(
-                "/liquidity",
-                json={"symbol": "BTC-USD", "amount": 100},
+                "/liquidity", json={"symbol": "BTC-USD", "amount": 100}
             )
             assert response.status_code == 200
             data = response.json()
             assert isinstance(data, dict)
             assert "message" in data
-from fastapi import HTTPException
-import pytest
-from main import app, verify_identity
 
 
 @pytest.mark.anyio
@@ -1862,9 +1803,6 @@ async def test_verify_identity_valid():
             def test_endpoint():
                 response = app.test_client().get("/endpoint")
                 assert response.status_code == 404
-import pytest
-from fastapi.testclient import TestClient
-from main import app, calculate_optimized_marking_curve
 
 
 def test_calculate_optimized_marking_curve():
@@ -1877,9 +1815,6 @@ def test_calculate_optimized_marking_curve():
         response = await client.get("/optimal_marking_curve")
         assert response.status_code == 200
         assert isinstance(response.json(), pvector)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.mark.parametrize(
@@ -1887,17 +1822,12 @@ from main import app
     [
         ({"user_id": "user123"}, {}),
         ({"user_id": "user456"}, {"message": "KYC registration successful"}),
-        # Add more test cases for error handling.
     ],
 )
 def test_kyc_endpoint(client, input_data, expected_output):
     response = client.post("/kyc", json=input_data)
     assert response.status_code == 200
     assert response.json() == expected_output
-    # Note: More test cases should be added to cover error handling scenarios such as when the user is not found.
-from fastapi import HTTPException
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -1917,7 +1847,7 @@ def client():
             assert response.status_code == 200
             content = response.json()
             assert "status" in content and content["status"] == "updated"
-from main import app
+
 
 importpytest
 
@@ -1986,9 +1916,7 @@ def test_create_claim():
             assert response.status_code == 200
             claim = response.json()
             updated_claim_id = str(uuid.uuid4())
-            response = client.delete(
-                f"/claims/{updated_claim_id}",
-            )
+            response = client.delete(f"/claims/{updated_claim_id}")
             assert response.status_code == 200
             assert response.text == "Claim not found"
 
@@ -2019,8 +1947,6 @@ def test_create_claim():
                     "amount_claimed": 10000.0,
                     "claim_status": "PENDING",
                 }
-import pytest
-from fastapi.testclient import TestClient
 
 
 def test_endpoint():
@@ -2041,18 +1967,14 @@ def test_endpoint():
         response = client.get("/yields")
         data = response.json()
         assert data["current_strategy"] == "Buy low sell high"
-import pytest
-from main import app
 
 
 def test_create_account():
     client = TestClient(app)
-    # Create an inactive account
     account_data = BrokerageAccount(status="inactive")
     response = client.post("/accounts/", json=account_data)
     assert response.status_code == 400
     assert response.json() == {"detail": "Account is inactive."}
-    # Now create an active account
     account_data.status = "active"
     response = client.post("/accounts/", json=account_data)
     assert response.status_code == 200
@@ -2063,8 +1985,6 @@ def test_create_account():
         "currency": account_data.currency,
         "status": account_data.status,
     }
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -2083,17 +2003,11 @@ def client():
                     b"Invalid JSON payload received for delta hedging."
                     in response.content
                 )
-from main import generate_wallet_address, BitcoinAddress
-import pytest
-from datetime import datetime
-import re
 
 
 def test_generate_wallet_address():
-    # Test with unsupported currency
     with pytest.raises(HTTPException):
         generate_wallet_address(currency="unsupported", user_id=1)
-        # Test with valid currency
         response = generate_wallet_address(currency="bitcoin", user_id=1)
         assert isinstance(response, dict)
         assert "currency" in response
@@ -2103,14 +2017,10 @@ def test_generate_wallet_address():
         def test_bitcoin_address_creation():
             wallet = BitcoinAddress()
             address = wallet.create_address(123)
-            # Test that the created address is a valid bitcoin address.
-            if not re.match(r"^[13][a-km-uptk-z1-9]{27,34}$", str(address)):
+            if not re.match("^[13][a-km-uptk-z1-9]{27,34}$", str(address)):
                 raise AssertionError(
                     "The generated BitcoinAddress is not in the correct format."
                 )
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 def test_batch_orders():
@@ -2127,9 +2037,6 @@ def test_batch_orders():
     assert len(data["trading_pairs"]) == 2
     assert data["status"] == "success"
     assert "batch_id" in data.keys()
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime, timedelta
 
 
 def test_create_margin_trading_position():
@@ -2187,8 +2094,6 @@ def test_create_margin_trading_position():
                                         params={"current_price": 50000, "leverage": 5},
                                     )
                                     assert response.status_code == 200
-import pytest
-from main import app, LiquiditySnapshot
 
 
 @pytest.fixture()
@@ -2210,8 +2115,6 @@ def client():
                 snapshot: LiquiditySnapshot = response.json()
                 assert isinstance(snapshot, LiquiditySnapshot)
                 assert "detail" in snapshot
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -2225,11 +2128,8 @@ def client():
             assert (
                 "user_id" in response.json()
                 and "action" in response.json()
-                and "resource" in response.json()
+                and ("resource" in response.json())
             )
-from fastapi import HTTPException
-import pytest
-from main import app
 
 
 @pytest.mark.anyio
@@ -2247,8 +2147,6 @@ async def test_create_lending_order_book():
             assert "detail" in error_response
 
             def test_update_lending_order_book():
-                # This test depends on the database interactions being mocked or handled.
-                # As such, this test is currently not fully functional but illustrates how you might write a test for updating an order book.
                 with pytest.raises(HTTPException):
                     response = app.test_client.put(
                         "/order_books/fake_order_id",
@@ -2257,8 +2155,6 @@ async def test_create_lending_order_book():
                     assert response.status_code == 404
                     error_response = response.json()
                     assert "detail" in error_response
-import pytest
-from main import app, stress_test_portfolio
 
 
 @pytest.fixture()
@@ -2273,23 +2169,20 @@ def client():
                 risk_free_rate=0.02,
                 num_assets=5,
                 weights=[0.2, 0.1, 0.3, 0.3, 0.1],
-                returns=[0.12, 0.15, 0.08, 0.10, 0.16],
+                returns=[0.12, 0.15, 0.08, 0.1, 0.16],
             )
 
         response = client.post("/stress_test", json=data)
         assert response.status_code == 200
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.mark.parametrize(
     "sender_amount, receiver_amount, expected_status",
     [
-        (0.000001, 0.000001, 200),
+        (1e-06, 1e-06, 200),
         (9999999, 9999999, 200),
         (-1, 10000000, 400),
-        (1e6, -1, 400),
+        (1000000.0, -1, 400),
     ],
 )
 def test_atomic_swap(sender_amount, receiver_amount, expected_status):
@@ -2302,10 +2195,14 @@ def test_atomic_swap(sender_amount, receiver_amount, expected_status):
         @pytest.mark.parametrize(
             "sender_amount, receiver_amount, exception_message",
             [
-                (0.0000001, 0.0000001, None),
+                (1e-07, 1e-07, None),
                 (9999999999, 9999999999, None),
                 (-1, 10000000, "Sender amount must be between 0.000001 and 99999999."),
-                (1e6, -1, "Receiver amount must be between 0.000001 and 99999999."),
+                (
+                    1000000.0,
+                    -1,
+                    "Receiver amount must be between 0.000001 and 99999999.",
+                ),
             ],
         )
         def test_atomic_swap_invalid_data(
@@ -2318,8 +2215,6 @@ def test_atomic_swap(sender_amount, receiver_amount, expected_status):
                     )
                     assert response.status_code == 400
                     assert ex_info.value.detail == exception_message
-import pytest
-from main import app, DIDsManager
 
 
 @pytest.fixture()
@@ -2369,8 +2264,7 @@ def manager():
                                 updated_did = response["did"]
                                 assert response["result"] == "DID updated successfully."
                                 assert type(updated_did) is str
-import pytest
-from fastapi.testclient import TestClient
+
 
 app = FastAPI()
 
@@ -2384,6 +2278,7 @@ class TokenSwapRoute(BaseModel):
 
     @pytest.fixture
     def create_route():
+
         def _create_route(route: TokenSwapRoute):
             if route.id in app.state.SWAP_ROUTES:
                 raise HTTPException(status_code=400, detail="Route already exists.")
@@ -2420,8 +2315,6 @@ class TokenSwapRoute(BaseModel):
                 response = client.get("/list_token_swap_routes")
                 assert response.status_code == 200
                 assert len(response.json()["routes"]) == 2
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -2476,8 +2369,6 @@ def client():
                         assert "The email address is already registered." in str(
                             response.content
                         )
-import pytest
-from your_module import CurveInput, optimize_curve
 
 
 def test_optimize_curve():
@@ -2492,9 +2383,6 @@ def test_optimize_curve():
         response = client.get("/optimize_curve")
         assert response.status_code == 200
         assert b'{"x_curve": [...]}' in response.content
-from fastapi.testclient import TestClient
-import pytest
-from main import app, OracleData
 
 
 @pytest.fixture
@@ -2520,9 +2408,6 @@ def client():
                 )
                 response = client.post("/data", json=data.dict())
                 assert response.status_code == 400
-from fastapi.testclient import TestClient
-import pytest
-from main import app, start_liquidation_auction
 
 
 @pytest.fixture
@@ -2535,8 +2420,6 @@ def client():
                 "/start_liquidation", json={"auction_id": "test_auction"}
             )
             assert response.status_code == 200
-import pytest
-from main import app, WalletSecurity
 
 
 def test_fetch_scores():
@@ -2554,14 +2437,10 @@ def test_fetch_scores():
         result = response.json()
         assert result["wallet_url"] == "https://fakeurl.com"
         assert isinstance(result["scores"], dict)
-from fastapi import HTTPException
-import pytest
-from main import app, Position
 
 
 def test_unwinding():
     client = TestClient(app)
-    # Create a random position for unwinding
     symbol = "ABC"
     quantity = 100.0
     price = random.uniform(10.0, 20.0)
@@ -2579,7 +2458,6 @@ def test_unwinding():
 
     def test_unwinding_invalid_position():
         client = TestClient(app)
-        # Create an invalid position quantity to test the exception handling.
         symbol = "ABC"
         quantity = -100.0
         price = random.uniform(10.0, 20.0)
@@ -2592,7 +2470,6 @@ def test_unwinding():
 
             def test_unwinding_invalid_price_range():
                 client = TestClient(app)
-                # Create an invalid position quantity to test the exception handling.
                 symbol = "ABC"
                 quantity = 100.0
                 price = 1.0
@@ -2609,9 +2486,6 @@ def test_unwinding():
                         with pytest.raises(HTTPException):
                             response = client.get("/unwind")
                             assert response.status_code == 404
-from fastapi import HTTPException
-import pytest
-from main import TransactionBatch, create_transaction_batch
 
 
 @pytest.fixture()
@@ -2636,12 +2510,6 @@ def test_create_transaction_batch():
         response = create_transaction_block(transaction_batch.json())
         assert response.status_code == 200
         assert response.json() == expected_response
-import pytest
-from main import (
-    LiquidityPool,
-    create_liquidity_pool_endpoint,
-    get_liquidity_pool_endpoint,
-)
 
 
 @pytest.fixture
@@ -2664,15 +2532,11 @@ async def test_create_liquidity_pool(test_pool):
     assert test_pool.token2_id == "token2"
 
     def test_get_liquidity_pool():
-        # This tests would be implemented here using the provided
-        # get_liquidity_pool_endpoint function from the given API implementation.
-        pass  # Placeholder for test implementation
-import pytest
-from fastapi import HTTPException
-from main import app, InstitutionalPrimeBrokers
+        pass
 
 
 class TestInstitutionalPrimeBrokers:
+
     def test_valid_institutional_prime_brokers_creation(self):
         id = "123"
         name = "ABC Prime Brokerage"
@@ -2691,8 +2555,6 @@ class TestInstitutionalPrimeBrokers:
                 InstitutionalPrimeBrokers(
                     id="123", name="", address="", contact_number=""
                 )
-import pytest
-from datetime import datetime
 
 
 def test_place_limit_sell_order():
@@ -2714,9 +2576,6 @@ def test_place_limit_sell_order():
                 client = pytest.app.test_client()
                 response = client.get("/limit-sell", params={"symbol": None})
                 assert response.status_code == 400
-import pytest
-from fastapi.testclient import TestClient
-from main import app, OrderBook
 
 
 @pytest.fixture()
@@ -2739,8 +2598,6 @@ def test_client():
                 assert isinstance(order_book, OrderBook)
                 assert len(order_book.bids) == 0
                 assert len(order_book.asks) == 0
-import pytest
-from main import app, Deposit
 
 
 @pytest.fixture
@@ -2764,8 +2621,7 @@ def client():
                     response = client.get("/deposits/1")
                     assert response.status_code == 200
                     assert "deposit_id" in response.json()
-from fastapi import TestClient
-from main import app, Portfolio
+
 
 importpytest
 
@@ -2778,28 +2634,18 @@ def test_dependency_overrides():
     @pytest.mark.asyncio
     async def test_update_portfolio_background_task():
         client = TestClient(app)
-        # Trigger the background task to update portfolio value.
         response = client.post("/update_portfolio_background_task")
-        # Check if the portfolio value has been updated in the response.
         portfolios = await client.get("http://127.0.0.1:8000/portfolio_list")
         for portfolio in portfolios.json():
             assert "updated_at" in portfolio
             assert datetime.now() > datetime.strptime(
                 portfolio["updated_at"], "%Y-%m-%d %H:%M:%S"
             )
-            # Additional tests can be added as needed.
-import pytest
-from fastapi import HTTPException
-import time
 
 
 def test_stop_loss_order():
     order = StopOrder(
-        symbol="AAPL",
-        quantity=100,
-        price=150.0,
-        type="stop_loss",
-        trigger_price=145.0,
+        symbol="AAPL", quantity=100, price=150.0, type="stop_loss", trigger_price=145.0
     )
     with pytest.raises(HTTPException):
         with pytest.raises(Exception):
@@ -2820,31 +2666,23 @@ def test_stop_loss_order():
                 )
                 with pytest.raises(HTTPException):
                     with pytest.raises(Exception):
-                        market_data = {
-                            ...
-                        }  # Placeholder for a mock market data object.
+                        market_data = {...}
                         execute_order(order, market_data)
                         assert order.symbol == "MSFT"
                         assert order.quantity == 50
                         assert order.price == 175.0
                         assert order.type == "trailing_stop"
                         assert order.trigger_price == 170.0
-import pytest
-from fastapi.testclient import TestClient
-from main import app
-from datetime import datetime
 
 
 def test_update_trading_strategy_params():
     client = TestClient(app)
-    # Define TradingStrategyParams object
     params = TradingStrategyParams(
         risk_level=0.1,
         stop_loss_percentage=2.5,
         take_profit_percentage=10.0,
         time_frame_minutes=15,
     )
-    # Send a PUT request to the endpoint with the params object
     response = client.put("/trading-strategy/params", json=params)
     assert response.status_code == 200
     data = response.json()
@@ -2853,8 +2691,6 @@ def test_update_trading_strategy_params():
         "updated_params": params.dict(),
     }
     assert data == expected_data
-import pytest
-from main import app, LiquiditySnapshot
 
 
 def test_load_snapshot():
@@ -2864,9 +2700,7 @@ def test_load_snapshot():
     def test_save_snapshot():
         timestamp = datetime.datetime.now()
         new_snapshot = LiquiditySnapshot(
-            timestamp=timestamp,
-            total_liquidity=0.5,
-            rewards_earned=0.02,
+            timestamp=timestamp, total_liquidity=0.5, rewards_earned=0.02
         )
         original_snapshot = LiquiditySnapshot.load_snapshot()
         app.save_snapshot(new_snapshot)
@@ -2885,9 +2719,6 @@ def test_load_snapshot():
             assert isinstance(snapshot_data, dict)
             for field_name in ["timestamp", "total_liquidity", "rewards_earned"]:
                 assert field_name in snapshot_data
-import pytest
-from fastapi import HTTPException
-from main import app
 
 
 @pytest.mark.parametrize(
@@ -2897,18 +2728,12 @@ def test_get_quote(request_id, expected_exception):
     with pytest.raises(expected_exception):
         client = TestClient(app)
         response = client.get(f"/quote/{request_id}")
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime, timedelta
-from main import app
 
 
 @pytest.fixture()
 def client():
-    # Mock the database or any other dependency used by the endpoint
     yield TestClient(app)
 
-    # Clean up any resources allocated during testing.
     def test_valid_atomic_swap(client):
         atomic_swap_data = {
             "id": str(uuid.uuid4()),
@@ -2936,9 +2761,7 @@ def client():
             assert response.status_code == 400
             assert isinstance(response.json(), dict)
             assert "detail" in response.json()
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime
+
 
 app = FastAPI()
 
@@ -2952,7 +2775,6 @@ class LendingPosition(BaseModel):
 
     @classmethod
     def create_lending_position(cls, position: LendingPosition) -> dict:
-        # ... (code remains unchanged)
         return {"position_id": 1234, "status": "active"}
 
     def test_create_lending_position():
@@ -2988,9 +2810,6 @@ class LendingPosition(BaseModel):
                     response = client.post("/lending-position", json=position.dict())
                     assert response.status_code == 200
                     assert "position_id" in response.json()
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -3031,22 +2850,17 @@ def client():
                         "price": updated_price,
                         "timestamp": datetime.now(),
                     }
-import pytest
-from main import app, TradingFeeRebateSystem
 
 
 @pytest.fixture()
 def trading_fee_rebate_system():
     system = TradingFeeRebateSystem()
     yield system
-    # Clean up your objects here if required.
     pass
 
     def test_add_rebate(trading_fee_rebate_system):
         new_rebate = TradingFeeRebate(
-            currency="USD",
-            rebate_percentage=0.05,
-            min_amount=10000,
+            currency="USD", rebate_percentage=0.05, min_amount=10000
         )
         trading_fee_rebate_system.add_rebate(new_rebate)
         assert len(trading_fee_rebate_system._rebates) == 1
@@ -3054,16 +2868,12 @@ def trading_fee_rebate_system():
 
         def test_get_rebate(trading_fee_rebate_system):
             new_rebate = TradingFeeRebate(
-                currency="USD",
-                rebate_percentage=0.05,
-                min_amount=10000,
+                currency="USD", rebate_percentage=0.05, min_amount=10000
             )
             trading_fee_rebate_system.add_rebate(new_rebate)
             response = trading_fee_rebate_system.get_rebate("USD")
             assert len(response) == 1
             assert list(response)[0] == new_rebate
-import pytest
-from main import app, Order
 
 
 def test_liquidity_routing_endpoint():
@@ -3082,8 +2892,6 @@ def test_liquidity_routing_endpoint():
     @handle_order.resolves
     def test_handle_order(order):
         assert isinstance(order, Order)
-import pytest
-from main import Oracle, get_oracles
 
 
 def test_create_oracle():
@@ -3113,10 +2921,6 @@ def test_create_oracle():
             def test_get_invalid_oracle():
                 with pytest.raises(HTTPException):
                     Oracle.get_oracle("invalid_oracle_id")
-import asyncio
-import ujson
-from fastapi.testclient import TestClient
-from main import app
 
 
 def test_optimize_routing():
@@ -3141,26 +2945,19 @@ def test_optimize_routing():
             with pytest.raises(HTTPException):
                 response = client.get("/optimize")
                 assert response.status_code == 500
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_create_payment_channel_network():
     client = TestClient(app)
-    # Define sample input data
     node1 = {"id": str(uuid.uuid4()), "state": "online"}
     node2 = {"id": str(uuid.uuid4()), "state": "offline"}
     network_input = {"network": PaymentChannelNetwork(nodes=[node1, node2])}
-    # Test the endpoint
     response = client.post("/networks", json=network_input)
     assert response.status_code == 200
     result_data = response.json()
     assert len(result_data["nodes"]) == 2
     for node in result_data["nodes"]:
         assert "id" in node and "state" in node
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -3177,9 +2974,6 @@ def client():
             assert risk_factors["age_group"] == expected_age_group
             expected_smoking_status = "Smokes"
             assert risk_factors["smoking_status"] == expected_smoking_status
-            # ... continue with the rest of the assertions
-import pytest
-from main import app, Reputation
 
 
 @pytest.fixture
@@ -3236,9 +3030,6 @@ def client():
                             response = client.get(f"/reputation/{invalid_user_id}")
                             assert response.status_code == 404
                             assert response.text == "User not found"
-import pytest
-from fastapi.testclient import TestClient
-from main import app, InventoryHedgingItem
 
 
 def test_get_inventory_hedging():
@@ -3256,8 +3047,6 @@ def test_get_inventory_hedging():
             content = response.content
             assert content
             assert response.status_code == 404
-import pytest
-from main import app
 
 
 @pytest.mark.parametrize(
@@ -3272,8 +3061,6 @@ def test_api_responses(endpoint, method, expected_status_code):
     client = TestClient(app)
     response = getattr(client, method)(f"/endpoint{endpoint}")
     assert response.status_code == expected_status_code
-import pytest
-from main import ReputationOracle, app
 
 
 @pytest.mark.anyio
@@ -3298,15 +3085,10 @@ async def test_create_oracle():
                 with pytest.raises(HTTPException) as ex:
                     app.test_client().put("/oracle/test_id")
                     assert ex.value.status_code == 404
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app, FeeOptimizationInput
 
 
 def test_fee_optimization():
     client = TestClient(app)
-    # Mock input_data with specific values.
     input_data = FeeOptimizationInput(
         token0_price=1.5,
         token1_price=2.3,
@@ -3320,29 +3102,24 @@ def test_fee_optimization():
 
     def test_fee_optimization_unprocessable_input():
         client = TestClient(app)
-        # Mock input_data with invalid values.
         input_data = FeeOptimizationInput(
             token0_price=-1.5,
             token1_price=2.3,
             reserve0_amount=1000,
-            reserve1_amount=-1200,  # Invalid value
+            reserve1_amount=-1200,
             fee_cemented=0.001,
             slippage_percentage=0.05,
         )
         response = client.post("/fee_optimization", json=input_data.json())
         assert response.status_code == 422
-import pytest
-from main import DarkPool, app
 
 
 @pytest.fixture
 def dark_pool():
-    # Create a new dark pool instance
     return DarkPool()
 
 
 def test_create_dark_pool(dark_pool):
-    # Test creating a new dark pool with provided data
     id = str(uuid.uuid4())
     dark_pool.id = id
     dark_pool.buyer = "Buyer A"
@@ -3358,7 +3135,6 @@ def test_create_dark_pool(dark_pool):
     assert response["sell_amount"] == 500.0
 
     def test_get_dark_pool(dark_pool):
-        # Test retrieving a dark pool with provided ID
         id = str(uuid.uuid4())
         dark_pool.id = id
         dark_pool.buyer = "Buyer A"
@@ -3375,13 +3151,10 @@ def test_create_dark_pool(dark_pool):
         assert get_response["sell_amount"] == 500.0
 
         def test_get_dark_pool_non_existent(dark_pool):
-            # Test retrieving a non-existent dark pool with provided ID
             id = str(uuid.uuid4())
             with pytest.raises(HTTPException) as context:
                 _ = dark_pool.get_dark_pool(id)
                 assert str(context.value) == "Dark pool not found."
-import pytest
-from main import app
 
 
 def test_market_depth():
@@ -3391,25 +3164,19 @@ def test_market_depth():
     assert "asset" in data
     assert "buy" in data
     assert "sell" in data
-from datetime import datetime
-import pytest
-from main import app
 
 
 def test_tax_report_endpoint():
     client = TestClient(app)
-    # Test case 1: Valid start_date and end_date
     start_date_str = "2022-01-01"
     end_date_str = "2022-12-31"
     response = client.get(
         f"/tax-report?start_date={start_date_str}&end_date={end_date_str}"
     )
     assert response.status_code == 200
-    # Test case 2: Missing required parameters
     response = client.get("/tax-report")
     assert response.status_code == 400
     assert b"Missing required parameters" in response.content
-    # Test case 3: Invalid start_date or end_date format
     invalid_start_date_str = "2022-13-01"
     valid_end_date_str = "2022-12-31"
     response = client.get(
@@ -3417,10 +3184,6 @@ def test_tax_report_endpoint():
     )
     assert response.status_code == 400
     assert b"Invalid start_date or end_date format" in response.content
-import pytest
-from main import app
-from main import create_alert
-from main import get_alerts
 
 
 @pytest.mark.parametrize(
@@ -3428,13 +3191,13 @@ from main import get_alerts
     [
         PriceAlert(
             product_id=1,
-            target_price=50.00,
+            target_price=50.0,
             trigger_time="2023-01-01 10:00",
             notification_type="email",
         ),
         PriceAlert(
             product_id=2,
-            target_price=75.00,
+            target_price=75.0,
             trigger_time="2023-02-01 15:30",
             notification_type="sms",
         ),
@@ -3463,9 +3226,6 @@ def test_create_alert(alert):
                 "notification_type": "sms",
             },
         ]
-from fastapi import HTTPException
-import pytest
-from main import app, SystemHealth
 
 
 @pytest.fixture
@@ -3491,8 +3251,6 @@ def client():
                 response = client.get("/system-health", status_code=500)
                 content = response.content
                 assert b"Internal Server Error" in content
-import pytest
-from fastapi.testclient import TestClient
 
 
 def test_create_snapshot():
@@ -3509,14 +3267,10 @@ def test_create_snapshot():
         response = client.get("/liquidity_snapshots")
         assert response.status_class == "200 OK"
         assert len(response.json()) == 2
-import pytest
-from fastapi.testclient import TestClient
-from main import app, FeeStatement
 
 
 def test_fee_statement_endpoint():
     client = TestClient(app)
-    # Test for valid data
     fee_statement_data = FeeStatement(
         client_id=123,
         statement_date=datetime(2022, 1, 1),
@@ -3526,12 +3280,8 @@ def test_fee_statement_endpoint():
             {"type": "withdrawal", "amount": 3000},
         ],
     )
-    response = client.post(
-        "/generate_fee_statement",
-        json=fee_statement_data.dict(),
-    )
+    response = client.post("/generate_fee_statement", json=fee_statement_data.dict())
     assert response.status_code == 200
-    # Test that the JSON response contains the expected fields
     fees = FeeStatement.parse_raw(response.text)
     assert fees.client_id == fee_statement_data.client_id
     assert fees.statement_date == fee_statement_data.statement_date
@@ -3540,7 +3290,6 @@ def test_fee_statement_endpoint():
 
     def test_fee_statement_endpoint_invalid_client_id():
         client = TestClient(app)
-        # Test for invalid client ID
         fee_statement_data = FeeStatement(
             client_id=-123,
             statement_date=datetime(2022, 1, 1),
@@ -3551,18 +3300,15 @@ def test_fee_statement_endpoint():
             ],
         )
         response = client.post(
-            "/generate_fee_statement",
-            json=fee_statement_data.dict(),
+            "/generate_fee_statement", json=fee_statement_data.dict()
         )
         assert response.status_code == 400
-        # Test that the JSON response contains an appropriate error message
         fees = FeeStatement.parse_raw(response.text)
         assert fees.client_id == fee_statement_data.client_id
         assert fees.statement_date == fee_statement_data.statement_date
         assert fees.statement_period == fee_statement_data.statement_period
         assert len(fees.transactions) == len(fee_statement_data.transactions)
-from fastapi.testclient import TestClient
-from main import app
+
 
 importpytest
 
@@ -3575,14 +3321,12 @@ def test_get_whitelisted_addresses():
 
     def test_set_whitelisted_address():
         client = TestClient(app)
-        # Test adding an address to whitelist
         response = client.post("/whitelist", json={"address": "0x1234567890"})
         assert response.status_code == 200
         assert response.json() == {"result": "address added to whitelist"}
 
         def test_get_whitelisted_address():
             client = TestClient(app)
-            # Test getting an address from whitelist
             WHITE_LISTED_ADDRESSES.append("0x1234567890")
             response = client.get("/whitelist/0x1234567890")
             assert response.status_code == 200
@@ -3592,13 +3336,10 @@ def test_get_whitelisted_addresses():
 
             def test_get_whitelisted_address_not_found():
                 client = TestClient(app)
-                # Test getting an address not in whitelist
                 with pytest.raises(HTTPException):
                     response = client.get("/whitelist/0x9999999999")
                     assert response.status_code == 404
                     assert "Address not found in whitelist" in str(response.content)
-import pytest
-from main import is_trading_pair_eligible, delist_trading_pair
 
 
 @pytest.fixture()
@@ -3616,8 +3357,6 @@ def test_is_trading_pair_eligible(test_data):
         expected_output = {"result": "Delisted BTC-USD"}
         response = delist_trading_pair(pair_symbol)
         assert response == expected_output
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -3625,7 +3364,6 @@ def client():
     with TestClient(app) as _client:
         yield _
 
-        # Clean up the TestClient here, if needed.
         def test_stress_test_endpoint(client):
             response = client.get("/stress-test")
             assert response.status_code == 200
@@ -3633,9 +3371,6 @@ def client():
             assert isinstance(result_data, dict)
             assert "portfolio_return" in result_data
             assert "portfolio_volatility" in result_data
-from fastapi.testclient import TestClient
-import pytest
-from main import app, ProofOfReserves
 
 
 @pytest.fixture
@@ -3652,12 +3387,11 @@ def client():
             bank_balance = attestation_data["attestation_data"]["bank_balance"]
             assert stablecoin_total == data["stablecoin_total"]
             assert bank_balance == data["bank_balance"]
-from pytest import mark, raises
-import time
 
 
 @pytest.mark.fastapi
 class TestAPI:
+
     @mark.test_staking
     def test_stake(self):
         token_data = Stake(
@@ -3666,7 +3400,6 @@ class TestAPI:
         with raises(HTTPException, status_code=400, detail="Stake already exists"):
             STAKES[token_data.stake_id] = token_data
 
-            # Additional assertions for the success case
             @mark.test_voting
             def test_vote(self):
                 vote_data = Vote(
@@ -3682,7 +3415,6 @@ class TestAPI:
                 ):
                     VOTES[vote_data.vote_id] = vote_data
 
-                    # Additional assertions for the success case
                     @mark.test_stakes_endpoint
                     def test_get_stakes(self):
                         response = self.client.get("/stakes")
@@ -3690,36 +3422,23 @@ class TestAPI:
                         data = response.json()
                         assert isinstance(data, dict)
                         assert "STAKES" in data.keys()
-                        # Additional assertions and setup for the client
-import pytest
-from main import app
-from your_app_validator_node import ValidatorNode, validator_node_router
 
 
 @pytest.fixture
 def client():
-    # Code to initialize the test application
     pass
 
     def test_add_validator_node(client):
-        # Code to add a new validator node and check the response
         pass
 
         def test_get_validator_node(client):
-            # Code to retrieve a specific validator node from the database and check the response
             pass
 
             def test_update_validator_node(client):
-                # Code to update a validator node's status in the database and check the response
                 pass
 
                 def test_delete_validator_node(client):
-                    # Code to delete a validator node from the database and check the response
                     pass
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime, timedelta
-from main import app
 
 
 @pytest.fixture
@@ -3751,16 +3470,12 @@ def client():
                 client = TestClient(app)
                 response = client.get("/manipulate_market")
                 assert response.status_code == 404
-import pytest
-from main import DIDDocument, AttestationState, AttestationRequest, AttestationResponse
 
 
 @pytest.fixture()
 def attestestation_request():
     return AttestationRequest(
-        did_document=DIDDocument(
-            id=str(uuid.uuid4()),
-        ),
+        did_document=DIDDocument(id=str(uuid.uuid4())),
         attestation_request_id=str(uuid.uuid4()),
     )
 
@@ -3776,27 +3491,19 @@ def test_attestation_request_valid(attestestation_request):
     def test_attestation_request_invalid():
         with pytest.raises(HTTPException):
             AttestationRequest(
-                did_document=DIDDocument(
-                    id=str(uuid.uuid4()),
-                ),
+                did_document=DIDDocument(id=str(uuid.uuid4())),
                 attestation_request_id=str(uuid.uuid4()),
             )
             assert not DIDDocument.id
             assert not uuid.UUID
             request = AttestationRequest(
-                did_document=DIDDocument(
-                    id=None,
-                ),
-                attestation_request_id=uuid.uuid4(),
+                did_document=DIDDocument(id=None), attestation_request_id=uuid.uuid4()
             )
             with pytest.raises(HTTPException):
                 if not request.did_document.id:
                     raise HTTPException(
                         status_code=400, detail="Missing DID document ID."
                     )
-import uuid
-from datetime import datetime
-from main import app
 
 
 def test_create_event():
@@ -3822,27 +3529,23 @@ def test_create_event():
         with pytest.raises(HTTPException):
             response = client.post("/event", json=event_data)
             assert response.status_code == 400
-import asyncio
-from fastapi import FastAPI, HTTPException
-from fastapi.testclient import TestClient
+
 
 app = FastAPI()
 
 
 class LPRebalancer:
+
     def __init__(self, lp_address: str):
         self.lp_address = lp_address
 
         async def rebalance_lps():
             while True:
-                lp_rebalancer = LPRebalancer(
-                    lp_address="0x..."
-                )  # Replace with actual token addresses
+                lp_rebalancer = LPRebalancer(lp_address="0x...")
                 await lp_rebalancer.rebalance()
                 print("Waiting for the next rebalance...")
-                await asyncio.sleep(60 * 5)  # Sleep for 5 minutes before checking again
+                await asyncio.sleep(60 * 5)
 
-                # Tests
                 def test_rebalance_lps():
                     loop = asyncio.get_event_loop()
                     response = loop.run_until_complete(rebalance_lps())
@@ -3860,11 +3563,6 @@ class LPRebalancer:
                                 assert "Liquidity pool rebalanced." in str(
                                     rebalance_result
                                 )
-import pytest
-from main import app
-from models.collateral import Collateral
-from models.position import Position
-from main import app
 
 
 @pytest.fixture
@@ -3888,7 +3586,7 @@ def client():
                 assert response.status_code == 200
                 data = response.json()
                 assert isinstance(data, list)
-                assert all(isinstance(item, Collateral) for item in data)
+                assert all((isinstance(item, Collateral) for item in data))
 
                 def test_create_position(client):
                     create_collateral(client, type="Equity", amount=100000)
@@ -3924,12 +3622,7 @@ def client():
                         assert response.status_code == 200
                         data = response.json()
                         assert isinstance(data, list)
-                        assert all(isinstance(item, Position) for item in data)
-import pytest
-from unittest import mock
-from main import app
-from main import app, BOTS
-from main import app, BOTS
+                        assert all((isinstance(item, Position) for item in data))
 
 
 @pytest.fixture
@@ -3949,7 +3642,6 @@ def test_create_liquidator_bot(sample_bot_data):
     def test_get_liquidator_bot():
         with mock.patch("main.app") as fastapi_app:
             fastapi_app.return_value = TestClient(app)
-            # Assuming the 'BOTS' dictionary is already populated.
             bot_name = "LiquidatorBot1"
             response = client.get(f"/bots/{bot_name}")
             assert response.status_code == 200
@@ -3957,14 +3649,9 @@ def test_create_liquidator_bot(sample_bot_data):
             def test_update_liquidator_bot():
                 with mock.patch("main.app") as fastapi_app:
                     fastapi_app.return_value = TestClient(app)
-                    # Assuming the 'BOTS' dictionary is already populated.
                     bot_name = "LiquidatorBot1"
                     response = client.put(f"/bots/{bot_name}")
                     assert response.status_code == 200
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app
 
 
 @pytest.fixture
@@ -3979,8 +3666,6 @@ def client():
             assert "ticker" in data
             assert "ask" in data
             assert "bid" in data
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -4001,7 +3686,6 @@ def client():
                         service.websocket_endpoint()
                     )
 
-                    # Test that the websocket endpoint is called correctly when new price updates are added
                     def mock_get_price_updates(
                         self, websocket: WebSocket, *args, **kwargs
                     ):
@@ -4021,12 +3705,11 @@ def client():
                     def test_price_update_service_not_connected():
                         with pytest.raises(ConnectionError):
                             PriceUpdateService().websocket_endpoint()
-import pytest
-from main import app, calculate_portfolio_value
 
 
 @pytest.mark.use_testfiles
 class TestUpdateUserPortfolio:
+
     @pytest.fixture
     def background_task(self):
         return BackgroundTasks()
@@ -4035,17 +3718,13 @@ class TestUpdateUserPortfolio:
     async def test_background_job_updates_user_portfolio_every_minute(
         self, background_task
     ):
-        # Trigger the update job for user with id 1
         response = background_task.update_user_portfolio(1)
         assert response == {
             "message": "Background job to update user portfolio started."
         }
-        # Sleep for a minute before checking the updated value of portfolio.
         time.sleep(60)
         portfolio_value = calculate_portfolio_value(1)
         assert portfolio_value == 1010
-import pytest
-from main import app
 
 
 def test_generate_tax_report():
@@ -4077,10 +3756,6 @@ def test_generate_tax_report():
                 ).item():
                     response = create_tax_report(request_data)
                     assert response.status_code == 200
-import pytest
-from fastapi.testclient import TestClient
-from main import app, RiskManager
-from datetime import datetime
 
 
 @pytest.fixture
@@ -4107,10 +3782,7 @@ def test_monitor_exposure(mocker):
         def test_get_user_exposure():
             risk_manager = RiskManager()
             exposure = Exposure(
-                user_id=1,
-                limit=500.0,
-                current_exposure=350.0,
-                timestamp=datetime.now(),
+                user_id=1, limit=500.0, current_exposure=350.0, timestamp=datetime.now()
             )
             risk_manager.exposures.append(exposure)
             exposure_in_user_format = risk_manager.get_user_exposure(1)
@@ -4173,7 +3845,7 @@ def test_monitor_exposure(mocker):
                                                     timestamp=datetime.now(),
                                                 ),
                                                 1,
-                                            ),
+                                            )
                                         ],
                                     )
                                     def test_risk_manager_get_user_exposure(
@@ -4205,10 +3877,6 @@ def test_monitor_exposure(mocker):
                                                     exposure_in_user_format.current_exposure
                                                     == 500.0
                                                 )
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app
 
 
 def test_request_signatures():
@@ -4252,8 +3920,6 @@ def test_request_signatures():
                     "detail" in data
                     and data["detail"] == "Not enough signatures received."
                 )
-import pytest
-from main import app
 
 
 @pytest.mark.parametrize(
@@ -4262,16 +3928,16 @@ from main import app
         (
             {
                 "account_id": "acc123",
-                "source_account_margin": 1000.00,
-                "target_account_margin": 500.00,
+                "source_account_margin": 1000.0,
+                "target_account_margin": 500.0,
             },
             "Cross-margin position transfer between accounts was successful.",
         ),
         (
             {
                 "account_id": "invalid_acc",
-                "source_account_margin": -50.00,
-                "target_account_margin": 200.00,
+                "source_account_margin": -50.0,
+                "target_account_margin": 200.0,
             },
             "Invalid margin values",
         ),
@@ -4285,9 +3951,6 @@ def test_transfer_cross_margin_positions(account_data, expected):
         assert e.type == HTTPException
         assert response.status_code == 200
         assert response.json() == {"message": expected}
-from fastapi import HTTPException
-import pytest
-from main import app, AMMPair
 
 
 @pytest.fixture()
@@ -4305,8 +3968,6 @@ def client():
                 with pytest.raises(HTTPException):
                     amm_pair_data = AMMPair(token0="invalid_token", token1="USDT")
                     client.post("/amm_pairs", json=amm_pair_data.dict())
-import pytest
-from main import app
 
 
 def test_create_otc_quote_request():
@@ -4321,8 +3982,6 @@ def test_create_otc_quote_request():
     response = client.post("/otc_quote_request", json=req_data)
     assert response.status_code == 200
     assert "desk_id" in response.json()
-import pytest
-from your_module import LiquidityBridge, LiquidityBridgeManager
 
 
 def test_encrypt_decrypt():
@@ -4348,9 +4007,6 @@ def test_encrypt_decrypt():
             with pytest.raises(HTTPException) as exc:
                 manager.get_bridge_by_public_key("invalid_public_key")
                 assert str(exc.value) == "Bridge not found"
-import pytest
-from fastapi.testclient import TestClient
-from main import app, BridgingRequest, BridgingResponse
 
 
 def test_endpoint_not_found():
@@ -4386,9 +4042,6 @@ def test_endpoint_not_found():
                 response = client.post("/bridging", json=request_data.dict())
                 assert response.status_code == 404
                 assert "Unsupported cross-chain bridge." in str(response.content)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -4417,8 +4070,6 @@ def client():
                         response.json()["message"]
                         == "CSV file has been successfully imported."
                     )
-import pytest
-from main import netting_groups, NettingGroup
 
 
 def test_create_netting_group():
@@ -4435,9 +4086,6 @@ def test_create_netting_group():
         def test_netting_group_not_found():
             with pytest.raises(HTTPException):
                 get_netting_group(999)
-from fastapi import HTTPException
-import pytest
-from main import Bridge
 
 
 @pytest.fixture
@@ -4476,9 +4124,6 @@ def test_create_bridges(sample_bridge):
                                 "/bridge", data=sample_bridge
                             )
                             assert str(ex.value).startswith("New bridge created")
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.mark.parametrize(
@@ -4527,9 +4172,6 @@ def test_get_concentrated_liquidity(token0, token1, expected):
     assert data["token0"]["amount_shares"] == token0["amount_shares"]
     assert data["token1"]["id"] == token1["id"]
     assert data["token1"]["amount_shares"] == token1["amount_shares"]
-import pytest
-from fastapi.testclient import TestClient
-from main import app, CrossChainState
 
 
 def test_verify_state():
@@ -4550,20 +4192,11 @@ def test_verify_state():
             amount=100,
             timestamp=datetime.utcnow(),
         )
-        # Test if the state verification works
         assert CrossChainState.verify_state(state) == True
-        # Test if exception is raised when an invalid state is received
         with pytest.raises(HTTPException):
             with pytest.delegates() as delegates:
                 CrossChainState.verify_and_process_state(state)
                 raise Exception("Test exception")
-import pytest
-from fastapi.testclient import TestClient
-from main import (
-    ComplianceAttestation,
-    validate_compliance_attestation,
-    attest_compliance_attestation,
-)
 
 
 def test_validate_compliance_attestation():
@@ -4591,9 +4224,6 @@ def test_validate_compliance_attestation():
                 )
                 with pytest.raises(HTTPException):
                     assert attest_compliance_attestation(attestation) == False
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 def test_calculate_rebalance_ratio():
@@ -4607,8 +4237,7 @@ def test_calculate_rebalance_ratio():
             def test_liquidity_pool_rebalance_endpoint(client: TestClient):
                 response = client.get("/rebalance")
                 assert response.status_code == 200
-import pytest
-from fastapi.testclient import TestClient
+
 
 app = FastAPI()
 
@@ -4619,22 +4248,17 @@ def test_position_netting():
         "member1": {"net_position": 1000},
         "member2": {"net_position": -500},
     }
-    # Test for creating netting entry
     with pytest.raises(ValueError):
         position_netting.create_netting_entry(
-            margin_member="new_member",
-            net_position=200,
+            margin_member="new_member", net_position=200
         )
-        # Test for updating existing netting entry
         position_netting.positions["member1"]["net_position"] = 500
         with pytest.raises(ValueError):
             position_netting.update_netting_entry(
-                margin_member="member1",
-                new_net_position=-300,
+                margin_member="member1", new_net_position=-300
             )
             positions_dict = position_netting.positions_dict
             assert len(positions_dict) == 2
-            # Test for getting positions
             client = TestClient(app)
             response = client.get("/positions")
             assert response.status_code == 200
@@ -4644,8 +4268,6 @@ def test_position_netting():
                 client = TestClient(app)
                 response = client.get("/endpoint")
                 assert response.status_code == 200
-import pytest
-from main import app, DebtPosition
 
 
 @pytest.main
@@ -4690,16 +4312,11 @@ def test_get_positions():
                 client = TestClient(app)
                 with pytest.raises(HTTPException):
                     response = client.put(
-                        "/positions/{position_id}".format(
-                            position_id="nonexistent",
-                        ),
+                        "/positions/{position_id}".format(position_id="nonexistent"),
                         json={"creditor_id": "C1", "debtor_id": "D1"},
                     )
                     assert response.status_code == 404
                     assert "Position not found." in str(response.content)
-import uuid
-from fastapi.testclient import TestClient
-from main import app
 
 
 def test_create_position():
@@ -4725,7 +4342,6 @@ def test_create_position():
             amount=100.0,
             timestamp=datetime.now(),
         )
-        # create the initial position
         response = client.post("/positions", json=position_data.dict())
         assert response.status_code == 200
         new_position_data = CollateralPosition(
@@ -4747,8 +4363,6 @@ def test_create_position():
             assert response.status_code == 404
             assert "detail" in response.json()
             assert "Collateral Position not found" == response.json()["detail"]
-import pytest
-from unittest import mock
 
 
 @pytest.fixture
@@ -4804,8 +4418,6 @@ def options_hedge_endpoint():
                             client = TestClient(app)
                             test_options_hedge_success(client)
                             test_options_hedge_failure(client)
-import pytest
-from main import CustodyRotation, app
 
 
 @pytest.fixture
@@ -4867,9 +4479,6 @@ def test_create_rotation_event():
                 newRotation.get_rotation_events()[-1].get("start_date")
                 == start_date.isoformat()
             )
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -4882,29 +4491,20 @@ def client():
             assert response.status_code == 200
             assert "message" in response.json()
             assert "order_id" in response.json()
-            # Test canceling an order that doesn't exist.
             response = client.get("/cancel/9999")
             assert response.status_code == 404
             assert "Order not found" in response.text
-import os
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app
 
 
 @pytest.fixture
 def client():
     yield TestClient(app)
 
-    # This test ensures that running migrations is possible.
     def test_migrate(client):
         response = client.get("/migrate")
         assert response.status_code == 200
         data = response.json()
         assert "message" in data
-import pytest
-from fastapi.testclient import TestClient
 
 
 def test_audit_log_endpoint():
@@ -4917,9 +4517,6 @@ def test_audit_log_endpoint():
         assert isinstance(audit["event_type"], str)
         assert isinstance(audit["user_id"], int)
         assert isinstance(audit["description"], str)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -4933,7 +4530,7 @@ def client():
                 symbol="AAPL",
                 quantity=100,
                 price=150,
-                stop_loss_price=None,  # This will be the default value if not provided in request body.
+                stop_loss_price=None,
                 trailing_stop_distance=20.0,
             )
             response = await client.post("/stop-loss-order", json=data)
@@ -4944,7 +4541,7 @@ def client():
                     symbol="AAPL",
                     quantity=100,
                     price=150,
-                    stop_loss_price=160,  # To trigger the trailing stop logic
+                    stop_loss_price=160,
                     trailing_stop_distance=10.0,
                 )
                 response = client.get(
@@ -4954,9 +4551,6 @@ def client():
                 )
                 result = response.json()
                 assert "trailing_stop_price" in result
-import pytest
-from fastapi.testclient import TestClient
-from your_app import app
 
 
 @pytest.fixture()
@@ -4966,8 +4560,7 @@ def client():
 
         def test_set_trading_parameters(client):
             response = client.post(
-                "/parameters",
-                json={"risk_per_trade": 0.7, "trade_frequency": 15},
+                "/parameters", json={"risk_per_trade": 0.7, "trade_frequency": 15}
             )
             assert response.status_code == 200
             data = response.json()
@@ -4978,12 +4571,6 @@ def client():
                 assert response.status_code == 200
                 data = response.json()
                 assert "risk_per_trade" in data and "trade_frequency" in data
-import os
-import tempfile
-from typing import IO
-import pytest
-import csv
-from main import bulk_order_import
 
 
 @pytest.fixture
@@ -5007,8 +4594,7 @@ def test_bulk_order_import(test_csv):
             assert os.path.exists(
                 os.path.join(tmpdirname, "bulk_order_data", "bulk_order_import.csv")
             )
-from datetime import datetime, timedelta
-from main import generate_compliance_report, app
+
 
 importpytest
 
@@ -5043,9 +4629,6 @@ def test_generate_compliance_report():
                     assert (
                         False
                     ), f"Expected asyncio timeout error but got status code {response.status_code}"
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 @pytest.fixture()
@@ -5099,15 +4682,12 @@ def client():
                         assert response.json() == {
                             "detail": f"User ID {user_id} has been successfully deleted."
                         }
-import pytest
-from fastapi.testclient import TestClient
 
 
 def test_list_collaterals():
     client = TestClient(app)
     response = client.get("/collaterals")
     assert response.status_code == 200
-    # Check if the response contains a list of Collateral objects with expected properties.
     data = response.json()
     for collateral in data:
         assert isinstance(collateral, dict)
@@ -5127,7 +4707,6 @@ def test_list_collaterals():
                 },
             )
             assert response.status_code == 200
-            # Check if the response contains a Collateral object with expected properties.
             data = response.json()
             assert isinstance(data, dict)
             assert "chain" in data
@@ -5146,16 +4725,12 @@ def test_list_collaterals():
                     },
                 )
                 assert response.status_code == 200
-                # Check if the response contains a Collateral object with expected properties.
                 data = response.json()
                 assert isinstance(data, dict)
                 assert "chain" in data
                 assert "token_address" in data
                 assert "token_symbol" in data
                 assert "amount" in data
-import pytest
-from fastapi.testclient import TestClient
-from main import app, LiquidityPool
 
 
 def test_get_all_pools():
@@ -5168,10 +4743,7 @@ def test_get_all_pools():
 
         def test_validate_pool():
             pool1 = LiquidityPool(
-                chain="ETH",
-                token1="DAI",
-                token2="USDC",
-                liquidity=100,
+                chain="ETH", token1="DAI", token2="USDC", liquidity=100
             )
             pool2 = LiquidityPool(chain="BTC", token1="BCH", token2="LTC", liquidity=50)
             system = LiquidityAggregationSystem()
@@ -5180,16 +4752,10 @@ def test_get_all_pools():
 
             def test_add_pool():
                 pool = LiquidityPool(
-                    chain="ETH",
-                    token1="DAI",
-                    token2="USDC",
-                    liquidity=100,
+                    chain="ETH", token1="DAI", token2="USDC", liquidity=100
                 )
                 system = LiquidityAggregationSystem()
                 assert system.add_pool(pool)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_generate_stress_test_data():
@@ -5200,23 +4766,17 @@ def test_generate_stress_test_data():
     def test_smart_contract_stress_test_endpoint():
         client = TestClient(app)
         response = client.get("/smart-contract-stress-test")
-        # Assert that the correct HTTP method was used
         assert response.request.method == "GET"
-        # Check that the response status code is 200 (OK)
         assert response.status_code == 200
-        # Extract data from the JSON response
         content = response.json()
         data = content["data"]
-        # Assert that data is a list and not empty
         assert isinstance(data, list)
         assert len(data) > 0
-from fastapi import HTTPException
-import pytest
-from main import MigrationRequest, router
 
 
 @pytestmark
 class TestMigration:
+
     def setup_method(self):
         self.migration_request = MigrationRequest(
             source_pool_id=str(uuid.uuid4()), target_pool_id="target_pool_id"
@@ -5230,10 +4790,6 @@ class TestMigration:
                 def test_migration_no_error(self):
                     response = router.post("/migration", request=self.migration_request)
                     assert response.status_code == 200
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime, timedelta
-from main import app
 
 
 def create_app():
@@ -5286,10 +4842,7 @@ def client():
                     )
                     data = response.json()
                     assert response.status_code == 400
-                    expected_data = {
-                        "detail": "Invalid Claim Status",
-                        "code": 400,
-                    }
+                    expected_data = {"detail": "Invalid Claim Status", "code": 400}
                     assert data == expected_data
 
                     def test_claim_status(client):
@@ -5325,9 +4878,6 @@ def client():
                             "date_claimed": datetime.now(),
                         }
                         assert data == expected_data
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -5340,9 +4890,6 @@ def client():
         result = response.json()
         risk_factors = result["riskFactors"]
         assert len(risk_factors) > 0
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 @pytest.fixture()
@@ -5363,16 +4910,12 @@ def client():
 
             def test_withdraw_insufficient_balance(client):
                 request_data = WithdrawalRequest(
-                    destination_address="123 Main St",
-                    amount=1500.0,  # More than the balance
+                    destination_address="123 Main St", amount=1500.0
                 )
                 response = client.post("/withdraw", json=request_data.dict())
                 assert response.status_code == 400
                 result = response.json()
                 assert "detail" in result
-import pytest
-from main import app, AuditLog
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture()
@@ -5390,22 +4933,16 @@ def test_add_audit_log(client):
     response = client.post("/audit-log", json=audit_log_data)
     assert response.status_code == 200
     assert AuditLog.AUDIT_LOGS[0].data["result"] == "success"
-from fastapi import TestClient
-import asyncio
-from datetime import datetime, time
-from main import app
 
 
 def test_enter_leave_maintenance_mode():
     client = TestClient(app)
-    # Test entering maintenance mode
     response = client.get("/maintenance")
     assert response.status_code == 200
     content = response.json()
     assert content["mode"] is True
     assert asyncio.Lock().acquired() is True
 
-    # Test leaving maintenance mode
     async def _leave_mode():
         return await MaintenanceMode().leave_mode()
 
@@ -5414,9 +4951,6 @@ def test_enter_leave_maintenance_mode():
     assert response.status_code == 200
     content = response.json()
     assert "mode" not in content or content["mode"] is False
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_calculate_transaction_costs():
@@ -5434,9 +4968,6 @@ def test_calculate_transaction_costs():
         assert "total_cost" in result
         assert "base_fee" in result
         assert "spread_cost" in result
-import pytest
-from fastapi import HTTPException
-from main import otc_router, QuoteRequest
 
 
 def test_invalid_request_id():
@@ -5444,23 +4975,14 @@ def test_invalid_request_id():
         otc_router.quote_request("invalid_req")
 
         def test_quote_request():
-            req = QuoteRequest(
-                request_id="req1",
-                trader_name="TraderA",
-            )
+            req = QuoteRequest(request_id="req1", trader_name="TraderA")
             assert req.request_id == "req1"
             assert req.trader_name == "TraderA"
 
             def test_settlement():
-                settlement = QuoteRequest(
-                    request_id="req2",
-                    trader_name="TraderB",
-                )
+                settlement = QuoteRequest(request_id="req2", trader_name="TraderB")
                 with pytest.raises(HTTPException):
                     otc_router.settle(settlement)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_endpoint():
@@ -5470,7 +4992,6 @@ def test_endpoint():
 
     def test_wash_trading():
         client = TestClient(app)
-        # Setup trades to detect wash trading patterns
         user_id_1 = 1
         user_id_2 = 2
         timestamp = datetime.datetime(2023, 5, 10, 10)
@@ -5482,23 +5003,18 @@ def test_endpoint():
         )
         assert response.status_code == 200
         trade_1 = response.json()
-        # Perform the same transaction by another user
         response = client.post(
             "/trade",
             json={"timestamp": timestamp, "user_id": user_id_2, "amount": amount_2},
         )
         assert response.status_code == 200
         trade_2 = response.json()
-        # Test to check if wash trading is detected
         trades = client.get(f"/user_trades/{user_id_1}")
         assert trades.status_code == 200
         user_trades = trades.json()
         assert len(user_trades) > 0
-        # Check if the same trade amount is not present multiple times
         for trade in user_trades:
             assert trade["amount"] != amount_2
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 
 @pytest.mark.asyncio
@@ -5523,9 +5039,6 @@ async def test_is_delisted_returns_false():
         trading_pairs[1] = trading_pair2
         with pytest.raises(AsyncIOError):
             await delist_trading_pairs(system_mock)
-from fastapi.testclient import TestClient
-import pytest
-from main import app, TradingSignal
 
 
 @pytest.fixture
@@ -5540,8 +5053,6 @@ def client():
             assert (
                 "status" in data and data["status"] == "signals generated successfully"
             )
-import pytest
-from unittest.mock import patch, MagicMock
 
 
 def test_vesting_schedule_creation():
@@ -5573,9 +5084,6 @@ def test_vesting_schedule_creation():
                     assert response.json() == {
                         "message": f"Vested {vesting_amount} tokens."
                     }
-import pytest
-from fastapi.testclient import TestClient
-from main import app, DIDManager
 
 
 @pytest.fixture()
@@ -5611,16 +5119,12 @@ def test_create_did(did_manager):
             authenticationMethod="http://example.com/authentication",
         )
         assert response == expected_response
-import pytest
-from fastapi import HTTPException
-from main import Identity, DecentralizedIdentityRecoveryApp
 
 
 @pytest.fixture
 def identity_app():
     app = DecentralizedIdentityRecoveryApp()
     yield app
-    # Clean up the test client, which can have side-effects
     app.client.close()
 
     def test_get_identity(identity_app):
@@ -5650,26 +5154,19 @@ def identity_app():
                 )
                 assert recovery_identity.recovery_answer == "Blue"
                 assert recovery_identity.id != identity_id
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_provide_liquidity():
     client = TestClient(app)
-    # Test with positive amount
     response = client.post("/provide-liquidity", json={"amount": 1000.0})
     assert response.status_code == 200
     assert "timestamp" in response.json()
     assert "amount_provided" in response.json()
-    # Test with negative amount
     response = client.post("/provide-liquidity", json={"amount": -500.0})
     assert response.status_code == 400
     assert "Amount must be a positive value." in str(response.content)
     if __name__ == "__main__":
         pytest.main()
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -5694,9 +5191,6 @@ def client():
                     json={"password_strength": 1, "two_factor_enabled": False},
                 )
                 assert response.status_code == 400
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -5737,9 +5231,6 @@ def client():
                                     data=json.dumps({}),
                                 )
                                 assert "Method Not Allowed" in str(exc.value)
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 @pytest.fixture
@@ -5752,9 +5243,6 @@ def client():
         data = json.loads(response.text)
         assert "events" in data
         assert len(data["events"]) > 0
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -5770,9 +5258,6 @@ def client():
                 response = client.get("/token_vestings")
                 all_vestings = response.json()
                 assert len(all_vestings) > 0
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 @pytest.fixture
@@ -5788,10 +5273,6 @@ def client():
             def test_get_total_yield_not_found(client):
                 response = client.get("/total-yield/BSC")
                 assert response.status_code == 404
-import asyncio
-from fastapi.testclient import TestClient
-from main import app, LiquidityOptimization
-import pytest
 
 
 @pytest.fixture
@@ -5811,21 +5292,16 @@ async def test_optimize_liquidity(client):
             data = response.json()
             assert data["status"] == "optimized"
             assert isinstance(data["optimization_details"], list)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_withdraw_request():
     client = TestClient(app)
-    # Test successful withdrawal with sufficient funds
     data = {"amount": 500, "address": "123 Test St"}
     response = client.post("/withdraw", json=data)
     assert response.status_code == 200
     content = response.json()
     assert content["amount"] == 500
     assert content["balance"] > 1000
-    # Test failure due to insufficient funds
     data_insufficient_funds = {"amount": 600, "address": "123 Test St"}
     response_insufficient_funds = client.post("/withdraw", json=data_insufficient_funds)
     assert response_insufficient_funds.status_code == 400
@@ -5833,8 +5309,6 @@ def test_withdraw_request():
     assert (
         content_insufficient_funds["detail"] == "Insufficient funds for the withdrawal."
     )
-import pytest
-from fastapi.testclient import TestClient
 
 
 def test_bulk_approve_endpoint():
@@ -5842,11 +5316,7 @@ def test_bulk_approve_endpoint():
     with pytest.raises(HTTPException):
         response = client.get("/bulk-approve")
         print(response.status_code)
-        # Check if the endpoint returns an HTTP 200 status code.
         assert response.status_code == 200
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 def test_create_network():
@@ -5872,9 +5342,6 @@ def test_create_network():
                     "/network", json={"network_id": "test-network", "nodes": []}
                 )
                 assert response.status_code == 400
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -5884,17 +5351,13 @@ def client():
 
         def test_create_verification_request(client):
             response = client.post(
-                "/verify",
-                json={"user_identity": "123", "verifier_signature": "abc"},
+                "/verify", json={"user_identity": "123", "verifier_signature": "abc"}
             )
             assert response.status_code == 200
 
             def test_get_verification_status(client):
                 response = client.get("/verify", params={"verification_id": "1"})
                 assert response.status_code == 200
-from fastapi.testclient import TestClient
-import pytest
-from main import app, rebalance_pool, rebalance_endpoint
 
 
 def test_rebalance_endpoint():
@@ -5913,8 +5376,6 @@ def test_rebalance_endpoint():
         data = response.json()
         assert "rebalance_status" in data
         assert "last_rebalanced_time" in data
-import pytest
-from main import rebalance_tokens
 
 
 @pytest.mark.parametrize(
@@ -5925,13 +5386,10 @@ from main import rebalance_tokens
 def test_rebalance_tokens(token_id, new_weight, expected_response):
     response = rebalance_tokens(token_id=token_id, new_weight=new_weight)
     assert response == expected_response
-import pytest
-from fastapi.testclient import TestClient
+
 
 app = FastAPI()
-accounts = [
-    Account(id="1", name="Main Account", owner_id="user123"),
-]
+accounts = [Account(id="1", name="Main Account", owner_id="user123")]
 
 
 class Account(BaseModel):
@@ -5948,11 +5406,9 @@ class Account(BaseModel):
 
             @pytest.fixture(autospec=True)
             def create_delegation(client):
+
                 def _create_delegation(subaccount):
-                    response = client.post(
-                        "/delegations",
-                        json=subaccount,
-                    )
+                    response = client.post("/delegations", json=subaccount)
                     assert response.status_code == 200
                     return response.json()
 
@@ -5981,10 +5437,6 @@ class Account(BaseModel):
                     assert account["id"] == "1"
                     assert account["name"] == "Main Account"
                     assert account["owner_id"] == "user123"
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app, DIDDocument, DIDsRepository
 
 
 def test_create_did():
@@ -5997,21 +5449,17 @@ def test_create_did():
     def test_get_did():
         dids_repository = DidsRepository()
         client = TestClient(app)
-        # Create a new DID
         response = client.post("/dids")
         new_did_id = response.json()["did"]
-        # Get the created DID
         get_response = client.get(f"/dids/{new_did_id}")
         assert get_response.status_code == 200
         assert "verificationMethod" in get_response.json()
-        # Try to get a non-existing DID
         unknown_did_id = uuid.uuid4().hex
         unknown_get_response = client.get(f"/dids/{unknown_did_id}")
         assert unknown_get_response.status_code == 404
 
         def test_create_duplicate_did():
             dids_repository = DidsRepository()
-            # Try to create a new DID while it already exists
             response = client.post("/dids")
             assert "409" in str(response.content)
             with pytest.raises(HTTPException):
@@ -6025,8 +5473,6 @@ def test_create_did():
                         assert did_document.id
                         assert did_document.verificationMethod
                         assert did_document.authentication
-import pytest
-from main import app
 
 
 def setup_module(module):
@@ -6050,10 +5496,6 @@ def setup_module(module):
 
         def teardown_module(module):
             del app.dependency_overrides[app.get]
-import asyncio
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 @pytest.mark.asyncio
@@ -6072,9 +5514,6 @@ async def test_update_oracle_prices():
             client = TestClient(app)
             response = client.get("/endpoint")
             assert response.status_code == 200
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime, timezone
 
 
 def test_create_transaction():
@@ -6108,7 +5547,6 @@ def test_create_transaction():
             return transaction
 
         client = TestClient(app)
-        # Create a new transaction
         response = client.post(
             "/transaction",
             json={
@@ -6120,16 +5558,12 @@ def test_create_transaction():
         )
         assert response.status_code == 200
         transaction_data = response.json()
-        # Test fetching the transaction details using the transaction ID
         response = client.get(
             "/transaction/{id}", params={"id": transaction_data["id"]}
         )
         assert response.status_code == 200
         fetched_transaction = response.json()
         assert fetched_transaction == transaction_data
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -6146,9 +5580,6 @@ def client():
             assert response.status_code == 200
             data = response.json()
             assert isinstance(data, dict) and "id" in data
-import pytest
-from fastapi.testclient import TestClient
-from your_main import app, KycDocument, UserKyc, KYCManager
 
 
 def create_test_client():
@@ -6174,9 +5605,6 @@ def test_kyc_document():
         def test_create_user_kyc_invalid(test_user_kyc):
             with pytest.raises(HTTPException):
                 create_user_kyc(user_kyc=test_user_kyc)
-from fastapi.testclient import TestClient
-import json
-from main import app
 
 
 def test_add_collateral():
@@ -6196,7 +5624,6 @@ def test_add_collateral():
 
     def test_get_collaterals():
         client = TestClient(app)
-        # add a collateral to the json file
         response_add = client.post(
             "/collaterals",
             content={"chain": "test_chain", "amount": 1.0},
@@ -6210,7 +5637,6 @@ def test_add_collateral():
 
             def test_update_collateral():
                 client = TestClient(app)
-                # add a collateral to the json file
                 response_add = client.post(
                     "/collaterals",
                     content={"chain": "test_chain", "amount": 1.0},
@@ -6220,7 +5646,6 @@ def test_add_collateral():
                 with open("main/collaterals.json", "r") as f:
                     collaterals = json.load(f)
                     initial_collateral_data = {c["chain"]: c for c in collaterals}
-                    # update the collateral
                     response_update = client.put(
                         "/collaterals/test_chain",
                         content={"chain": "test_chain", "amount": 2.0},
@@ -6230,17 +5655,12 @@ def test_add_collateral():
                     with open("main/collaterals.json", "r") as f:
                         collaterals = json.load(f)
                         updated_collateral_data = {c["chain"]: c for c in collaterals}
-                        # check if the collateral has been updated
                         assert initial_collateral_data["test_chain"]["amount"] == 1.0
                         assert updated_collateral_data["test_chain"]["amount"] == 2.0
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_create_token_event():
     client = TestClient(app)
-    # Test positive case for a valid token event
     token_event_data = {
         "event_type": "login",
         "user_id": str(uuid.uuid4()),
@@ -6251,7 +5671,6 @@ def test_create_token_event():
 
     def test_read_token_events():
         client = TestClient(app)
-        # Test positive case for a valid token event
         with open("test_token_events.json", "w") as f:
             json.dump(
                 [
@@ -6282,10 +5701,6 @@ def test_create_token_event():
                 data = response.json()
                 assert isinstance(data, list)
                 assert len(data) == 0
-import uuid
-from fastapi import HTTPException
-import pytest
-from main import StateVerifier, app
 
 
 @pytest.fixture
@@ -6362,9 +5777,6 @@ def test_state_verifier_creation(state_verifier):
                                     isinstance(verify_response, dict)
                                     and "state_hash" in verify_response
                                 )
-import pytest
-from fastapi import HTTPException
-from main import app, generate_random_value
 
 
 def test_start_protocol():
@@ -6385,9 +5797,7 @@ def test_start_protocol():
 
                 def setup_module(module):
                     module.app.router.include_router(app.MPC.as_router())
-from fastapi.testclient import TestClient
-import pytest
-from main import app, Oracle
+
 
 client = TestClient(app)
 
@@ -6399,15 +5809,11 @@ def test_get_oracles():
     assert len(response.json()["oracles"]) > 0
 
     def test_get_oracle():
-        # Get the first oracle from oracles.json file
         response = client.get("/oracle/DefaultOracle")
         assert response.status_code == 200
         assert "oracle" in response.json()
-        # Check if the returned Oracle matches the one in oracles.json
         assert response.json()["oracle"].name == "DefaultOracle"
         assert response.json()["oracle"].address == "123 Main St, Anytown USA"
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -6452,8 +5858,6 @@ def delegation_pool():
                             )
                             get_delegation_pool(delegation_pool.id())
                             assert True
-import pytest
-from main import app, YieldStrategy
 
 
 @pytest.fixture
@@ -6465,9 +5869,6 @@ def strategy():
         assert response.status_code == 200
         assert "strategy_id" in response.json()
         assert isinstance(response.json()["strategy_id"], str)
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -6493,9 +5894,6 @@ def client():
                 assert second_response.status_code == 200
                 execution_data = second_response.json()
                 assert "id" in execution_data
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.mark.parametrize("status", ["created", "cancelled"])
@@ -6503,7 +5901,6 @@ def test_cancel_order(client, status):
     order_id = str(uuid.uuid4())
     response = client.post("/orders", json={"items": [], "status": "created"})
     created_order = OrderRepository().get_order_by_id(response.json()["id"])
-    # Test successful cancellation of an existing order
     response = client.put(f"/orders/{created_order.id}", json={"status": status})
     assert response.status_code == 200
     cancelled_order = OrderRepository().get_order_by_id(response.json()["id"])
@@ -6511,13 +5908,12 @@ def test_cancel_order(client, status):
 
     def test_cancel_order_not_found(client):
         order_id = str(uuid.uuid4())
-        # Test cancellation of a non-existing order
         try:
             response = client.put(f"/orders/{order_id}", json={"status": "cancelled"})
             assert False, f"Expected HTTP 404 but got HTTP {response.status_code}"
         except HTTPException as e:
             pass
-from main import app
+
 
 importpytest
 
@@ -6558,9 +5954,6 @@ def test_kyc_endpoint():
                                 )
                                 assert b"KYC verification failed" in response.content
                                 assert response.status_code == 400
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -6571,25 +5964,20 @@ def client():
         response = client.get("/markets")
         assert response.status_code == 200
         assert isinstance(response.json(), list)
-        assert all(isinstance(item, dict) for item in response.json())
+        assert all((isinstance(item, dict) for item in response.json()))
 
         def test_execute_arbitrage(client):
             with pytest.raises(HTTPException):
                 data = {"symbol": "AAPL", "exchange": "NYSE"}
                 response = client.post("/execute_arbitrage", json=data)
                 assert response.status_code == 500
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime
+
 
 app = FastAPI()
 
 
 def test_create_reward_snapshot():
-    snapshot = create_reward_snapshot(
-        total_staked=100,
-        reward_percentage=5,
-    )
+    snapshot = create_reward_snapshot(total_staked=100, reward_percentage=5)
     assert snapshot.total_staked == 100
     assert snapshot.reward_percentage == 5
 
@@ -6605,8 +5993,6 @@ def test_create_reward_snapshot():
                 assert data["timestamp"].replace(
                     microsecond=0
                 ) != datetime.utcnow().replace(microsecond=0)
-import pytest
-from main import app, MarginTransfer
 
 
 def test_margin_transfer_endpoint():
@@ -6629,14 +6015,6 @@ def test_margin_transfer_endpoint():
             data = {"sender_account_id": "invalid", "receiver_account_id": "valid"}
             with pytest.raises(HTTPException):
                 MarginTransfer(sender_account_id="invalid", receiver_account_id="valid")
-import pytest
-from main import (
-    PaymentChannel,
-    create_payment_channel,
-    get_payment_channel,
-    update_payment_channel,
-    delete_payment_channel,
-)
 
 
 @pytest.fixture
@@ -6651,7 +6029,6 @@ def test_create_payment_channel(payment_channel):
     assert new_payment_channel.last_update == datetime.now()
 
     def test_get_payment_channel():
-        # Test for get_payment_channel function
         pass
 
         def test_update_payment_channel(payment_channel):
@@ -6662,11 +6039,6 @@ def test_create_payment_channel(payment_channel):
             assert response.id == 1
             assert response.network_id == "NetworkB"
             assert response.last_update == datetime.now()
-from fastapi.testclient import TestClient
-import pytest
-from main import app
-from datetime import datetime
-from unittest.mock import patch
 
 
 def test_create_compliance_report():
@@ -6679,16 +6051,10 @@ def test_create_compliance_report():
 
         @patch("main.datetime")
         def test_get_current_date(mock_datetime):
-            # Setting the current date to a fixed value
             mock_datetime.now.return_value = datetime(2023, 1, 5, 10, 30)
             with pytest.raises(HTTPException):
                 response = TestClient(app).get("/current-date")
                 assert response.status_code == 200
-                # Note: The above test assumes that the "/current-date" endpoint is implemented in the main application code. This implementation detail should be considered while writing further tests.
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime
-from main import app
 
 
 def create_app():
@@ -6723,9 +6089,6 @@ def client():
                     assert response.status_code == 400
                     data = response.json()
                     assert "Not a valid date" == data["detail"]
-import pytest
-from fastapi.testclient import TestClient
-from main import app, DepositWithdrawalBatch
 
 
 @pytest.fixture
@@ -6737,7 +6100,7 @@ def client():
             data = {
                 "type": "deposit",
                 "id": "1234567890",
-                "amount": 100.00,
+                "amount": 100.0,
                 "timestamp": datetime.now(),
             }
             response = client.post("/batch/", json=data)
@@ -6753,7 +6116,7 @@ def client():
                 data = {
                     "type": "withdrawal",
                     "id": "0987654321",
-                    "amount": 50.00,
+                    "amount": 50.0,
                     "timestamp": datetime.now(),
                 }
                 response = client.post("/batch/", json=data)
@@ -6769,7 +6132,7 @@ def client():
                     data = {
                         "type": "invalidType",
                         "id": "0123456789",
-                        "amount": 30.00,
+                        "amount": 30.0,
                         "timestamp": datetime.now(),
                     }
                     response = client.post("/batch/", json=data)
@@ -6791,27 +6154,16 @@ def client():
                             and result["description"]
                             == "invalid request: Empty JSON body."
                         )
-from main import app, LiquidityData
 
 
 def test_get_concentrated_liquidity():
     client = TestClient(app)
-    # Prepare the data for testing
-    expected_data = {
-        "concentration": 0.5,
-    }
-    # Send a GET request to the endpoint
+    expected_data = {"concentration": 0.5}
     response = client.get("/concentrated_liquidity")
-    # Check if the HTTP status code is correct (200)
     assert response.status_code == 200
-    # Parse the JSON data returned by the API
     json_data = response.json()
-    # Extract and compare the relevant values in the parsed JSON data
     assert json_data["concentration"] == expected_data["concentration"]
     print("Test passed.")
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.main
@@ -6839,9 +6191,6 @@ def test_create_transaction(client: TestClient):
                 response = client.get("/transactions/1")
                 assert response.status_code == 200
                 assert len(response.json()["data"].transactions) == 1
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.mark.parametrize(
@@ -6854,21 +6203,16 @@ from main import app
                 "target_gas_price": 0.1,
             },
             "Implement your gas optimization strategy here...",
-        ),
+        )
     ],
 )
 def test_gas_optimization(input_data, expected_output):
     client = TestClient(app)
-    response = client.post(
-        "/gas_optimization",
-        json=input_data,
-    )
+    response = client.post("/gas_optimization", json=input_data)
     assert response.status_code == 200
     result = response.json()
     assert "gas_optimization" in result.keys()
     assert result["gas_optimization"] == expected_output
-import pytest
-from fastapi.testclient import TestClient
 
 
 def test_event_post_request(test_app: TestClient):
@@ -6880,15 +6224,11 @@ def test_event_post_request(test_app: TestClient):
     }
     response = test_app.post("/events", json=event_data)
     assert response.status_code == 200
-import pytest
-from main import app, migrate_pool
 
 
 def test_migration_params():
     migration_params = MigrationParams(
-        source_pool_id="source_pool_id",
-        target_pool_id="target_pool_id",
-        amount=100,
+        source_pool_id="source_pool_id", target_pool_id="target_pool_id", amount=100
     )
     assert migration_params.source_pool_id == "source_pool_id"
     assert migration_params.target_pool_id == "target_pool_id"
@@ -6898,7 +6238,7 @@ def test_migration_params():
         response = migrate_pool(
             MigrationParams(
                 source_pool_id="source_pool", target_pool_id="target_pool", amount=10
-            ),
+            )
         )
         expected_response = {
             "message": "Pool migration successful!",
@@ -6914,11 +6254,8 @@ def test_migration_params():
                         source_pool_id="source_pool",
                         target_pool_id="target_pool",
                         amount=0,
-                    ),
+                    )
                 )
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 def test_get_oracle_exchange_rates():
@@ -6926,19 +6263,13 @@ def test_get_oracle_exchange_rates():
     response = client.get("/oracles")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
-    assert all(isinstance(item, OracleData) for item in response.json())
-    # Additional test cases can be added here as per requirement.
+    assert all((isinstance(item, OracleData) for item in response.json()))
     if __name__ == "__main__":
         pytest.main()
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime, timedelta
-from main import app
 
 
 def setup_module(module):
     client = TestClient(app)
-    # Create a new delegation pool to use in tests.
     app.dependency_overrides[app.delegation_pool.get_all_delegation_pools] = (
         lambda: [
             {
@@ -6946,7 +6277,7 @@ def setup_module(module):
                 "pool_name": "Test Delegation Pool",
                 "delegator_address": "test_delegator",
                 "validator_address": "test_validator",
-            },
+            }
         ],
     )
     client = None
@@ -6979,27 +6310,21 @@ def setup_module(module):
         if setup_test_data:
             input_value = test_data["input_values"]
             expected_output = test_data["expected_output"]
-            response = client.post(
-                "/create_new_delegation_pool",
-                json=input_value,
-            )
+            response = client.post("/create_new_delegation_pool", json=input_value)
             pool_data = response.json()
             assert pool_data is not None
             assert "id" in pool_data
-            # Test update
             input_values_update = {
                 "pool_name": "Updated Test Delegation Pool",
                 "delegator_address": "updated_test_delegator",
                 "validator_address": "updated_test_validator",
             }
             response = client.put(
-                f"/update_delegation_pool/{pool_data['id']}",
-                json=input_values_update,
+                f"/update_delegation_pool/{pool_data['id']}", json=input_values_update
             )
             assert response.status_code == 200
             pool_data_updated = response.json()
             assert "id" in pool_data_updated
-            # Test delete
             response = client.delete(f"/delete_delegation_pool/{pool_data['id']}")
             assert response.status_code == 200
         else:
@@ -7026,33 +6351,24 @@ def setup_module(module):
                                 "validator_address": "test_validator",
                             },
                             200,
-                        ),
+                        )
                     ],
                 )
                 def test_invalid_endpoints(client):
                     input_value = {"delegator_address": "invalid_test_delegator"}
                     response = client.post(
-                        "/create_new_delegation_pool",
-                        json=input_value,
+                        "/create_new_delegation_pool", json=input_value
                     )
                     assert response.status_code == expected_output
-import pytest
-from main import app
 
 
 def test_monitor_smart_contract():
-    # Test if the smart contract monitoring endpoint is available.
     response = app.test_client().get("/monitor")
     assert response.status_code == 200
 
-    # Test that when the smart contract state changes, the new state
-    # is reflected in the API response. This requires a way to trigger the
-    # state change logic and check for the correct response.
     def test_monitor_smart_contract_state_change():
         response = app.test_client().get("/monitor")
         assert "ACTIVE" in str(response.text)
-import pytest
-from main import Derivative, SettlementManager
 
 
 def test_create_derivative():
@@ -7072,9 +6388,6 @@ def test_create_derivative():
             assert derivative.contract_id == "new_contract_id"
             assert derivative.settlement_date is not None
             assert derivative.settlement_amount > 0
-from fastapi import HTTPException
-import pytest
-from main import app, ReputationOracle
 
 
 @pytest.mark.parametrize(
@@ -7138,7 +6451,7 @@ def test_create_reputation_oracle(
                             },
                             200,
                             "Oracle updated successfully",
-                        ),
+                        )
                     ],
                 )
                 def test_update_reputation_oracle(
@@ -7151,9 +6464,7 @@ def test_create_reputation_oracle(
 
                     @pytest.mark.parametrize(
                         "input, expected_status_code, expected_error_message",
-                        [
-                            ({"id": "1"}, 200, "Oracle deleted successfully"),
-                        ],
+                        [({"id": "1"}, 200, "Oracle deleted successfully")],
                     )
                     def test_delete_reputation_oracle(
                         input_data, expected_status_code, expected_error_message
@@ -7162,9 +6473,6 @@ def test_create_reputation_oracle(
                         response = client.delete(f"/oracle/{input_data['id']}")
                         assert response.status_code == expected_status_code
                         assert "Oracle deleted successfully" in str(response.content)
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime
 
 
 def test_create_position():
@@ -7173,19 +6481,15 @@ def test_create_position():
         "/positions",
         content_type="application/json",
         data=json.dumps(
-            {"chain": "TestChain", "token_address": "0xTokenAddress", "value": 10.00}
+            {"chain": "TestChain", "token_address": "0xTokenAddress", "value": 10.0}
         ),
     )
     assert response.status_code == 200
 
     def test_get_positions():
         client = TestClient(app)
-        # Assume a positions.json file is created with sample data
         response = client.get("/positions?chain=TestChain&token_address=0xTokenAddress")
         assert response.status_code == 200
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.mark.parametrize("status_code", [200])
@@ -7210,8 +6514,6 @@ def test_cancel_order_endpoint_status_code(status_code):
                 response.json().get("detail")
                 == "Order with ID 12345 has been canceled on [date and time]"
             )
-import pytest
-from main import app, get_db_engine
 
 
 @pytest.fixture
@@ -7229,8 +6531,6 @@ def client():
             def test_get_db_engine():
                 engine = get_db_engine()
                 assert isinstance(engine, create_engine)
-import pytest
-from main import app, AuditLog
 
 
 @pytest.fixture(autosuppress=True)
@@ -7259,8 +6559,6 @@ def client():
                 )
                 with pytest.raises(HTTPException):
                     app.post("/audit-log/", json=audit_log.dict())
-import pytest
-from main import MultiSignatureWallet, approve, disapprove
 
 
 def test_init():
@@ -7287,8 +6585,6 @@ def test_init():
                     assert disapprove(wallet) is None
                     wallet.disapproved = True
                     assert disapprove(wallet)["result"] == "wallet disapproved"
-import pytest
-from main import app, StressTestData
 
 
 def test_derivative_stress_test_endpoint():
@@ -7306,9 +6602,6 @@ def test_derivative_stress_test_endpoint():
             with pytest.raises(NotImplementedError):
                 stress_test_instance = StressTestData(data=None)
                 stress_data = stress_test_instance.data
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -7328,10 +6621,6 @@ def client():
                     print(response.text)
                     assert "Desk not found" in str(e.value)
                     assert response.status_code == 404
-from fastapi.testclient import TestClient
-import pytest
-from main import app
-from main import MarketMaker, app
 
 
 def test_market_maker_endpoint():
@@ -7341,6 +6630,7 @@ def test_market_maker_endpoint():
     assert isinstance(response.json(), dict)
 
     def test_market_maker():
+
         @app.get("/market_maker")
         def market_maker():
             if not MarketMaker.market_maker:
@@ -7364,9 +6654,6 @@ def test_market_maker_endpoint():
             mm = MarketMaker(app)
             response = mm.initialize_market_maker(market_data)
             assert isinstance(response, Dict) and "market_maker" in response
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -7422,8 +6709,6 @@ def client():
                             "message" in data
                             and data["message"] == "Collateral deleted successfully"
                         )
-import pytest
-from your_module import ValidatorNode, ValidatorNodeService
 
 
 @pytest.fixture()
@@ -7457,8 +6742,7 @@ def test_create_validator_node(validator_node_service):
             node = validator_node_service.get_validator_node(node.id)
             assert node is not None
             assert node.name == "Test Node"
-import pytest
-from fastapi.testclient import TestClient
+
 
 app = TestClient(Main.app)
 
@@ -7476,13 +6760,12 @@ def test_get_liquidity():
                 assert response.status_code == 200
                 data = response.json()
                 assert isinstance(data, dict)
-from main import PositionRiskEndpoint
+
 
 importpytest
 
 
 def test_endpoint():
-    # Add test data here or use factory_boy for complex objects.
     endpoint = PositionRiskEndpoint()
     decomposition_data = PositionRiskDecomposition(
         market_value=100,
@@ -7495,10 +6778,9 @@ def test_endpoint():
             decomposition_data
         )
         assert str(e.value) == "Data does not match the provided data structure."
-import pytest
-from unittest.mock import patch, MagicMock
 
-app = your_app_instance  # Replace with your actual app instance
+
+app = your_app_instance
 
 
 def test_create_delegation_pool():
@@ -7507,7 +6789,6 @@ def test_create_delegation_pool():
     with patch("main.DelegationPool.router.post") as mock_post:
         result = app.create_delegation_pool(delegation_pool)
         assert result == delegation_pool
-        # Check if the post method is called
         mock_post.assert_called_once_with(
             data=delegation_pool.dict(), content_type="application/json"
         )
@@ -7559,10 +6840,6 @@ def test_create_delegation_pool():
                             with pytest.raises(HTTPException) as ex:
                                 response = app.delete_delegation_pool(pool_id)
                                 assert str(ex.value) == f"{error_message}"
-import asyncio
-from fastapi.testclient import TestClient
-from pytest import raises
-from main import app
 
 
 async def test_volatility_surface_endpoint():
@@ -7582,9 +6859,6 @@ async def test_volatility_surface_endpoint():
                 with raises(Exception) as context:
                     asyncio.run(test_calculated_volatility_surface_endpoint())
                     assert str(context.exception) == "An error occurred:"
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 @pytest.fixture
@@ -7605,8 +6879,6 @@ def client():
             def test_get_institutional_prime_brokerage_data_not_found(client):
                 response = client.get("/institutions/999")
                 assert response.status_code == 404
-import pytest
-from main import app
 
 
 def test_get_loans_valid_loan_id():
@@ -7677,12 +6949,6 @@ def test_get_loans_valid_loan_id():
                     assert response.status_code == 200
                     assert "loan_id" in str(response.content)
                     assert isinstance(str(response.content)["loan_id"], str)
-from pytest import mark
-import uuid
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime, timedelta
-from main import app
 
 
 def test_create_uuid():
@@ -7698,7 +6964,6 @@ def test_create_uuid():
 
         @pytest.mark.asyncio
         async def test_optimize_spread():
-            # Generate a dummy data for the optimization analysis
             dummy_data = {
                 "spread": 10,
                 "min_price": 1000,
@@ -7706,7 +6971,6 @@ def test_create_uuid():
                 "current_price": 1200,
             }
             client = TestClient(app)
-            # Call the endpoint and check if we get a response with the correct result
             response = await client.post("/optimize", json=dummy_data)
             assert response.status_code == 200
             expected_result = {
@@ -7714,9 +6978,6 @@ def test_create_uuid():
             }
             result_json = response.json()
             assert result_json["result"] == expected_result["result"]
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -7752,8 +7013,7 @@ def client():
                         assert response.json() == {
                             "detail": "Invalid destination address provided."
                         }
-import pytest
-from fastapi.testclient import TestClient
+
 
 app = None
 
@@ -7790,9 +7050,6 @@ def client():
                     "message" in content
                     and content["message"] == "User KYC documents documented."
                 )
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_calculate_score():
@@ -7817,12 +7074,9 @@ def test_calculate_score():
             leaderboard_data = response.json()
             assert leaderboard_data["username"] == "NewUser"
             assert leaderboard_data["score"] == 10
-import pytest
-from main import app, Trade
 
 
 def test_wash_trading_detector():
-    # Test with a list of trades that do not exhibit wash trading patterns
     trades = [
         Trade(
             timestamp=datetime(2023, 1, 1),
@@ -7837,7 +7091,6 @@ def test_wash_trading_detector():
             quantity=0.15,
         ),
     ]
-    # Test the Wash Trading Detector
     detector = Trade.WashTradingDetector()
     with pytest.raises(ValueError):
         detector.detect_wash_trading(trades)
@@ -7851,8 +7104,6 @@ def test_wash_trading_detector():
                 "No instruments detected that exhibit wash trading patterns"
             )
             assert isinstance(result, expected_result)
-import pytest
-from unittest.mock import patch, MagicMock
 
 
 def test_calculate_fee_valid_input():
@@ -7865,27 +7116,22 @@ def test_calculate_fee_valid_input():
         base_fee=base_fee,
         increment_factor=increment_factor,
     )
-    assert result == max(base_fee + (base_fee * congestion_level * increment_factor), 1)
+    assert result == max(base_fee + base_fee * congestion_level * increment_factor, 1)
 
     def test_calculate_fee_invalid_congestion_level():
         with pytest.raises(HTTPException):
             calculate_fee(congestion_level=-0.5, base_fee=10, increment_factor=0.05)
 
             def test_network_congestion_valid_input():
+
                 @patch("main.network_congestion")
                 def test_network_congestion(self, mock_network_congestion):
-                    # Arrange
                     expected = NetworkCongestion()
                     expected.congestion_level = 0.5
                     mock_network_congestion.return_value = expected
-                    # Act
                     result = network_congestion()
-                    # Assert
                     assert isinstance(result, NetworkConggestion)
                     mock_network_congestion.assert_called_once()
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -7901,9 +7147,6 @@ def client():
             assert "gender" in data
             assert "cholesterol" in data
             assert "glucose" in data
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.mark.asyncio
@@ -7912,8 +7155,6 @@ async def test_manipulation_detection_endpoint():
     response = client.get("/manipulation-detection")
     assert response.status_code == 200
     assert "data" in response.json()
-import pytest
-from fastapi.testclient import TestClient
 
 
 def test_list_cross_chain_collaterals():
@@ -7925,7 +7166,6 @@ def test_list_cross_chain_collaterals():
 
     def test_get_cross_chain_collateral():
         client = TestClient(app)
-        # Mock the collateral data for testing purposes
         COLLATERAL_DATA = [
             {
                 "chain_id": "test_chain1",
@@ -7952,8 +7192,7 @@ def test_list_cross_chain_collaterals():
                 with pytest.raises(HTTPException):
                     response = client.get("/chains/test_chain1/collaterals/TokenX")
                     assert response.status_code == 404
-import pytest
-from fastapi.testclient import TestClient
+
 
 app = FastAPI()
 
@@ -7964,13 +7203,11 @@ class LiquidityRoutingRequest(BaseModel):
 
     @app.post("/liquidity-routing")
     async def route_liquidity(request_data: LiquidityRoutingRequest):
-        # Simulate real-time liquidity data retrieval
         liquidity_data = {
             "BTC": {"price": 35000, "volume": 1000000},
             "ETH": {"price": 2200, "volume": 5000000},
         }
         requested_asset = liquidity_data[request_data.asset]
-        # Simulate optimization logic
         optimized_route = "ETH" if request_data.amount > 5000000 else "BTC"
         return {
             "requested_asset": requested_asset["asset"],
@@ -7981,7 +7218,6 @@ class LiquidityRoutingRequest(BaseModel):
 
     def test_route_liquidity():
         client = TestClient(app)
-        # Define some data
         data = LiquidityRoutingRequest(asset="ETH", amount=2500000)
         response = client.post("/liquidity-routing", json=data)
         assert response.status_code == 200
@@ -7993,7 +7229,6 @@ class LiquidityRoutingRequest(BaseModel):
 
         def test_route_liquidity_large_amount():
             client = TestClient(app)
-            # Define some data
             data = LiquidityRoutingRequest(asset="BTC", amount=1500000000)
             response = client.post("/liquidity-routing", json=data)
             assert response.status_code == 200
@@ -8005,7 +7240,6 @@ class LiquidityRoutingRequest(BaseModel):
 
             def test_route_liquidity_invalid_data():
                 client = TestClient(app)
-                # Define some invalid data
                 data = LiquidityRoutingRequest(asset="invalid", amount=100)
                 response = client.post("/liquidity-routing", json=data)
                 assert response.status_code == 400
@@ -8014,9 +7248,6 @@ class LiquidityRoutingRequest(BaseModel):
                 assert "detail" in result
                 assert result["detail"]["type"] == "value_error"
                 assert error_message in result["detail"]["msg"]
-import pytest
-from fastapi.testclient import TestClient
-from main import app, AssetBridgingValidation
 
 
 @pytest.fixture()
@@ -8042,9 +7273,6 @@ def client():
                 assert response.status_code == 200
                 assert isinstance(response.json(), dict)
                 assert "last_validation_id" in response.json()
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -8062,9 +7290,6 @@ def client():
             def test_get_market_depth_endpoint_not_found(client):
                 response = client.get("/market-depth/INVALID_SYMBOL")
                 assert response.status_code == 404
-import asyncio
-from fastapi import TestClient
-from main import app
 
 
 def test_get_bids():
@@ -8078,9 +7303,6 @@ def test_get_bids():
         response = client.get("/asks")
         assert response.status_code == 200
         assert isinstance(response.json(), list)
-from main import app, HistoricalData
-import pytest
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture
@@ -8100,9 +7322,6 @@ def client():
             assert response.status_code == 200
             expected_output = list(HistoricalData.parse_raw(response.text))
             assert len(expected_output) > 0, "No historical data returned."
-from fastapi import HTTPException
-import pytest
-from main import app, Order
 
 
 @pytest.mark.anyio
@@ -8118,9 +7337,6 @@ async def test_get_active_orders():
             response = app.test_client().get("/orders/user/999")
             data = response.json()
             assert data["status"] == "422 Unprocessable Entity"
-import pytest
-from fastapi.testclient import TestClient
-from main import app, RateLimiter
 
 
 @pytest.fixture(autouse=True)
@@ -8142,15 +7358,13 @@ def setup(request):
 
                 def test_too_many_requests(client):
                     for i in range(11):
-                        response = client.get(f"/endpoint?limit={i+1}")
+                        response = client.get(f"/endpoint?limit={i + 1}")
                         if response.status_code == 429:
                             break
                     else:
                         response = client.get("/endpoint")
                         assert response.status_code == 200
                         assert any(response.status_code == 429)
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -8172,17 +7386,11 @@ def client():
                 with pytest.raises(HTTPException) as ex:
                     client.get("/audit-log")
                     assert str(ex.value) == "Audit log data is empty."
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime, timedelta
-import asyncio
-from main import app
 
 
 @pytest.mark.asyncio
 async def test_create_recurring_order():
     client = TestClient(app)
-    # Creating a sample RecurringOrder
     schedule = {"interval": "minute", "count": 10}
     order_data = RecurringOrder(
         symbol="AAPL", quantity=1, price=100.0, schedule=schedule
@@ -8195,7 +7403,6 @@ async def test_create_recurring_order():
 
     def test_create_recurring_order_invalid():
         client = TestClient(app)
-        # Creating a sample RecurringOrder with invalid symbol
         schedule = {"interval": "minute", "count": 10}
         order_data = RecurringOrder(
             symbol="invalid_symbol", quantity=1, price=100.0, schedule=schedule
@@ -8205,9 +7412,6 @@ async def test_create_recurring_order():
         data = response.json()
         assert "detail" in data
         assert "Invalid data received" in data["detail"]
-from fastapi.testclient import TestClient
-import pytest
-from datetime import datetime
 
 
 def test_post_order_batch():
@@ -8243,10 +7447,6 @@ def test_post_order_batch():
         assert response.status_code == 200
         assert "order_batches" in response.json()
         assert len(response.json()["order_batches"]) == 2
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app, WithdrawalApproval
 
 
 @pytest.fixture
@@ -8269,9 +7469,6 @@ def client():
             assert response.status_code == 200
             assert isinstance(response.json(), dict)
             assert "message" in response.json()
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 def test_margin_health_stream():
@@ -8285,15 +7482,10 @@ def test_margin_health_stream():
     async def test_websocket_endpoint():
         client = TestClient(app)
         async with client.websocket_connect("/ws/margin-health"):
-            # Send an empty message to trigger the stream
             await client.send_text("")
-            # Assert that a margin health data is received
             msg = await client.receive_json()
             assert "margin_percentage" in msg
-            # Check if the connection was closed
             assert client.is_connected() is False
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -8302,11 +7494,9 @@ def client():
         yield TC
 
         def test_identify_wash_trading(client):
-            # Load the data set with wash trading patterns
             trades = pd.read_csv("trades_data.csv")
             np.random.shuffle(trades)
 
-            # Set up the client fixture to make requests for testing purposes.
             @pytest.fixture()
             def api_client():
                 return client
@@ -8314,11 +7504,7 @@ def client():
             response = client.get("/identify_wash_trading")
             assert response.status_code == 200
             data = response.json()
-            # Check if the identified wash trading pattern is correct and expected number of trades detected are in the results
             assert len(data["trades_detected"]) > 0
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture()
@@ -8342,9 +7528,6 @@ def client():
                 assert "Reward distribution updated successfully." in str(
                     response.content
                 )
-from fastapi.testclient import TestClient
-import pytest
-from main import app
 
 
 @pytest.fixture
@@ -8357,28 +7540,18 @@ def client():
             data = response.json()
             assert response.status_code == 200
             assert "optimized_fee_tiers" in data.keys()
-import pytest
-from fastapi.testclient import TestClient
-from main import app
 
 
 def test_mirror_position():
     client = TestClient(app)
-    # Define expected response content
     data = {"key": "value"}
     expected_response_content = {
         "result": "Position mirrored successfully",
         "data": data,
     }
-    # Send a POST request to the endpoint with sample data
     response = client.post("/mirror_position", json=data)
-    # Assert that the status code of the response is 200
     assert response.status_code == 200
-    # Unpack and compare the contents of the response with the expected content
     assert response.json() == expected_response_content
-import pytest
-from main import app, Transaction
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture
@@ -8403,8 +7576,6 @@ def test_create_transaction(client):
         response = client.get("/transactions")
         transactions: Transaction = response.json()
         assert len(transactions) > 0
-import pytest
-from main import OracleData, validate_oracle_data
 
 
 def test_validate_oracle_data_success():
@@ -8424,8 +7595,6 @@ def test_validate_oracle_data_success():
                 with pytest.raises(HTTPException):
                     _ = validate_oracle_data(data)
                     assert True
-import pytest
-from main import app, DebtPosition
 
 
 @pytest.main
@@ -8433,12 +7602,43 @@ def test_debt_position_investor():
     investor = DebtPosition.Investor(
         id=1, name="John Doe", email="john.doe@example.com"
     )
-    dp = DebtPosition(id=1, amount=1000.00, investor_id=investor.id, interest_rate=0.05)
+    dp = DebtPosition(id=1, amount=1000.0, investor_id=investor.id, interest_rate=0.05)
     assert dp.investor_id == investor.id
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+@pytest.mark.asyncio
+async def test_generate_wallet_address_with_all_parameters(client):
+    response = await client.post(
+        "/wallet-address", json={"currency": "BTC", "user_id": 123456}
+    )
+    assert response.status_code == 200
+    data = await response.json()
+    assert "user_id" in data
+    assert "currency" in data
+    assert "wallet_address" in data
+    assert "creation_date" in data
+
+    @pytest.mark.asyncio
+    async def test_generate_wallet_address_with_missing_parameters(client):
+        response = await client.post("/wallet-address", json={})
+        assert response.status_code == 422
+
+        @pytest.mark.asyncio
+        async def test_generate_wallet_address_with_optional_creation_date(client):
+            response = await client.post(
+                "/wallet-address", json={"currency": "BTC", "user_id": 123456}
+            )
+            assert response.status_code == 200
+            data = await response.json()
+            assert "user_id" in data
+            assert "currency" in data
+            assert "wallet_address" in data
+            assert isinstance(data["creation_date"], str)
 
 
 @pytest.fixture
