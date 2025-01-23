@@ -7328,3 +7328,39 @@ def client():
                     print(response.text)
                     assert "Desk not found" in str(e.value)
                     assert response.status_code == 404
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+from main import MarketMaker, app
+
+
+def test_market_maker_endpoint():
+    client = TestClient(app)
+    response = client.get("/market_maker")
+    assert response.status_code == 200
+    assert isinstance(response.json(), dict)
+
+    def test_market_maker():
+        @app.get("/market_maker")
+        def market_maker():
+            if not MarketMaker.market_maker:
+                market_data = {
+                    "AAPL": {"last_price": 145.0, "volatility": 15},
+                    "GOOG": {"last_price": 2700.0, "volatility": 8},
+                }
+                mm = MarketMaker(app)
+                mm.initialize_market_maker(market_data)
+                return {"market_maker": "initialized"}
+            market_data = {
+                "AAPL": {
+                    "last_price": random.uniform(130, 150),
+                    "volatility": random.randint(10, 20),
+                },
+                "GOOG": {
+                    "last_price": random.uniform(2600, 2800),
+                    "volatility": random.randint(5, 15),
+                },
+            }
+            mm = MarketMaker(app)
+            response = mm.initialize_market_maker(market_data)
+            assert isinstance(response, Dict) and "market_maker" in response

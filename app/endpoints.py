@@ -7269,3 +7269,43 @@ class TradingDeskAllocation(BaseModel):
             else:
                 return get_random_allocation()
             return {"desk": desk, "allocation": get_random_allocation().allocation}
+from fastapi import FastAPI
+import random
+from typing import Dict
+
+app = FastAPI()
+
+
+class MarketMaker:
+    def __init__(self, api: FastAPI):
+        self.api = api
+        self.market_maker = None
+
+        def initialize_market_maker(self, market_data: Dict):
+            strike_prices = [500, 525, 550]
+            time_to_expire = random.randint(30, 60)  # in days
+            expiration_date = datetime.now() + timedelta(days=time_to_expire)
+            for symbol, data in market_data.items():
+                self.market_maker = MarketMaker(self.api)
+                order_response = self.market_maker.submit_order(
+                    symbol=symbol,
+                    side="market",
+                    order_type="limit",
+                    quantity=5,
+                    price=random.choice(strike_prices),
+                    expiration_date=expiration_date,
+                )
+                # Placeholder code to simulate handling of the response
+                print(f"Order submitted successfully: {order_response}")
+                return "Market Maker initialized and orders placed."
+
+            @app.get("/market_maker")
+            def market_maker():
+                if not MarketMaker.market_maker:
+                    market_data = {
+                        "AAPL": {"last_price": 145.0, "volatility": 15},
+                        "GOOG": {"last_price": 2700.0, "volatility": 8},
+                    }
+                    mm = MarketMaker(app)
+                    mm.initialize_market_maker(market_data)
+                    return {"market_maker": "initialized"}
