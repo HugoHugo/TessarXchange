@@ -8088,3 +8088,35 @@ class HistoricalData(models.HistoricalData):
             # Fetch historical trading data using external API
             data = models.fetch_historical_data(start_date, end_date, interval)
             return data
+from fastapi import FastAPI, HTTPException
+from typing import List
+from datetime import datetime
+
+app = FastAPI()
+
+
+class Order:
+    def __init__(self, id: int, user_id: int, order_date: datetime, status: str):
+        self.id = id
+        self.user_id = user_id
+        self.order_date = order_date
+        self.status = status
+
+        def get_active_orders(user_id: int) -> List[Order]:
+            # Assume we have a database connection and function to fetch active orders
+            # For simplicity, this example will simulate fetching active orders from an in-memory list
+            active_orders = [
+                Order(
+                    id=1, user_id=123, order_date=datetime(2023, 5, 10), status="active"
+                ),
+                Order(
+                    id=2, user_id=123, order_date=datetime(2023, 5, 11), status="active"
+                ),
+                Order(
+                    id=3, user_id=456, order_date=datetime(2023, 5, 12), status="closed"
+                ),
+            ]
+            active_orders = [
+                order for order in active_orders if order.status == "active"
+            ]
+            return active_orders

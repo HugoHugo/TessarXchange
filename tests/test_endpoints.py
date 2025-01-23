@@ -8100,3 +8100,21 @@ def client():
             assert response.status_code == 200
             expected_output = list(HistoricalData.parse_raw(response.text))
             assert len(expected_output) > 0, "No historical data returned."
+from fastapi import HTTPException
+import pytest
+from main import app, Order
+
+
+@pytest.mark.anyio
+async def test_get_active_orders():
+    response = await app.test_client().get("/orders/user/123")
+    active_orders = Order.parse_raw(response.content.decode())
+    assert len(active_orders) == 2
+    assert active_orders[0].id == 1
+    assert active_orders[1].id == 2
+
+    def test_get_active_orders_invalid_user_id():
+        with pytest.raises(HTTPException):
+            response = app.test_client().get("/orders/user/999")
+            data = response.json()
+            assert data["status"] == "422 Unprocessable Entity"
