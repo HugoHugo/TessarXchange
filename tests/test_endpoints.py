@@ -7901,3 +7901,14 @@ def client():
             assert "gender" in data
             assert "cholesterol" in data
             assert "glucose" in data
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.mark.asyncio
+async def test_manipulation_detection_endpoint():
+    client = TestClient(app)
+    response = client.get("/manipulation-detection")
+    assert response.status_code == 200
+    assert "data" in response.json()

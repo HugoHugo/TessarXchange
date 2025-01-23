@@ -7833,3 +7833,37 @@ def risk_factors():
         "glucose": f"High blood glucose {glucose}",
     }
     return decomposed_risk_factors
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import asyncio
+import json
+
+app = FastAPI()
+
+
+class MarketData(BaseModel):
+    symbol: str
+    price: float
+    volume: float
+    timestamp: datetime
+
+    class ManipulationDetection:
+        def __init__(self, market_data_queue: asyncio.Queue):
+            self.market_data_queue = market_data_queue
+
+            async def read_market_data(self):
+                while True:
+                    await self.market_data_queue.put(
+                        json.loads(await self.market_data_queue.get())
+                    )
+
+                    async def manipulate_detection_endpoint():
+                        queue = asyncio.Queue()
+                        loop = (
+                            asyncio.get_eventrex()
+                        )  # This should be 'NewEventLoop()' to create a new event loop
+                        detector = ManipulationDetection(queue)
+                        await detector.read_market_data()
+                        app.add_event_handler("startup", manipulate_detection_endpoint)
+                        while True:
+                            await asyncio.sleep(1)
