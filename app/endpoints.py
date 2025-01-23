@@ -7521,3 +7521,50 @@ class InstitutionalPrimeBrokerage(BaseModel):
         def get_institutional_prime_brokerage_data(id: int):
             brokerage_data = get_institutional_prime_brokerage(id)
             return brokerage_data
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class MarginLendingRecord(BaseModel):
+    loan_id: str
+    user_id: str
+    collateral_type: str
+    amount: float
+    interest_rate: float
+    start_date: datetime
+    end_date: datetime
+    router = APIRouter()
+
+    @router.post("/loan")
+    async def create_loan(record: MarginLendingRecord):
+        if not record.loan_id:
+            record.loan_id = str(uuid.uuid4())
+            return {"loan_id": record.loan_id}
+
+        @router.get("/loans/{loan_id}")
+        async def get_loans(loan_id: str):
+            loans_data = {
+                "loan_id": loan_id,
+                "user_id": "user_123",
+                "collateral_type": "Equity",
+                "amount": 1000000,
+                "interest_rate": 5.0,
+                "start_date": datetime.now(),
+                "end_date": None,
+            }
+            return loans_data
+
+        @router.put("/loans/{loan_id}")
+        async def update_loan(loan_id: str, record: MarginLendingRecord):
+            if not loan_id:
+                raise HTTPException(status_code=400, detail="Invalid loan_id")
+                # Implement logic to update the loan record
+                pass
+
+                @router.delete("/loans/{loan_id}")
+                async def delete_loan(loan_id: str):
+                    if not loan_id:
+                        raise HTTPException(status_code=400, detail="Invalid loan_id")
+                        # Implement logic to delete the loan record
+                        pass

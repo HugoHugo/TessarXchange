@@ -7605,3 +7605,75 @@ def client():
             def test_get_institutional_prime_brokerage_data_not_found(client):
                 response = client.get("/institutions/999")
                 assert response.status_code == 404
+import pytest
+from main import app
+
+
+def test_get_loans_valid_loan_id():
+    client = TestClient(app)
+    response = client.get("/loans/test_loan")
+    assert response.status_code == 200
+    assert "loan_id" in response.json()
+    assert "user_id" in response.json()
+    assert "collateral_type" in response.json()
+    assert "amount" in response.json()
+    assert "interest_rate" in response.json()
+    assert "start_date" in response.json()
+    assert "end_date" not in response.json()
+
+    def test_get_loans_invalid_loan_id():
+        client = TestClient(app)
+        response = client.get("/loans/invalid_loan")
+        assert response.status_code == 400
+        assert "Invalid loan_id" in str(response.content)
+
+        def test_create_loan_valid_input():
+            client = TestClient(app)
+            new_record = MarginLendingRecord(
+                loan_id="test_loan",
+                user_id="user_123",
+                collateral_type="Equity",
+                amount=1000000,
+                interest_rate=5.0,
+                start_date=datetime.now(),
+                end_date=None,
+            )
+            response = client.post("/loan", json=new_record.dict())
+            assert response.status_code == 200
+            assert "loan_id" in response.json()
+            assert isinstance(response.json()["loan_id"], str)
+            assert "user_id" in response.json()
+            assert "collateral_type" in response.json()
+            assert "amount" in response.json()
+            assert "interest_rate" in response.json()
+            assert "start_date" in response.json()
+            assert "end_date" not in response.json()
+
+            def test_update_loan_valid_input():
+                client = TestClient(app)
+                new_record = MarginLendingRecord(
+                    loan_id="test_loan",
+                    user_id="user_123",
+                    collateral_type="Equity",
+                    amount=2000000,
+                    interest_rate=7.5,
+                    start_date=datetime.now(),
+                    end_date=None,
+                )
+                response = client.put("/loans/test_loan", json=new_record.dict())
+                assert response.status_code == 200
+                assert "loan_id" in response.json()
+                assert isinstance(response.json()["loan_id"], str)
+                assert "user_id" in response.json()
+                assert "collateral_type" in response.json()
+                assert "amount" in response.json()
+                assert "interest_rate" in response.json()
+                assert "start_date" in response.json()
+                assert "end_date" not in response.json()
+
+                def test_delete_loan_valid_input():
+                    client = TestClient(app)
+                    response = client.delete("/loans/test_loan")
+                    assert response.status_code == 200
+                    assert "loan_id" in str(response.content)
+                    assert isinstance(str(response.content)["loan_id"], str)
