@@ -8012,3 +8012,60 @@ async def get_market_depth(symbol: str):
                     status_code=404, detail="Market depth data not available."
                 )
                 return {"symbol": symbol, "market_data": data}
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import asyncio
+
+
+class OrderBook(BaseModel):
+    bids: list
+    asks: list
+
+    async def match_orders(buy_order, sell_order):
+        if buy_order["price"] > sell_order["price"]:
+            raise ValueError("Buy order price is greater than the sell order price.")
+            if buy_order["price"] == sell_order["price"]:
+                # If the prices are equal, we can match them
+                return "Matched"
+        else:
+            # Otherwise, we can add both orders to their respective lists.
+            buy_order["order_id"] = len(bids) + 1
+            sell_order["order_id"] = len(asks) + 1
+            bids.append(buy_order)
+            asks.append(sell_order)
+            return "Added"
+
+        async def process_orders(book_type: str, order_list: list):
+            if book_type == "bids":
+                orders = bids
+            elif book_type == "asks":
+                orders = asks
+            else:
+                raise ValueError("Invalid book type.")
+                for order in orders:
+                    await match_orders(order)
+
+                    async def match_orders(buy_order, sell_order):
+                        if buy_order["price"] > sell_order["price"]:
+                            raise ValueError(
+                                "Buy order price is greater than the sell order price."
+                            )
+                            if buy_order["price"] == sell_order["price"]:
+                                # If the prices are equal, we can match them
+                                return "Matched"
+                        else:
+                            # Otherwise, we can add both orders to their respective lists.
+                            buy_order["order_id"] = len(bids) + 1
+                            sell_order["order_id"] = len(asks) + 1
+                            bids.append(buy_order)
+                            asks.append(sell_order)
+                            return "Added"
+                        app = FastAPI()
+
+                        @app.get("/bids", response_model=list[OrderBook])
+                        async def get_bids():
+                            return await asyncio.gather(process_orders("bids", bids))
+
+                        @app.get("/asks", response_model=list[OrderBook])
+                        async def get_asks():
+                            return await asyncio.gather(process_orders("asks", asks))

@@ -8062,3 +8062,19 @@ def client():
             def test_get_market_depth_endpoint_not_found(client):
                 response = client.get("/market-depth/INVALID_SYMBOL")
                 assert response.status_code == 404
+import asyncio
+from fastapi import TestClient
+from main import app
+
+
+def test_get_bids():
+    client = TestClient(app)
+    response = client.get("/bids")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+    def test_get_asks():
+        client = TestClient(app)
+        response = client.get("/asks")
+        assert response.status_code == 200
+        assert isinstance(response.json(), list)
