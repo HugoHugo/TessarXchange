@@ -7851,3 +7851,35 @@ def test_wash_trading_detector():
                 "No instruments detected that exhibit wash trading patterns"
             )
             assert isinstance(result, expected_result)
+import pytest
+from unittest.mock import patch, MagicMock
+
+
+def test_calculate_fee_valid_input():
+    calculate_fee = MagicMock()
+    congestion_level = 0.5
+    base_fee = 10
+    increment_factor = 0.05
+    result = calculate_fee(
+        congestion_level=congestion_level,
+        base_fee=base_fee,
+        increment_factor=increment_factor,
+    )
+    assert result == max(base_fee + (base_fee * congestion_level * increment_factor), 1)
+
+    def test_calculate_fee_invalid_congestion_level():
+        with pytest.raises(HTTPException):
+            calculate_fee(congestion_level=-0.5, base_fee=10, increment_factor=0.05)
+
+            def test_network_congestion_valid_input():
+                @patch("main.network_congestion")
+                def test_network_congestion(self, mock_network_congestion):
+                    # Arrange
+                    expected = NetworkCongestion()
+                    expected.congestion_level = 0.5
+                    mock_network_congestion.return_value = expected
+                    # Act
+                    result = network_congestion()
+                    # Assert
+                    assert isinstance(result, NetworkConggestion)
+                    mock_network_congestion.assert_called_once()

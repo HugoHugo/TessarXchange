@@ -7760,3 +7760,54 @@ class Trade(BaseModel):
                             ),
                         ]
                         return trades_data
+from fastapi import FastAPI, HTTPException
+import random
+
+app = FastAPI()
+
+
+class NetworkCongestion:
+    def __init__(self):
+        self.congestion_level = 0.0
+
+        @property
+        def is_high_congestion(self) -> bool:
+            return self.congestion_level >= 0.7
+
+        def calculate_fee(
+            congestion_level: float, base_fee: float, increment_factor: float
+        ) -> float:
+            adjusted_fee = base_fee + (base_fee * congestion_level * increment_factor)
+            return max(adjusted_fee, 1)
+
+        @app.get("/network/congestion")
+        async def network_congestion():
+            congestion = NetworkCongestion()
+            return congestion
+
+        @app.post("/calculate/fee")
+        async def calculate_fee(request: dict, congestion_level: float = ...):
+            congestion_data = request["congestion_data"]
+            base_fee = congestion_data["base_fee"]
+            increment_factor = congestion_data["increment_factor"]
+            if (
+                not isinstance(congestion_level, float)
+                or congestion_level < 0.0
+                or congestion_level > 1.0
+            ):
+                raise HTTPException(status_code=400, detail="Invalid congestion level")
+                adjusted_fee = calculate_fee(
+                    congestion_level=congestion_level,
+                    base_fee=base_fee,
+                    increment_factor=increment_factor,
+                )
+                return {"fee": adjusted_fee}
+
+            async def main():
+                congestion_data = NetworkCongestion()
+                response = await calculate_fee(
+                    request={"congestion_data": congestion_data}
+                )
+                print(f"Network Fee: {response['fee']}")
+                if __name__ == "__main__":
+                    main()
