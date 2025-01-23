@@ -8424,3 +8424,14 @@ def test_validate_oracle_data_success():
                 with pytest.raises(HTTPException):
                     _ = validate_oracle_data(data)
                     assert True
+import pytest
+from main import app, DebtPosition
+
+
+@pytest.main
+def test_debt_position_investor():
+    investor = DebtPosition.Investor(
+        id=1, name="John Doe", email="john.doe@example.com"
+    )
+    dp = DebtPosition(id=1, amount=1000.00, investor_id=investor.id, interest_rate=0.05)
+    assert dp.investor_id == investor.id

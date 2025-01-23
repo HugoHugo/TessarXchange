@@ -8490,3 +8490,27 @@ class OracleData(BaseModel):
             # For example, check if the timestamp is within a valid range
             # If validation passes, return a success response; otherwise, raise an exception
             return {"result": "validation succeeded"}
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List
+
+app = FastAPI()
+
+
+class DebtPosition(BaseModel):
+    id: int
+    amount: float
+    investor_id: int
+    interest_rate: float = 0.05
+    due_date: datetime = None  # Will be set when the loan is issued
+
+    class Investor(BaseModel):
+        id: int
+        name: str
+        email: str
+
+        class LoanPosition(BaseModel):
+            debt_position_id: int
+            investor_id: int
+            amount: float
+            due_date: datetime
