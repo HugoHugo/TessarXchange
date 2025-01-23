@@ -7867,3 +7867,46 @@ class MarketData(BaseModel):
                         app.add_event_handler("startup", manipulate_detection_endpoint)
                         while True:
                             await asyncio.sleep(1)
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import json
+
+app = FastAPI()
+
+
+class Collateral(BaseModel):
+    chain_id: str
+    collateral_type: str
+    amount: float
+    timestamp: datetime
+    COLLATERAL_DATA_FILE = "collateral_data.json"
+    with open(COLLATERAL_DATA_FILE, "r") as f:
+        COLLATERAL_DATA = json.load(f)
+
+        def get_collateral_data():
+            return COLLABERTAL_DATA
+
+        @app.get("/chains/{chain_id}/collaterals")
+        async def list_cross_chain_collaterals(chain_id: str):
+            collateral_data = get_collateral_data()
+            collaterals = [
+                item for item in collateral_data if item["chain_id"] == chain_id
+            ]
+            if not collaterals:
+                raise HTTPException(
+                    status_code=404, detail="Collateral data not found."
+                )
+                return {"collaterals": collaterals}
+
+            @app.get("/chains/{chain_id}/collaterals/{collateral_type}")
+            async def get_cross_chain_collateral(chain_id: str, collateral_type: str):
+                collateral_data = get_collateral_data()
+                for item in collateral_data:
+                    if (
+                        item["chain_id"] == chain_id
+                        and item["collateral_type"] == collateral_type
+                    ):
+                        return {"collateral": item}
+                    raise HTTPException(
+                        status_code=404, detail="Collateral data not found."
+                    )

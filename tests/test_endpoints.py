@@ -7912,3 +7912,43 @@ async def test_manipulation_detection_endpoint():
     response = client.get("/manipulation-detection")
     assert response.status_code == 200
     assert "data" in response.json()
+import pytest
+from fastapi.testclient import TestClient
+
+
+def test_list_cross_chain_collaterals():
+    client = TestClient(app)
+    response = client.get("/chains/{chain_id}/collaterals")
+    assert response.status_code == 200
+    data = response.json()
+    assert "collaterals" in data.keys()
+
+    def test_get_cross_chain_collateral():
+        client = TestClient(app)
+        # Mock the collateral data for testing purposes
+        COLLATERAL_DATA = [
+            {
+                "chain_id": "test_chain1",
+                "collateral_type": "TokenX",
+                "amount": 100,
+                "timestamp": datetime.now(),
+            },
+            {
+                "chain_id": "test_chain2",
+                "collateral_type": "AssetY",
+                "amount": 150,
+                "timestamp": datetime.now(),
+            },
+        ]
+        with open("collateral_data.json", "w") as f:
+            json.dump(COLLATERAL_DATA, f)
+            response = client.get("/chains/test_chain1/collaterals/TokenX")
+            assert response.status_code == 200
+            data = response.json()
+            assert "collateral" in data.keys()
+
+            def test_get_cross_chain_collateral_not_found():
+                client = TestClient(app)
+                with pytest.raises(HTTPException):
+                    response = client.get("/chains/test_chain1/collaterals/TokenX")
+                    assert response.status_code == 404
