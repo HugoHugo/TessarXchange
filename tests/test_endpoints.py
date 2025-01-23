@@ -8403,3 +8403,24 @@ def test_create_transaction(client):
         response = client.get("/transactions")
         transactions: Transaction = response.json()
         assert len(transactions) > 0
+import pytest
+from main import OracleData, validate_oracle_data
+
+
+def test_validate_oracle_data_success():
+    data = OracleData(chain="ethereum", timestamp=datetime(2022, 1, 1), value=100)
+    assert validate_oracle_data(data) == {"result": "validation succeeded"}
+
+    def test_validate_oracle_data_unsupported_chain():
+        data = OracleData(chain="unsupported_chain")
+        with pytest.raises(HTTPException):
+            _ = validate_oracle_data(data)
+            assert True
+
+            def test_validate_oracle_data_invalid_timestamp():
+                data = OracleData(
+                    chain="ethereum", timestamp=datetime(2100, 1, 1), value=100
+                )
+                with pytest.raises(HTTPException):
+                    _ = validate_oracle_data(data)
+                    assert True

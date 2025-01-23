@@ -8471,3 +8471,22 @@ class Transaction(BaseModel):
 
                 def get_transactions(self) -> list[Transaction]:
                     return [value for _, value in self.transactions.items()]
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import json
+
+
+class OracleData(BaseModel):
+    chain: str
+    timestamp: datetime
+    value: float
+    oracle_data_router = APIRouter()
+
+    @oracle_data_router.post("/validate")
+    async def validate_oracle_data(data: OracleData):
+        if data.chain not in ["ethereum", "binance_smart_chain"]:
+            raise HTTPException(status_code=400, detail="Unsupported chain")
+            # Perform validation logic here
+            # For example, check if the timestamp is within a valid range
+            # If validation passes, return a success response; otherwise, raise an exception
+            return {"result": "validation succeeded"}
