@@ -7952,3 +7952,65 @@ def test_list_cross_chain_collaterals():
                 with pytest.raises(HTTPException):
                     response = client.get("/chains/test_chain1/collaterals/TokenX")
                     assert response.status_code == 404
+import pytest
+from fastapi.testclient import TestClient
+
+app = FastAPI()
+
+
+class LiquidityRoutingRequest(BaseModel):
+    asset: str
+    amount: float
+
+    @app.post("/liquidity-routing")
+    async def route_liquidity(request_data: LiquidityRoutingRequest):
+        # Simulate real-time liquidity data retrieval
+        liquidity_data = {
+            "BTC": {"price": 35000, "volume": 1000000},
+            "ETH": {"price": 2200, "volume": 5000000},
+        }
+        requested_asset = liquidity_data[request_data.asset]
+        # Simulate optimization logic
+        optimized_route = "ETH" if request_data.amount > 5000000 else "BTC"
+        return {
+            "requested_asset": requested_asset["asset"],
+            "requested_amount": request_data.amount,
+            "optimized_route": optimized_route,
+            "optimization_time": time.time(),
+        }
+
+    def test_route_liquidity():
+        client = TestClient(app)
+        # Define some data
+        data = LiquidityRoutingRequest(asset="ETH", amount=2500000)
+        response = client.post("/liquidity-routing", json=data)
+        assert response.status_code == 200
+        result = response.json()
+        expected_asset = "ETH"
+        expected_route = "ETH"
+        assert result["requested_asset"] == expected_asset
+        assert result["optimized_route"] == expected_route
+
+        def test_route_liquidity_large_amount():
+            client = TestClient(app)
+            # Define some data
+            data = LiquidityRoutingRequest(asset="BTC", amount=1500000000)
+            response = client.post("/liquidity-routing", json=data)
+            assert response.status_code == 200
+            result = response.json()
+            expected_asset = "BTC"
+            expected_route = "BTC"
+            assert result["requested_asset"] == expected_asset
+            assert result["optimized_route"] == expected_route
+
+            def test_route_liquidity_invalid_data():
+                client = TestClient(app)
+                # Define some invalid data
+                data = LiquidityRoutingRequest(asset="invalid", amount=100)
+                response = client.post("/liquidity-routing", json=data)
+                assert response.status_code == 400
+                result = response.json()
+                error_message = "Invalid input"
+                assert "detail" in result
+                assert result["detail"]["type"] == "value_error"
+                assert error_message in result["detail"]["msg"]
