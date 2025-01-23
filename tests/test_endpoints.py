@@ -8316,3 +8316,29 @@ def client():
             data = response.json()
             # Check if the identified wash trading pattern is correct and expected number of trades detected are in the results
             assert len(data["trades_detected"]) > 0
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    yield TestClient(app)
+
+    def test_get_staking_pools(client):
+        response = client.get("/staking-pools")
+        assert response.status_code == 200
+        assert isinstance(response.json(), list)
+        assert len(response.json()) > 0
+
+        def test_update_reward_distribution_invalid_pool_id(client):
+            response = client.put("/update-reward-distribution/pool123")
+            assert response.status_code == 400
+            assert "Pool ID not found" in str(response.content)
+
+            def test_update_reward_distribution_valid_pool_id(client):
+                response = client.put("/update-reward-distribution/pool1")
+                assert response.status_code == 200
+                assert "Reward distribution updated successfully." in str(
+                    response.content
+                )

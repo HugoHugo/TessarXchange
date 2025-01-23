@@ -8342,3 +8342,54 @@ import numpy as np
 import pandas as pd
 
 app = FastAPI()
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import random
+
+app = FastAPI()
+
+
+class StakingPool(BaseModel):
+    pool_id: str
+    pool_name: str
+    total_staked: float
+    rewards_distributed: bool
+    STAKING_POOLS = [
+        StakingPool(
+            pool_id="pool1",
+            pool_name="Pool 1",
+            total_staked=100.0,
+            rewards_distributed=False,
+        ),
+        StakingPool(
+            pool_id="pool2",
+            pool_name="Pool 2",
+            total_staked=200.0,
+            rewards_distributed=True,
+        ),
+    ]
+
+    def distribute_rewards():
+        for pool in STAKING_POOLS:
+            if not pool.rewards_distributed:
+                pool.total_staked += random.randint(1, 10) * 0.01
+                pool.rewards_distributed = True
+
+                @app.get("/staking-pools")
+                async def get_staking_pools():
+                    distribute_rewards()
+                    return STAKING_POOLS
+
+                @app.put("/update-reward-distribution/{pool_id}")
+                async def update_reward_distribution(pool_id: str):
+                    for pool in STAKING_POOLS:
+                        if pool.pool_id == pool_id:
+                            if not pool.rewards_distributed:
+                                pool.total_staked += random.randint(1, 10) * 0.01
+                                pool.rewards_distributed = True
+                                return {
+                                    "message": "Reward distribution updated successfully."
+                                }
+                            raise HTTPException(
+                                status_code=400, detail="Pool ID not found."
+                            )
