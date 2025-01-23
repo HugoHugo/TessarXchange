@@ -7457,3 +7457,22 @@ def test_create_validator_node(validator_node_service):
             node = validator_node_service.get_validator_node(node.id)
             assert node is not None
             assert node.name == "Test Node"
+import pytest
+from fastapi.testclient import TestClient
+
+app = TestClient(Main.app)
+
+
+def test_get_liquidity():
+    response = app.get("/liquidity")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+    def test_get_liquidity_by_asset():
+        for i in [1, 2]:
+            with pytest.raises(HTTPException):
+                assert app.get(f"/liquidity/{i}")
+                response = app.get("/liquidity/1")
+                assert response.status_code == 200
+                data = response.json()
+                assert isinstance(data, dict)

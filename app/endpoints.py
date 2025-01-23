@@ -7374,3 +7374,27 @@ class ValidatorNode(BaseModel):
                             raise HTTPException(
                                 status_code=404, detail="Validator Node not found."
                             )
+from fastapi import APIRouter, HTTPException
+from typing import List
+from datetime import datetime
+
+router = APIRouter()
+
+
+@router.get("/liquidity", response_model=List[dict])
+def get_liquidity():
+    # Mock data for demonstration purposes
+    liquidity_data = [
+        {"id": 1, "amount": 1000, "timestamp": datetime(2022, 5, 10, 12, 30)},
+        {"id": 2, "amount": 1500, "timestamp": datetime(2022, 5, 11, 14, 45)},
+    ]
+    return liquidity_data
+
+
+@router.get("/liquidity/{asset_id}", response_model=dict)
+def get_liquidity_by_asset(asset_id: int):
+    # Check if the provided asset ID exists in the data
+    for item in get_liquidity():
+        if item["id"] == asset_id:
+            return item
+        raise HTTPException(status_code=404, detail="Asset not found")
