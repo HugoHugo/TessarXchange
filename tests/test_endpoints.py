@@ -7051,3 +7051,24 @@ def test_monitor_smart_contract():
     def test_monitor_smart_contract_state_change():
         response = app.test_client().get("/monitor")
         assert "ACTIVE" in str(response.text)
+import pytest
+from main import Derivative, SettlementManager
+
+
+def test_create_derivative():
+    settlement_manager = SettlementManager()
+    derivative = settlement_manager.create_derivative(datetime(2023, 1, 1), 1000.0)
+    assert isinstance(derivative, Derivative)
+    assert derivative.contract_id is not None
+    assert derivative.settlement_date is None
+    assert derivative.settlement_amount == 1000.0
+
+    def test_settle_derivative():
+        settlement_manager = SettlementManager()
+        settlement_manager.create_derivative(datetime(2023, 1, 1), 1000.0)
+        with pytest.raises(HTTPException):
+            settlement_manager.settle_derivative("existing_contract_id")
+            derivative = settlement_manager.get_derivative_by_id("new_contract_id")
+            assert derivative.contract_id == "new_contract_id"
+            assert derivative.settlement_date is not None
+            assert derivative.settlement_amount > 0
