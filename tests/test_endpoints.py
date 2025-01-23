@@ -8042,3 +8042,23 @@ def client():
                 assert response.status_code == 200
                 assert isinstance(response.json(), dict)
                 assert "last_validation_id" in response.json()
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as test_client:
+        yield test_client
+
+        def test_get_market_depth_endpoint(client):
+            response = client.get("/market-depth/BTCEUR")
+            assert response.status_code == 200
+            data = response.json()
+            assert "best_bid" in data
+            assert "best_ask" in data
+
+            def test_get_market_depth_endpoint_not_found(client):
+                response = client.get("/market-depth/INVALID_SYMBOL")
+                assert response.status_code == 404

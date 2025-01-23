@@ -7981,3 +7981,34 @@ class AssetBridgingValidation:
                 if not validation_result:
                     raise HTTPException(status_code=400, detail="Invalid parameters")
                     return validation_result
+from fastapi import FastAPI, File, UploadFile
+from py7plus import SevenPlus
+import asyncio
+
+app = FastAPI()
+
+
+async def get_market_depth(symbol: str):
+    async with aiohttp.ClientSession() as session:
+        response = await session.get(
+            f"https://bittrex.com/api/v1.1/public/getmarketsummaries?market=BTCEUR&market=BTCBCH"
+        )
+        data = await response.json()
+        market_data = {}
+        symbol_info = next(
+            (item for item in data if item["MarketName"].upper() == symbol.upper()),
+            None,
+        )
+        if symbol_info:
+            market_data["best_bid"] = float(symbol_info["Last"])
+            market_data["best_ask"] = float(symbol_info["Bid"])
+            return market_data
+
+        @app.get("/market-depth/{symbol}")
+        def get_market_depth_endpoint(symbol: str):
+            data = asyncio.run(get_market_depth(symbol))
+            if not data:
+                raise HTTPException(
+                    status_code=404, detail="Market depth data not available."
+                )
+                return {"symbol": symbol, "market_data": data}
