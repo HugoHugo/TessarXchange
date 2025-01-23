@@ -7240,3 +7240,32 @@ class StressTestData(BaseModel):
         # To simulate derivative data for testing purposes,
         # you can create a sample dataset and load it into the
         # `derivative_data` variable before deploying this code.
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import random
+
+app = FastAPI()
+
+
+class TradingDeskAllocation(BaseModel):
+    desk: str
+    allocation: int
+    ALLOCATIONS = [
+        TradingDeskAllocation(desk="Equities", allocation=10),
+        TradingDeskAllocation(desk="Fixed Income", allocation=8),
+        TradingDeskAllocation(desk="Derivatives", allocation=5),
+    ]
+
+    def get_random_allocation():
+        return random.choice(ALLOCATIONS)
+
+    @app.get("/allocation")
+    async def get_desk_allocation(desk: str = None):
+        if desk:
+            for allocation in ALLOCATIONS:
+                if allocation.desk == desk:
+                    return {"desk": desk, "allocation": allocation.allocation}
+                raise HTTPException(status_code=404, detail="Desk not found")
+            else:
+                return get_random_allocation()
+            return {"desk": desk, "allocation": get_random_allocation().allocation}

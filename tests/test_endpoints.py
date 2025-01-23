@@ -7306,3 +7306,25 @@ def test_derivative_stress_test_endpoint():
             with pytest.raises(NotImplementedError):
                 stress_test_instance = StressTestData(data=None)
                 stress_data = stress_test_instance.data
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as ac:
+        yield ac
+
+        def test_get_desk_allocation(client):
+            response = client.get("/allocation")
+            assert response.status_code == 200
+            assert "desk" in response.json()
+            assert "allocation" in response.json()
+
+            def test_get_desk_allocation_with_invalid_desk(client):
+                with pytest.raises(HTTPException) as e:
+                    response = client.get(f"/allocation?desk=invalid")
+                    print(response.text)
+                    assert "Desk not found" in str(e.value)
+                    assert response.status_code == 404
