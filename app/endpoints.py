@@ -7045,3 +7045,46 @@ class ReputationOracle(BaseModel):
             # Logic to remove the oracle from our system
             # This could involve removing the oracle entry from a database table
             return {"message": "Oracle deleted successfully"}
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import json
+
+
+class Position(BaseModel):
+    chain: str
+    token_address: str
+    value: float
+    timestamp: datetime = None
+    position_router = APIRouter()
+
+    @app.post("/positions")
+    async def create_position(position_data: Position):
+        position.chain = position_data.chain
+        position.token_address = position_data.token_address
+        position.value = position_data.value
+        position.timestamp = position_data.timestamp
+        return position
+
+    @app.get("/positions/{chain}/{token_address}")
+    async def get_positions(chain: str, token_address: str):
+        positions = []
+        # Placeholder for fetching and processing positions from cross-chain networks.
+        with open("positions.json", "r") as f:
+            data = json.load(f)
+            for position in data:
+                if (
+                    position["chain"] == chain
+                    and position["token_address"] == token_address
+                ):
+                    positions.append(position)
+                    if not positions:
+                        raise HTTPException(
+                            status_code=404, detail="Positions not found"
+                        )
+                        return {"positions": positions}
+
+                    @app.get("/positions")
+                    async def get_positions():
+                        with open("positions.json", "r") as f:
+                            data = json.load(f)
+                            return {"positions": data}

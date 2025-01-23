@@ -7162,3 +7162,24 @@ def test_create_reputation_oracle(
                         response = client.delete(f"/oracle/{input_data['id']}")
                         assert response.status_code == expected_status_code
                         assert "Oracle deleted successfully" in str(response.content)
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime
+
+
+def test_create_position():
+    client = TestClient(app)
+    response = client.post(
+        "/positions",
+        content_type="application/json",
+        data=json.dumps(
+            {"chain": "TestChain", "token_address": "0xTokenAddress", "value": 10.00}
+        ),
+    )
+    assert response.status_code == 200
+
+    def test_get_positions():
+        client = TestClient(app)
+        # Assume a positions.json file is created with sample data
+        response = client.get("/positions?chain=TestChain&token_address=0xTokenAddress")
+        assert response.status_code == 200
