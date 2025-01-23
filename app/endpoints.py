@@ -6746,3 +6746,37 @@ class LiquidityData(BaseModel):
             # This example assumes a simple AMM with constant product.
             # Replace this placeholder code with your actual implementation.
             return {"concentration": data.concentration}
+from fastapi import APIRouter, HTTPException
+from fastapi.params import Depends
+from typing import List
+import uuid
+from datetime import datetime
+from models.transaction import Transaction
+from database.database import get_db
+
+router = APIRouter()
+
+
+@router.post("/transaction")
+async def create_transaction(transaction: Transaction, db: Depends(get_db)):
+    transaction_id = str(uuid.uuid4())
+    transaction.transaction_id = transaction_id
+    await db.transactions_save(obj=transaction)
+    return {"message": "Transaction created successfully", "data": transaction}
+
+
+@router.get("/transactions")
+async def get_transactions(db: Depends(get_db)):
+    transactions = await db.transactions_find()
+    return {"message": "All Transactions found.", "data": transactions}
+
+
+@router.get("/transactions/{transaction_id}")
+async def get_transaction(transaction_id: str, db: Depends(get_db)):
+    transaction = await db.transactions_find_by_id(id=transaction_id)
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found.")
+        return {
+            "message": "Transaction details retrieved successfully.",
+            "data": transaction,
+        }

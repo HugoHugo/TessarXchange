@@ -6809,3 +6809,33 @@ def test_get_concentrated_liquidity():
     # Extract and compare the relevant values in the parsed JSON data
     assert json_data["concentration"] == expected_data["concentration"]
     print("Test passed.")
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.main
+def test_create_transaction(client: TestClient):
+    response = client.post(
+        "/transaction", json={"amount": 1000, "currency": "USD", "type": "deposit"}
+    )
+    assert response.status_code == 200
+    assert len(response.json()["data"].transactions) == 1
+
+    @pytest.main
+    def test_get_transactions(client: TestClient):
+        response = client.get("/transactions")
+        assert response.status_code == 200
+        assert len(response.json()["data"]) == 5
+
+        @pytest.main
+        def test_get_transaction_not_found(client: TestClient):
+            response = client.get("/transactions/12345")
+            assert response.status_code == 404
+            assert response.json() == {"detail": "Transaction not found."}
+
+            @pytest.main
+            def test_get_transaction(client: TestClient):
+                response = client.get("/transactions/1")
+                assert response.status_code == 200
+                assert len(response.json()["data"].transactions) == 1
