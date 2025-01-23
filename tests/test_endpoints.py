@@ -8342,3 +8342,18 @@ def client():
                 assert "Reward distribution updated successfully." in str(
                     response.content
                 )
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _app:
+        yield _app
+
+        def test_optimize_fee_tier(client):
+            response = client.get("/optimize-feetier")
+            data = response.json()
+            assert response.status_code == 200
+            assert "optimized_fee_tiers" in data.keys()

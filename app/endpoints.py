@@ -8393,3 +8393,34 @@ class StakingPool(BaseModel):
                             raise HTTPException(
                                 status_code=400, detail="Pool ID not found."
                             )
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List
+
+app = FastAPI()
+
+
+class FeeTier(BaseModel):
+    token_price: float
+    fee_per_thousand: float
+    max_fee: float
+
+    class AutomatedMarketMaker(FastAPI):
+        def optimize_fee_tier(self, tokens: List[FeeTier]):
+            # Implement your fee optimization logic here
+            for tier in tokens:
+                if tier.token_price > 1000:
+                    tier.max_fee = tier.fee_per_thousand * 5
+                elif tier.token_price <= 1000 and tier.token_price > 500:
+                    tier.max_fee = tier.fee_per_thousand * 3
+                else:
+                    tier.max_fee = tier.fee_per_thousand
+                    return tokens
+
+                @app.get("/optimize-feetier")
+                def optimize_fee_tier_endpoint():
+                    token1 = FeeTier(token_price=1200, fee_per_thousand=0.5)
+                    token2 = FeeTier(token_price=600, fee_per_thousand=0.25)
+                    tokens = [token1, token2]
+                    optimized_tokens = AutomatedMarketMaker().optimize_fee_tier(tokens)
+                    return {"optimized_fee_tiers": optimized_tokens}
