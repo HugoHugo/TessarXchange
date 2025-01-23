@@ -7210,3 +7210,22 @@ def test_cancel_order_endpoint_status_code(status_code):
                 response.json().get("detail")
                 == "Order with ID 12345 has been canceled on [date and time]"
             )
+import pytest
+from main import app, get_db_engine
+
+
+@pytest.fixture
+def client():
+    yield TestClient(app)
+
+    def test_upgrade_version(client):
+        response = client.put("/db/migrate")
+        assert response.status_code == 200
+
+        def test_downgrade_version(client):
+            response = client.delete("/db/migrate")
+            assert response.status_code == 200
+
+            def test_get_db_engine():
+                engine = get_db_engine()
+                assert isinstance(engine, create_engine)

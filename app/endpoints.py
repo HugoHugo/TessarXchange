@@ -7106,3 +7106,44 @@ def cancel_order(order_id: UUID, db: Order = Depends(Order.db_dependencies)):
         return {
             "detail": f"Order with ID {order_id} has been canceled on {current_time}"
         }
+from fastapi import FastAPI, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordScope
+from alembic.config import Config
+from sqlalchemy import create_engine, MetaData, Table, Column
+
+app = FastAPI()
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./database.db?check_same_thread=true"
+metadata = MetaData()
+
+
+def get_db_engine():
+    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+    metadata.create_all(bind=engine)
+    return engine
+
+
+def upgrade_version(config: Config, from_version: str, to_version: str):
+    with app.test_client() as client:
+        config.compare_revision_to(current=True)  # Set current to True
+        if config.diff.outcome == "up":
+            response = client.put("/db/migrate")
+            print(f"Response Status Code: {response.status_code}")
+        else:
+            print("No upgrade needed")
+
+            def downgrade_version(config: Config, from_version: str, to_version: str):
+                with app.test_client() as client:
+                    config.compare_revision_to(current=True)
+                    if config.diff.outcome == "do":
+                        response = client.delete("/db/migrate")
+                        print(f"Response Status Code: {response.status_code}")
+                    else:
+                        print("No downgrade needed")
+                        upgrade_version_config = Config(
+                            "alembic.ini", "env.py", "automate.py"
+                        )
+                        upgrade_version(upgrade_version_config, "a1", "a2")
+                        downgrade_version_config = Config(
+                            "alembic.ini", "alembic.ini", "env.py"
+                        )
+                        downgrade_version(downgrade_version_config, "a2", "a1")
