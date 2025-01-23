@@ -6839,3 +6839,31 @@ def test_create_transaction(client: TestClient):
                 response = client.get("/transactions/1")
                 assert response.status_code == 200
                 assert len(response.json()["data"].transactions) == 1
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.mark.parametrize(
+    "input_data, expected_output",
+    [
+        (
+            {
+                "start_time": "2022-01-01",
+                "end_time": "2022-02-01",
+                "target_gas_price": 0.1,
+            },
+            "Implement your gas optimization strategy here...",
+        ),
+    ],
+)
+def test_gas_optimization(input_data, expected_output):
+    client = TestClient(app)
+    response = client.post(
+        "/gas_optimization",
+        json=input_data,
+    )
+    assert response.status_code == 200
+    result = response.json()
+    assert "gas_optimization" in result.keys()
+    assert result["gas_optimization"] == expected_output

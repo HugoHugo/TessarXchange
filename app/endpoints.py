@@ -6780,3 +6780,31 @@ async def get_transaction(transaction_id: str, db: Depends(get_db)):
             "message": "Transaction details retrieved successfully.",
             "data": transaction,
         }
+from fastapi import FastAPI, HTTPException
+import models
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class GasOptimizationInput(BaseModel):
+    start_time: str
+    end_time: str
+    target_gas_price: float
+
+    @app.post("/gas_optimization")
+    async def gas_optimization(input_data: GasOptimizationInput):
+        try:
+            # Convert the input 'start_time' and 'end_time' strings to datetime objects
+            start_datetime = models.convert_to_datetime(input_data.start_time)
+            end_datetime = models.convert_to_datetime(input_data.end_time)
+            if not (start_datetime <= end_datetime and end_datetime <= datetime.now()):
+                raise HTTPException(status_code=400, detail="Invalid date range.")
+                # Your gas optimization logic can go here.
+                optimized_strategy = "Implement your gas optimization strategy here..."
+                return {"gas_optimization": optimized_strategy}
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            raise HTTPException(
+                status_code=500, detail="An internal server error has occurred."
+            )
