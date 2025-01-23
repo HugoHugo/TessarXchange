@@ -8307,3 +8307,33 @@ class WithdrawalApproval(BaseModel):
                 # Assuming the business logic to approve or reject bulk withdrawal approvals is implemented here
                 # Update the database accordingly and return updated approval data.
                 return {"message": "Bulk withdrawal approvals have been processed."}
+from fastapi import FastAPI, WebSocket
+from fastapi.livestream import SimpleLivestream
+import asyncio
+
+app = FastAPI()
+
+
+class MarginHealthStream(SimpleLivestream):
+    def __call__(self):
+        while True:
+            # Simulate margin health data generation
+            margin_health_data = {
+                "timestamp": str(datetime.now()),
+                "margin_percentage": 95.2,
+                "sector": "Technology",
+                "status": "Healthy",
+            }
+            yield margin_health_data
+
+            @app.websocket("/ws/margin-health")
+            async def websocket_endpoint(websocket: WebSocket):
+                await websocket.accept()
+                stream = MarginHealthStream()
+                async for data in websocket.receive_async():
+                    # Forward received messages to the stream
+                    await stream.send(data)
+                    # Handle any received errors and close the connection if necessary.
+                    if data["error"]:
+                        await websocket.close(code=data["code"], reason=data["reason"])
+                        break

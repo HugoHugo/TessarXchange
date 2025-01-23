@@ -8269,3 +8269,26 @@ def client():
             assert response.status_code == 200
             assert isinstance(response.json(), dict)
             assert "message" in response.json()
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_margin_health_stream():
+    client = TestClient(app)
+    response = client.get("/ws/margin-health")
+    assert response.status_code == 101
+    assert b"Upgrade" in response.content
+    assert b"Sec-WebSocket-Accept" in response.content
+
+    @pytest.mark.asyncio
+    async def test_websocket_endpoint():
+        client = TestClient(app)
+        async with client.websocket_connect("/ws/margin-health"):
+            # Send an empty message to trigger the stream
+            await client.send_text("")
+            # Assert that a margin health data is received
+            msg = await client.receive_json()
+            assert "margin_percentage" in msg
+            # Check if the connection was closed
+            assert client.is_connected() is False
