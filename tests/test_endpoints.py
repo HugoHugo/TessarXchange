@@ -7559,3 +7559,26 @@ def test_create_delegation_pool():
                             with pytest.raises(HTTPException) as ex:
                                 response = app.delete_delegation_pool(pool_id)
                                 assert str(ex.value) == f"{error_message}"
+import asyncio
+from fastapi.testclient import TestClient
+from pytest import raises
+from main import app
+
+
+async def test_volatility_surface_endpoint():
+    client = TestClient(app)
+    response = client.get("/volatility_surface")
+    assert response.status_code == 200
+    assert "message" in response.json()
+
+    async def test_calculated_volatility_surface_endpoint():
+        with raises(HTTPException):
+            asyncio.run(test_volatility_surface_endpoint())
+            assert (
+                False
+            ), "This is a placeholder assertion to ensure the function is called."
+
+            async def test_error_in_calculating_volatility_surface_endpoint():
+                with raises(Exception) as context:
+                    asyncio.run(test_calculated_volatility_surface_endpoint())
+                    assert str(context.exception) == "An error occurred:"

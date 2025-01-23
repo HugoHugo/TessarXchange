@@ -7468,3 +7468,31 @@ class DelegationPool(BaseModel):
                     # Implement logic to delete the delegation pool based on pool_id
                     # and raise an HTTPException if the delegation pool is not found
                     pass
+from fastapi import FastAPI, HTTPException
+from pyvolta.volatility import Volatility
+import asyncio
+
+app = FastAPI()
+
+
+def get_volatility_data():
+    volatility = Volatility()
+    # Get historical data (e.g., Heston model parameters)
+    model_params = volatility.get_historical_model_parameters()
+    return model_params
+
+
+async def volatility_surface():
+    while True:
+        try:
+            model_params = get_volatility_data()
+            # Compute volatility surface based on the model's parameters
+            # This is a placeholder function to simulate the computation of the volatility surface.
+            # In practice, this would involve calling an API or using another computational method for generating the volatility surface.
+            await asyncio.sleep(5)  # Adjust sleep time as needed
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+            @app.get("/volatility_surface")
+            async def volatility_surface_endpoint():
+                return {"message": "Real-time volatility surface calculated."}
