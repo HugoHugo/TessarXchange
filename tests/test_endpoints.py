@@ -7790,3 +7790,30 @@ def client():
                     "message" in content
                     and content["message"] == "User KYC documents documented."
                 )
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+def test_calculate_score():
+    score = 1000
+    assert TradingCompetition().calculate_score() == score
+
+    @pytest.mark.asyncio
+    async def test_get_leaderboard():
+        client = TestClient(app)
+        response = await client.get("/leaderboard")
+        data = response.json()
+        assert len(data["trades"]) > 10
+        assert "username" in data and isinstance(data["username"], str)
+        assert "score" in data
+
+        @pytest.mark.asyncio
+        async def test_update_leaderboard():
+            client = TestClient(app)
+            response = await client.post(
+                "/leaderboard", json={"username": "NewUser", "score": 10}
+            )
+            leaderboard_data = response.json()
+            assert leaderboard_data["username"] == "NewUser"
+            assert leaderboard_data["score"] == 10

@@ -7674,3 +7674,40 @@ class IdentityDocument:
                         ],
                     )
                     return documentation
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import random
+
+app = FastAPI()
+
+
+class Trade(BaseModel):
+    id: int
+    symbol: str
+    quantity: float
+    price: float
+    timestamp: datetime
+
+    class Leaderboard(BaseModel):
+        username: str
+        score: float
+        trades: list[Trade]
+
+        class TradingCompetition:
+            def __init__(self, start_timestamp, end_timestamp):
+                self.start_timestamp = start_timestamp
+                self.end_timestamp = end_timestamp
+                self.leaderboard = []
+
+                async def get_leaderboard(self):
+                    leaderboard = Leaderboard(
+                        username=random.choice(["User1", "User2", "User3"]),
+                        score=self.calculate_score(),
+                        trades=[random.Trade() for _ in range(10)],
+                    )
+                    return leaderboard
+
+                def calculate_score(self):
+                    # Placeholder calculation, replace with your logic
+                    # Example: sum(trade.score for trade in self.leaderboard.trades)
+                    return 1000
