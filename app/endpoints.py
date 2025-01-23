@@ -8164,3 +8164,35 @@ class RateLimiter(BaseHTTPMiddleware):
                         self._requests[key].append(current_request_time)
                     else:
                         raise HTTPException(status_code=429, detail="Too many requests")
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class AuditLog(BaseModel):
+    id: str
+    timestamp: datetime
+    action: str
+    resource: str
+    user_id: int
+    AUDIT_LOGS = []
+
+    def generate_audit_log_entry():
+        new_entry = AuditLog(
+            id=str(uuid.uuid4()),
+            timestamp=datetime.utcnow(),
+            action="user_action",
+            resource="/user_profile",  # Example resource
+            user_id=12345,
+        )
+        AUDIT_LOGS.append(new_audit_log_entry)
+        return new_entry
+
+    @app.post("/audit-log")
+    def create_audit_log():
+        if not AUDIT_LOGS:
+            raise HTTPException(status_code=500, detail="Audit log data is empty.")
+            new_entry = generate_audit_log_entry()
+            return new_entry

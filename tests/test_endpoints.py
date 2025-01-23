@@ -8149,3 +8149,26 @@ def setup(request):
                         response = client.get("/endpoint")
                         assert response.status_code == 200
                         assert any(response.status_code == 429)
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_audit_log_endpoint(client):
+            response = client.get("/audit-log")
+            assert response.status_code == 200
+            content = response.json()
+            assert "id" in content
+            assert "timestamp" in content
+            assert "action" in content
+            assert "resource" in content
+            assert "user_id" in content
+
+            def test_audit_log_empty(client):
+                with pytest.raises(HTTPException) as ex:
+                    client.get("/audit-log")
+                    assert str(ex.value) == "Audit log data is empty."
