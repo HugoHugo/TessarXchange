@@ -8357,3 +8357,22 @@ def client():
             data = response.json()
             assert response.status_code == 200
             assert "optimized_fee_tiers" in data.keys()
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+def test_mirror_position():
+    client = TestClient(app)
+    # Define expected response content
+    data = {"key": "value"}
+    expected_response_content = {
+        "result": "Position mirrored successfully",
+        "data": data,
+    }
+    # Send a POST request to the endpoint with sample data
+    response = client.post("/mirror_position", json=data)
+    # Assert that the status code of the response is 200
+    assert response.status_code == 200
+    # Unpack and compare the contents of the response with the expected content
+    assert response.json() == expected_response_content
