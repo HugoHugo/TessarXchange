@@ -6808,3 +6808,24 @@ class GasOptimizationInput(BaseModel):
             raise HTTPException(
                 status_code=500, detail="An internal server error has occurred."
             )
+from fastapi import FastAPI, HTTPException
+import models
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class TokenDistributionEvent(BaseModel):
+    event_type: str
+    token_id: int
+    recipient_address: str
+    timestamp: datetime
+    block_number: int
+    TokenDistributionEvents = models.Collection("token_distribution_events")
+
+    @app.post("/events/token-distribution")
+    async def distribute_tokens_event(event_data: TokenDistributionEvent):
+        # Add your logic here to handle the real-time token distribution event.
+        # For demonstration purposes, let's just log the received event.
+        TokenDistributionEvents.insert_one(event_data.dict())
+        return {"message": "Token distribution event processed successfully."}

@@ -6867,3 +6867,16 @@ def test_gas_optimization(input_data, expected_output):
     result = response.json()
     assert "gas_optimization" in result.keys()
     assert result["gas_optimization"] == expected_output
+import pytest
+from fastapi.testclient import TestClient
+
+
+def test_event_post_request(test_app: TestClient):
+    event_data = {
+        "event_type": "token-distribution",
+        "token_id": 1,
+        "recipient_address": "0x123...",
+        "timestamp": datetime.now(),
+    }
+    response = test_app.post("/events", json=event_data)
+    assert response.status_code == 200
