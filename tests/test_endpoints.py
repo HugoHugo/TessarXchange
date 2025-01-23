@@ -7476,3 +7476,22 @@ def test_get_liquidity():
                 assert response.status_code == 200
                 data = response.json()
                 assert isinstance(data, dict)
+from main import PositionRiskEndpoint
+
+importpytest
+
+
+def test_endpoint():
+    # Add test data here or use factory_boy for complex objects.
+    endpoint = PositionRiskEndpoint()
+    decomposition_data = PositionRiskDecomposition(
+        market_value=100,
+        weighted_exposure=[10, 20, 30],
+        sector_exposure=[0.5, 0.3, 0.2],
+        country_exposure=[0.1, 0.25, 0.6],
+    )
+    with pytest.raises(HTTPException) as e:
+        decomposition_data = endpoint.get_position_risk_decomposition(
+            decomposition_data
+        )
+        assert str(e.value) == "Data does not match the provided data structure."

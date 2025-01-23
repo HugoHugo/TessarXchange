@@ -7398,3 +7398,36 @@ def get_liquidity_by_asset(asset_id: int):
         if item["id"] == asset_id:
             return item
         raise HTTPException(status_code=404, detail="Asset not found")
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List
+
+app = FastAPI()
+
+
+class PositionRiskDecomposition(BaseModel):
+    market_value: float
+    weighted_exposure: List[float]
+    sector_exposure: List[float]
+    country_exposure: List[float]
+
+    class PositionRiskEndpoint:
+        def __init__(self, position_risk_decomposition_data):
+            self.position_risk_data = position_risk_decomposion_data
+
+            @app.post("/position-risk-decomposition")
+            async def get_position_risk_decomposition(
+                self, decomposition_data: PositionRiskDecomposition
+            ):
+                if any(
+                    [
+                        d != decompositon_data.weighted_exposure[i]
+                        for i, d in enumerate(self.position_risk_data.weighted_exposure)
+                    ]
+                ):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Data does not match the provided data structure.",
+                    )
+                    return decomposition_data
+                # Additional utility functions can be added to this class if needed.
