@@ -7883,3 +7883,21 @@ def test_calculate_fee_valid_input():
                     # Assert
                     assert isinstance(result, NetworkConggestion)
                     mock_network_congestion.assert_called_once()
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as ac:
+        yield ac
+
+        def test_risk_factors(client):
+            response = client.get("/risk_factors")
+            assert response.status_code == 200
+            data = response.json()
+            assert "age" in data
+            assert "gender" in data
+            assert "cholesterol" in data
+            assert "glucose" in data

@@ -7811,3 +7811,25 @@ class NetworkCongestion:
                 print(f"Network Fee: {response['fee']}")
                 if __name__ == "__main__":
                     main()
+from fastapi import FastAPI
+from datetime import datetime
+
+app = FastAPI()
+
+
+@app.get("/risk_factors")
+def risk_factors():
+    # Sample simulated data - Replace with actual business logic
+    age = 45
+    gender = "Male"
+    cholesterol = 235
+    glucose = 110
+    blood_pressure = (130, 80)
+    # Decompose the risk factors and return the results
+    decomposed_risk_factors = {
+        "age": f"{age} years old",
+        "gender": gender,
+        "cholesterol": f"High cholesterol {cholesterol}",
+        "glucose": f"High blood glucose {glucose}",
+    }
+    return decomposed_risk_factors
