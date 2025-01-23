@@ -7287,3 +7287,22 @@ def test_init():
                     assert disapprove(wallet) is None
                     wallet.disapproved = True
                     assert disapprove(wallet)["result"] == "wallet disapproved"
+import pytest
+from main import app, StressTestData
+
+
+def test_derivative_stress_test_endpoint():
+    client = TestClient(app)
+    with pytest.raises(HTTPException):
+        response = client.get("/stress-test")
+        assert response.status_code == 200
+        stress_data = response.json()
+        assert "data" in stress_data
+        data = stress_data["data"]
+        assert isinstance(data, pd.DataFrame)
+        assert len(data) > 0
+
+        def test_derivative_stress_test_results():
+            with pytest.raises(NotImplementedError):
+                stress_test_instance = StressTestData(data=None)
+                stress_data = stress_test_instance.data
