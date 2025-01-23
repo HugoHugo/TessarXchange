@@ -7431,3 +7431,40 @@ class PositionRiskDecomposition(BaseModel):
                     )
                     return decomposition_data
                 # Additional utility functions can be added to this class if needed.
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import uuid
+
+
+class DelegationPool(BaseModel):
+    pool_id: uuid.UUID
+    delegator_address: str
+    validator_address: str
+    pool_weight: int = 0
+    router = APIRouter()
+
+    @router.post("/delegation-pools")
+    def create_delegation_pool(delegation_pool: DelegationPool = ...):
+        if not delegation_pool.pool_id:
+            delegation_pool.pool_id = uuid.uuid4()
+            return delegation_pool
+
+        @router.get("/delegation-pools/{pool_id}")
+        def get_delegation_pool(pool_id: uuid.UUID):
+            # Implement logic to fetch the delegation pool based on pool_id
+            # and raise an exception if the delegation pool is not found
+            pass
+
+            @router.put("/delegation-pools/{pool_id}")
+            def update_delegation_pool(
+                pool_id: uuid.UUID, delegation_pool: DelegationPool = ...
+            ):
+                # Implement logic to update the delegation pool based on pool_id
+                # and return the updated delegation pool
+                pass
+
+                @router.delete("/delegation-pools/{pool_id}")
+                def delete_delegation_pool(pool_id: uuid.UUID):
+                    # Implement logic to delete the delegation pool based on pool_id
+                    # and raise an HTTPException if the delegation pool is not found
+                    pass

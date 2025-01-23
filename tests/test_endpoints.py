@@ -7495,3 +7495,67 @@ def test_endpoint():
             decomposition_data
         )
         assert str(e.value) == "Data does not match the provided data structure."
+import pytest
+from unittest.mock import patch, MagicMock
+
+app = your_app_instance  # Replace with your actual app instance
+
+
+def test_create_delegation_pool():
+    pool_id = uuid.uuid4()
+    delegation_pool = DelegationPool(pool_id=pool_id)
+    with patch("main.DelegationPool.router.post") as mock_post:
+        result = app.create_delegation_pool(delegation_pool)
+        assert result == delegation_pool
+        # Check if the post method is called
+        mock_post.assert_called_once_with(
+            data=delegation_pool.dict(), content_type="application/json"
+        )
+
+        @pytest.mark.parametrize(
+            "invalid_field, error_message",
+            [
+                ("pool_id", "Pool ID cannot be empty"),
+                ("delegator_address", "Delegator address cannot be empty"),
+            ],
+        )
+        def test_get_delegation_pool(invalid_field, error_message):
+            pool_id = uuid.uuid4()
+            with pytest.raises(HTTPException) as ex:
+                response = app.get_delegation_pool(pool_id)
+                assert str(ex.value) == f"{error_message}"
+
+                @pytest.mark.parametrize(
+                    "pool_weight_value, expected_error",
+                    [
+                        (0, "Pool weight cannot be zero"),
+                        (-1, "Pool weight must be a positive integer"),
+                    ],
+                )
+                def test_update_delegation_pool(pool_weight_value, expected_error):
+                    pool_id = uuid.uuid4()
+                    delegation_pool = DelegationPool(
+                        pool_id=pool_id, pool_weight=pool_weight_value
+                    )
+                    with pytest.raises(HTTPException) as ex:
+                        updated_delegation_pool = app.update_delegation_pool(
+                            pool_id=delegation_pool.pool_id,
+                            delegation_pool=delegation_pool,
+                        )
+                        assert str(ex.value) == f"{expected_error}"
+
+                        @pytest.mark.parametrize(
+                            "invalid_field, error_message",
+                            [
+                                ("pool_id", "Pool ID cannot be empty"),
+                                (
+                                    "delegator_address",
+                                    "Delegator address cannot be empty",
+                                ),
+                            ],
+                        )
+                        def test_delete_delegation_pool(invalid_field, error_message):
+                            pool_id = uuid.uuid4()
+                            with pytest.raises(HTTPException) as ex:
+                                response = app.delete_delegation_pool(pool_id)
+                                assert str(ex.value) == f"{error_message}"
