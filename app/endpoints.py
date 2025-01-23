@@ -7168,3 +7168,40 @@ class AuditLog(BaseModel):
             raise HTTPException(status_code=400, detail="Details cannot be empty.")
             AUDIT_LOG_LIST.append(audit_log)
             return {"status": "success", "log_id": audit_log.id}
+from fastapi import FastAPI, HTTPException
+from datetime import datetime
+
+app = FastAPI()
+
+
+class MultiSignatureWallet:
+    def __init__(self, signers):
+        self.signers = signers
+        self.approved = False
+        self.disapproved = False
+
+        def approve(self, signature):
+            if len(signature) < 1 or not isinstance(signature[0], str):
+                raise HTTPException(status_code=400, detail="Invalid signature format")
+                if not any(s in signature for s in signers):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Signature does not have required signer's name",
+                    )
+                    n = len(signature)
+                    for i in range(n):
+                        if self.signers[i] == signature[i]:
+                            break
+                    else:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Invalid signature - incorrect signatory",
+                        )
+                        self.approved = True
+                        return {"result": "wallet approved"}
+
+                    def disapprove(self):
+                        self.disapproved = True
+                        return {"result": "wallet disapproved"}
+
+                    wallet = MultiSignatureWallet(["Alice", "Bob"])

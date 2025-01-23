@@ -7259,3 +7259,31 @@ def client():
                 )
                 with pytest.raises(HTTPException):
                     app.post("/audit-log/", json=audit_log.dict())
+import pytest
+from main import MultiSignatureWallet, approve, disapprove
+
+
+def test_init():
+    signers = ["Alice", "Bob"]
+    ws = MultiSignatureWallet(signers)
+    assert ws.signers == signers
+    assert ws.approved is False
+    assert ws.disapproved is False
+
+    def test_approve():
+        wallet = MultiSignatureWallet(["Alice", "Bob"])
+        with pytest.raises(HTTPException):
+            approve(wallet, [])
+            signature = ["Alice"]
+            with pytest.raises(HTTPException):
+                approve(wallet, signature)
+                signature = ["Alice", "Bob"]
+                wallet.approved = False
+                assert approve(wallet, signature)["result"] == "wallet approved"
+
+                def test_disapprove():
+                    wallet = MultiSignatureWallet(["Alice", "Bob"])
+                    wallet.disapproved = False
+                    assert disapprove(wallet) is None
+                    wallet.disapproved = True
+                    assert disapprove(wallet)["result"] == "wallet disapproved"
