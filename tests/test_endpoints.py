@@ -7714,3 +7714,41 @@ def test_create_uuid():
             }
             result_json = response.json()
             assert result_json["result"] == expected_result["result"]
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as ac:
+        yield ac
+
+        def test_withdraw_success(client):
+            response = client.post(
+                "/withdraw", json={"destination_address": "1", "amount": 200.0}
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["result"] == "Withdrawal successful"
+            assert data["new_balance"] >= 800.0
+
+            def test_withdraw_insufficient_balance(client):
+                response = client.post(
+                    "/withdraw", json={"destination_address": "1", "amount": 10000.0}
+                )
+                assert response.status_code == 400
+                assert response.json() == {
+                    "detail": "Insufficient balance for withdrawal"
+                }
+
+                def test_withdraw_invalid_destination(client):
+                    with pytest.raises(HTTPException) as e:
+                        response = client.post(
+                            "/withdraw",
+                            json={"destination_address": "abc", "amount": 500.0},
+                        )
+                        assert response.status_code == 400
+                        assert response.json() == {
+                            "detail": "Invalid destination address provided."
+                        }

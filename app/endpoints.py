@@ -7588,3 +7588,27 @@ class SpreadOptimizationAnalysis(UvicornApp):
         if __name__ == "__main__":
             app = SpreadOptimizationAnalysis()
             app.run(host="0.0.0.0", port=8000)
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class WithdrawalRequest(BaseModel):
+    destination_address: str
+    amount: float
+
+    @app.post("/withdraw")
+    def withdraw(request_data: WithdrawalRequest):
+        user_balance = 1000.00  # Simulating user's balance
+        if request_data.amount > user_balance:
+            raise HTTPException(
+                status_code=400, detail="Insufficient balance for withdrawal"
+            )
+            # Simulate transaction process
+            user_balance -= request_data.amount
+            return {
+                "result": "Withdrawal successful",
+                "amount": request_data.amount,
+                "new_balance": user_balance,
+            }
