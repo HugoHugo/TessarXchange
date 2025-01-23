@@ -7937,3 +7937,47 @@ class LiquidityRoutingRequest(BaseModel):
             "optimized_route": optimized_route,
             "optimization_time": time.time(),
         }
+from fastapi import FastAPI, HTTPException
+import uuid
+from datetime import datetime
+
+app = FastAPI()
+
+
+class AssetBridgingValidation:
+    def __init__(self):
+        self.validation_ids = []
+
+        @property
+        def last_validation_id(self):
+            if not self.validation_ids:
+                return None
+            return max(self.validation_ids, key=lambda x: x.id)
+
+        async def create_validation(
+            self, origin_chain: str, destination_chain: str, amount: int
+        ) -> AssetBridgingValidation:
+            new_validation = AssetBridgingValidation()
+            validation_id = uuid.uuid4()
+            new_validation.validation_ids.append(validation_id)
+            new_validation.origin_chain = origin_chain
+            new_validation.destination_chain = destination_chain
+            new_validation.amount = amount
+            return new_validation
+
+        async def get_last_validation(self) -> AssetBridgingValidation:
+            last_valid = self.last_validation_id
+            if not last_valid:
+                raise HTTPException(status_code=404, detail="No validation found")
+                return last_valid
+
+            async def validate_asset_bridging(
+                origin_chain: str, destination_chain: str, amount: int
+            ):
+                asset_validation = AssetBridgingValidation()
+                validation_result = await asset_validation.create_validation(
+                    origin_chain, destination_chain, amount
+                )
+                if not validation_result:
+                    raise HTTPException(status_code=400, detail="Invalid parameters")
+                    return validation_result

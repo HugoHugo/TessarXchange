@@ -8014,3 +8014,31 @@ class LiquidityRoutingRequest(BaseModel):
                 assert "detail" in result
                 assert result["detail"]["type"] == "value_error"
                 assert error_message in result["detail"]["msg"]
+import pytest
+from fastapi.testclient import TestClient
+from main import app, AssetBridgingValidation
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_create_validation(client):
+            response = client.post(
+                "/create-validation",
+                json={
+                    "origin_chain": "test_origin",
+                    "destination_chain": "test_destination",
+                    "amount": 100,
+                },
+            )
+            assert response.status_code == 200
+            assert isinstance(response.json(), dict)
+            assert "validation_id" in response.json()
+
+            def test_get_last_validation(client):
+                response = client.get("/get-last-validation")
+                assert response.status_code == 200
+                assert isinstance(response.json(), dict)
+                assert "last_validation_id" in response.json()
