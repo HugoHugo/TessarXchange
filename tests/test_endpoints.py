@@ -7364,3 +7364,61 @@ def test_market_maker_endpoint():
             mm = MarketMaker(app)
             response = mm.initialize_market_maker(market_data)
             assert isinstance(response, Dict) and "market_maker" in response
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as TC:
+        yield TC
+
+        def test_create_collateral(client):
+            response = client.post(
+                "/collaterals", json={"chain": "TestChain", "amount": 100.0}
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert "message" in data and data["message"] == "Collateral created"
+            assert "data" in data and isinstance(data["data"], Collateral)
+            assert data["data"].chain == "TestChain"
+            assert data["data"].amount == 100.0
+
+            def test_get_collaterals(client):
+                response = client.get("/collaterals")
+                assert response.status_code == 200
+                data = response.json()
+                assert (
+                    "message" in data
+                    and data["message"] == "Collaterals retrieved successfully"
+                )
+                assert "data" in data and isinstance(data["data"], list)
+                assert len(data["data"]) > 0
+
+                def test_update_collateral(client):
+                    response = client.put(
+                        "/collaterals/{id}",
+                        json={"chain": "TestChain", "amount": 200.0},
+                        params={"id": "1"},
+                    )
+                    assert response.status_code == 200
+                    data = response.json()
+                    assert (
+                        "message" in data
+                        and data["message"] == "Collateral updated successfully"
+                    )
+                    assert "data" in data and isinstance(data["data"], dict)
+                    assert data["data"]["chain"] == "TestChain"
+                    assert data["data"]["amount"] == 200.0
+
+                    def test_delete_collateral(client):
+                        response = client.delete(
+                            "/collaterals/{id}", params={"id": "1"}
+                        )
+                        assert response.status_code == 200
+                        data = response.json()
+                        assert (
+                            "message" in data
+                            and data["message"] == "Collateral deleted successfully"
+                        )

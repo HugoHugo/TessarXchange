@@ -7309,3 +7309,17 @@ class MarketMaker:
                     mm = MarketMaker(app)
                     mm.initialize_market_maker(market_data)
                     return {"market_maker": "initialized"}
+from fastapi import APIRouter, Path, Query
+from pydantic import BaseModel
+import uuid
+
+
+class Collateral(BaseModel):
+    id: str = str(uuid.uuid4())
+    chain: str
+    amount: float
+    collaterals_router = APIRouter()
+
+    @app.post("/collaterals")
+    def create_collateral(collateral_data: Collateral):
+        return {"message": "Collateral created", "data": collateral_data}
