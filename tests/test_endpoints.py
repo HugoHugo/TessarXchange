@@ -7582,3 +7582,26 @@ async def test_volatility_surface_endpoint():
                 with raises(Exception) as context:
                     asyncio.run(test_calculated_volatility_surface_endpoint())
                     assert str(context.exception) == "An error occurred:"
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as SC:
+        yield SC
+
+        def test_get_institutional_prime_brokerage_data(client):
+            response = client.get("/institutions/1")
+            assert response.status_code == 200
+            data = response.json()
+            assert "id" in data
+            assert "name" in data
+            assert "account_number" in data
+            assert "total_funds" in data
+            assert "risk_level" in data
+
+            def test_get_institutional_prime_brokerage_data_not_found(client):
+                response = client.get("/institutions/999")
+                assert response.status_code == 404

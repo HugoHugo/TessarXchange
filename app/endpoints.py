@@ -7496,3 +7496,28 @@ async def volatility_surface():
             @app.get("/volatility_surface")
             async def volatility_surface_endpoint():
                 return {"message": "Real-time volatility surface calculated."}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+
+class InstitutionalPrimeBrokerage(BaseModel):
+    id: int
+    name: str
+    account_number: str
+    total_funds: float
+    risk_level: str
+    INSTITUTIONAL_PRIME_BROKERAGE = {}
+
+    def get_institutional_prime_brokerage(id: int):
+        if id not in INSTITUTIONAL_PRIME_BROKERAGE:
+            raise HTTPException(
+                status_code=404, detail="Institutional Prime Brokerage not found"
+            )
+            return INSTITUTIONAL_PRIME_BROKERAGE[id]
+
+        @app.get("/institutions/{id}", response_model=InstitutionalPrimeBrokerage)
+        def get_institutional_prime_brokerage_data(id: int):
+            brokerage_data = get_institutional_prime_brokerage(id)
+            return brokerage_data
