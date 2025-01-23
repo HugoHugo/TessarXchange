@@ -8243,3 +8243,29 @@ def test_post_order_batch():
         assert response.status_code == 200
         assert "order_batches" in response.json()
         assert len(response.json()["order_batches"]) == 2
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app, WithdrawalApproval
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as _app:
+        yield _app
+
+        def test_post_bulk_withdrawal_approvals(client):
+            data = [
+                WithdrawalApproval(
+                    approval_id=1,
+                    admin_user_id=1,
+                    withdrawal_id=2,
+                    status="PENDING",
+                    approved_at=datetime.now(),
+                )
+                for _ in range(5)
+            ]
+            response = client.post("/bulk-withdrawal-approvals", json=data)
+            assert response.status_code == 200
+            assert isinstance(response.json(), dict)
+            assert "message" in response.json()

@@ -8283,3 +8283,27 @@ class OrderBatch(BaseModel):
                 for id in ORDER_BATCH_STORAGE:
                     order_batches.append(get_order_batch(id))
                     return {"order_batches": order_batches}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from datetime import datetime
+
+app = FastAPI()
+
+
+class WithdrawalApproval(BaseModel):
+    approval_id: int
+    admin_user_id: int
+    withdrawal_id: int
+    status: str
+    approved_at: datetime
+
+    @app.post("/bulk-withdrawal-approvals")
+    def bulk_withdrawal_approvals(withdrawals_approval_data: List[WithdrawalApproval]):
+        for approval in withdrawals_approval_data:
+            if approval.status != "PENDING":
+                raise HTTPException(
+                    status_code=400, detail="Status should be 'PENDING'."
+                )
+                # Assuming the business logic to approve or reject bulk withdrawal approvals is implemented here
+                # Update the database accordingly and return updated approval data.
+                return {"message": "Bulk withdrawal approvals have been processed."}
