@@ -7752,3 +7752,41 @@ def client():
                         assert response.json() == {
                             "detail": "Invalid destination address provided."
                         }
+import pytest
+from fastapi.testclient import TestClient
+
+app = None
+
+
+@pytest.fixture
+def client():
+    global app
+    with TestClient(app) as _app:
+        app = _app
+        yield _app
+        app = None
+
+        def test_kyc_verification_endpoint(client):
+            response = client.post(
+                "/kyc/verify", files={"documents": "tests/data/test_documents.jpg"}
+            )
+            assert response.status_code == 200
+            content = response.json()
+            assert "status" in content and content["status"] == "success"
+            assert (
+                "message" in content
+                and content["message"] == "Documents received successfully."
+            )
+            assert "user_id" in content
+            assert "documents" in content
+
+            def test_kyc_documented_endpoint(client):
+                user_id = "1234"
+                response = client.get(f"/kyc/documented/{user_id}")
+                assert response.status_code == 200
+                content = response.json()
+                assert "status" in content and content["status"] == "success"
+                assert (
+                    "message" in content
+                    and content["message"] == "User KYC documents documented."
+                )
