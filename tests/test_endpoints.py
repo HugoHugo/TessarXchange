@@ -7183,3 +7183,30 @@ def test_create_position():
         # Assume a positions.json file is created with sample data
         response = client.get("/positions?chain=TestChain&token_address=0xTokenAddress")
         assert response.status_code == 200
+from fastapi.testclient import TestClient
+import pytest
+from main import app
+
+
+@pytest.mark.parametrize("status_code", [200])
+def test_cancel_order_endpoint_status_code(status_code):
+    client = TestClient(app)
+    response = client.get("/cancel-order/{order_id}", params={"order_id": "12345"})
+    assert response.status_code == status_code
+
+    def test_cancel_order_endpoint_invalid_order():
+        client = TestClient(app)
+        response = client.get("/cancel-order/{order_id}", params={"order_id": "99999"})
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Order not found"}
+
+        def test_cancel_order_endpoint_success():
+            client = TestClient(app)
+            response = client.get(
+                "/cancel-order/{order_id}", params={"order_id": "12345"}
+            )
+            assert response.status_code == 200
+            assert (
+                response.json().get("detail")
+                == "Order with ID 12345 has been canceled on [date and time]"
+            )

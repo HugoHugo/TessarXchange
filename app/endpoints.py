@@ -7088,3 +7088,21 @@ class Position(BaseModel):
                         with open("positions.json", "r") as f:
                             data = json.load(f)
                             return {"positions": data}
+from fastapi import APIRouter, HTTPException
+from fastapi.params import Depends
+from typing import UUID
+from datetime import datetime
+from backend.models.order import Order
+
+order_router = APIRouter()
+
+
+@order_router.get("/cancel-order/{order_id}")
+def cancel_order(order_id: UUID, db: Order = Depends(Order.db_dependencies)):
+    if not db.is_valid_order(order_id):
+        raise HTTPException(status_code=404, detail="Order not found")
+        current_time = datetime.now()
+        db.cancel_order(order_id, current_time)
+        return {
+            "detail": f"Order with ID {order_id} has been canceled on {current_time}"
+        }
