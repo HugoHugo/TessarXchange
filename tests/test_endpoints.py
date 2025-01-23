@@ -8078,3 +8078,25 @@ def test_get_bids():
         response = client.get("/asks")
         assert response.status_code == 200
         assert isinstance(response.json(), list)
+from main import app, HistoricalData
+import pytest
+from fastapi.testclient import TestClient
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_historical_data(client):
+            response = client.get(
+                "/historical_data",
+                params={
+                    "start_date": "2022-01-01",
+                    "end_date": "2022-01-02",
+                    "interval": "1min",
+                },
+            )
+            assert response.status_code == 200
+            expected_output = list(HistoricalData.parse_raw(response.text))
+            assert len(expected_output) > 0, "No historical data returned."

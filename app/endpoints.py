@@ -8069,3 +8069,22 @@ class OrderBook(BaseModel):
                         @app.get("/asks", response_model=list[OrderBook])
                         async def get_asks():
                             return await asyncio.gather(process_orders("asks", asks))
+from fastapi import FastAPI, HTTPException
+import models
+
+app = FastAPI()
+
+
+class HistoricalData(models.HistoricalData):
+    pass
+
+    @app.get("/historical_data", response_model=List[HistoricalData])
+    def historical_data(
+        start_date: str = None, end_date: str = None, interval: str = "1min"
+    ):
+        # Validate date ranges and intervals
+        if not (start_date or end_date):
+            raise HTTPException(status_code=400, detail="Missing start or end date.")
+            # Fetch historical trading data using external API
+            data = models.fetch_historical_data(start_date, end_date, interval)
+            return data
