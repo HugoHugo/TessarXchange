@@ -8337,3 +8337,8 @@ class MarginHealthStream(SimpleLivestream):
                     if data["error"]:
                         await websocket.close(code=data["code"], reason=data["reason"])
                         break
+from fastapi import FastAPI
+import numpy as np
+import pandas as pd
+
+app = FastAPI()

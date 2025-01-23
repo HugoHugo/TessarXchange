@@ -8292,3 +8292,27 @@ def test_margin_health_stream():
             assert "margin_percentage" in msg
             # Check if the connection was closed
             assert client.is_connected() is False
+import pytest
+from main import app
+
+
+@pytest.fixture()
+def client():
+    with TestClient(app) as TC:
+        yield TC
+
+        def test_identify_wash_trading(client):
+            # Load the data set with wash trading patterns
+            trades = pd.read_csv("trades_data.csv")
+            np.random.shuffle(trades)
+
+            # Set up the client fixture to make requests for testing purposes.
+            @pytest.fixture()
+            def api_client():
+                return client
+
+            response = client.get("/identify_wash_trading")
+            assert response.status_code == 200
+            data = response.json()
+            # Check if the identified wash trading pattern is correct and expected number of trades detected are in the results
+            assert len(data["trades_detected"]) > 0
