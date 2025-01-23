@@ -7422,3 +7422,38 @@ def client():
                             "message" in data
                             and data["message"] == "Collateral deleted successfully"
                         )
+import pytest
+from your_module import ValidatorNode, ValidatorNodeService
+
+
+@pytest.fixture()
+def validator_node_service():
+    service = ValidatorNodeService()
+    service.create_validator_node("Test Node", "123 Test St.", "testPublicKey")
+    return service
+
+
+def test_create_validator_node(validator_node_service):
+    node = validator_node_service.get_validator_node("testId")
+    assert node is not None
+    assert node.name == "Test Node"
+    assert node.state == "offline"
+
+    def test_update_validator_node(validator_node_service):
+        validator_node = validator_node_service.create_validator_node(
+            name="Test Node", address="123 Test St.", public_key="testPublicKey"
+        )
+        validator_node.service.update_validator_node(
+            node_id=validator_node.id, state="online"
+        )
+        node = validator_node_service.get_validator_node(validator_node.id)
+        assert node is not None
+        assert node.state == "online"
+
+        def test_get_validator_node(validator_node_service):
+            validator_node = validator_node_service.create_validator_node(
+                name="Test Node", address="123 Test St.", public_key="testPublicKey"
+            )
+            node = validator_node_service.get_validator_node(node.id)
+            assert node is not None
+            assert node.name == "Test Node"

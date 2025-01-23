@@ -7323,3 +7323,54 @@ class Collateral(BaseModel):
     @app.post("/collaterals")
     def create_collateral(collateral_data: Collateral):
         return {"message": "Collateral created", "data": collateral_data}
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uuid
+
+app = FastAPI()
+
+
+class ValidatorNode(BaseModel):
+    id: str
+    name: str
+    address: str
+    public_key: str
+    state: str
+    VALIDATOR_NODE_STATE = {
+        "offline": "Validator node is not connected to the sidechain.",
+        "online": "Validator node is currently contributing to the security of the sidechain.",
+    }
+
+    class ValidatorNodeService:
+        def __init__(self):
+            self.validator_nodes = []
+
+            def create_validator_node(
+                self, name: str, address: str, public_key: str
+            ) -> ValidatorNode:
+                new_node = ValidatorNode(
+                    id=str(uuid.uuid4()),
+                    name=name,
+                    address=address,
+                    public_key=public_key,
+                    state="offline",
+                )
+                self.validator_nodes.append(new_node)
+                return new_node
+
+            def update_validator_node(self, node_id: str, state: str) -> ValidatorNode:
+                for validator_node in self.validator_nodes:
+                    if validator_node.id == node_id:
+                        validator_node.state = state
+                        return validator_node
+                    raise HTTPException(
+                        status_code=404, detail="Validator Node not found."
+                    )
+
+                    def get_validator_node(self, node_id: str) -> ValidatorNode:
+                        for validator_node in self.validator_nodes:
+                            if validator_node.id == node_id:
+                                return validator_node
+                            raise HTTPException(
+                                status_code=404, detail="Validator Node not found."
+                            )
