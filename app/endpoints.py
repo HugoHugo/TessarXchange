@@ -7831,3 +7831,19 @@ async def generate_wallet_address(
         }
     if __name__ == "__main__":
         uvicorn.run(app, host="localhost", port=8000)
+
+
+app = FastAPI()
+
+
+@app.get("/generate-wallet")
+async def generate_wallet(currency: str, username: str = None):
+    if not currency or not username:
+        return {"error": "Missing required parameters"}
+    current_timestamp = datetime.now().timestamp()
+    return json.dumps(
+        {
+            "status": "success",
+            "wallet_address": f"{username}_{currency}_{current_timestamp}",
+        }
+    )
