@@ -6916,3 +6916,17 @@ def test_migration_params():
                         amount=0,
                     ),
                 )
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+
+def test_get_oracle_exchange_rates():
+    client = TestClient(app)
+    response = client.get("/oracles")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    assert all(isinstance(item, OracleData) for item in response.json())
+    # Additional test cases can be added here as per requirement.
+    if __name__ == "__main__":
+        pytest.main()

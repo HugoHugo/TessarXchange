@@ -6865,3 +6865,32 @@ class MigrationParams(BaseModel):
                     status_code=500,
                     detail="An unexpected error occurred during pool migration.",
                 )
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import json
+
+app = FastAPI()
+
+
+class OracleData(BaseModel):
+    id: int
+    timestamp: str
+    exchange_rate: float
+    currency_pair: str
+    ORACLES_DATA_FILE = "oracles_data.json"
+
+    def load_oracles_data():
+        if not os.path.exists(ORACLES_DATA_FILE):
+            return []
+        with open(ORACLES_DATA_FILE, "r") as f:
+            oracles_data = json.load(f)
+            return [OracleData(**data) for data in oracles_data]
+
+        @app.get("/oracles", response_model=list[OracleData])
+        def get_oracle_exchange_rates():
+            oracles_data = load_oracles_data()
+            if not oracles_data:
+                raise HTTPException(
+                    status_code=404, detail="No oracle exchange rates available."
+                )
+                return oracles_data
