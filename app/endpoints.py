@@ -8196,3 +8196,43 @@ class AuditLog(BaseModel):
             raise HTTPException(status_code=500, detail="Audit log data is empty.")
             new_entry = generate_audit_log_entry()
             return new_entry
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import asyncio
+
+app = FastAPI()
+
+
+class RecurringOrder(BaseModel):
+    symbol: str
+    quantity: float
+    price: float
+    schedule: dict
+
+    class Order:
+        def __init__(self, symbol, quantity, price):
+            self.symbol = symbol
+            self.quantity = quantity
+            self.price = price
+            self.status = "new"
+
+            async def create_recurring_order(order_data: RecurringOrder):
+                # Assuming there is a function called `place_order` that handles the order placing logic.
+                await place_order(
+                    order_data.symbol,
+                    order_data.quantity,
+                    order_data.price,
+                    order_data.schedule,
+                )
+                return {"result": "recurring order created"}
+
+            @app.post("/recurring-order")
+            async def create_recurring_order_endpoint(order_data: RecurringOrder):
+                if (
+                    order_data.symbol is None
+                    or order_data.quantity is None
+                    or order_data.price is None
+                ):
+                    raise HTTPException(status_code=400, detail="Invalid data received")
+                    asyncio.create_task(create_recurring_order(order_data))
+                    return {"result": "recurring order created"}

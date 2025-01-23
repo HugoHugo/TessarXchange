@@ -8172,3 +8172,36 @@ def client():
                 with pytest.raises(HTTPException) as ex:
                     client.get("/audit-log")
                     assert str(ex.value) == "Audit log data is empty."
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime, timedelta
+import asyncio
+from main import app
+
+
+@pytest.mark.asyncio
+async def test_create_recurring_order():
+    client = TestClient(app)
+    # Creating a sample RecurringOrder
+    schedule = {"interval": "minute", "count": 10}
+    order_data = RecurringOrder(
+        symbol="AAPL", quantity=1, price=100.0, schedule=schedule
+    )
+    response = client.post("/recurring-order", json=order_data.dict())
+    assert response.status_code == 200
+    data = response.json()
+    assert "result" in data
+    assert "recurring order created" in data["result"]
+
+    def test_create_recurring_order_invalid():
+        client = TestClient(app)
+        # Creating a sample RecurringOrder with invalid symbol
+        schedule = {"interval": "minute", "count": 10}
+        order_data = RecurringOrder(
+            symbol="invalid_symbol", quantity=1, price=100.0, schedule=schedule
+        )
+        response = client.post("/recurring-order", json=order_data.dict())
+        assert response.status_code == 400
+        data = response.json()
+        assert "detail" in data
+        assert "Invalid data received" in data["detail"]
