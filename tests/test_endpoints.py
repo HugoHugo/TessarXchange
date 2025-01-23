@@ -8435,3 +8435,42 @@ def test_debt_position_investor():
     )
     dp = DebtPosition(id=1, amount=1000.00, investor_id=investor.id, interest_rate=0.05)
     assert dp.investor_id == investor.id
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+@pytest.mark.asyncio
+async def test_generate_wallet_address_with_all_parameters(client):
+    response = await client.post(
+        "/wallet-address", json={"currency": "BTC", "user_id": 123456}
+    )
+    assert response.status_code == 200
+    data = await response.json()
+    assert "user_id" in data
+    assert "currency" in data
+    assert "wallet_address" in data
+    assert "creation_date" in data
+
+    @pytest.mark.asyncio
+    async def test_generate_wallet_address_with_missing_parameters(client):
+        response = await client.post("/wallet-address", json={})
+        assert response.status_code == 422
+
+        @pytest.mark.asyncio
+        async def test_generate_wallet_address_with_optional_creation_date(client):
+            response = await client.post(
+                "/wallet-address", json={"currency": "BTC", "user_id": 123456}
+            )
+            assert response.status_code == 200
+            data = await response.json()
+            assert "user_id" in data
+            assert "currency" in data
+            assert "wallet_address" in data
+            assert isinstance(data["creation_date"], str)
