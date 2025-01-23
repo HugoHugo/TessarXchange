@@ -7711,3 +7711,52 @@ class Trade(BaseModel):
                     # Placeholder calculation, replace with your logic
                     # Example: sum(trade.score for trade in self.leaderboard.trades)
                     return 1000
+from fastapi import FastAPI
+from pydantic import BaseModel
+import numpy as np
+
+
+class Trade(BaseModel):
+    timestamp: datetime
+    instrument: str
+    side: str  # 'buy' or 'sell'
+    quantity: float
+
+    class WashTradingDetector:
+        def __init__(self, min_trades_per_instrument=2):
+            self.min_trades_per_instrument = min_trades_per_instrument
+            self.trade_counts = {}
+
+            def detect_wash_trading(self, trades):
+                for trade in trades:
+                    instrument = trade["instrument"]
+                    if instrument not in self.trade_counts:
+                        self.trade_counts[instrument] = 0
+                        self.trade_counts[instrument] += 1
+                        # Identify instruments with too few trades per instrument
+                        low_trade_count_instruments = {
+                            k: v
+                            for k, v in self.trade_counts.items()
+                            if v < self.min_trades_per_instrument
+                        }
+                        return list(low_trade_count_instruments.keys())
+                    app = FastAPI()
+
+                    @app.get("/trades", response_model=list[Trade])
+                    def trades_endpoint():
+                        # Simulated API call to fetch the actual trade data
+                        trades_data = [
+                            Trade(
+                                timestamp=datetime(2023, 1, 1),
+                                instrument="BTCUSDT",
+                                side="buy",
+                                quantity=0.2,
+                            ),
+                            Trade(
+                                timestamp=datetime(2023, 1, 1),
+                                instrument="ETHUSDT",
+                                side="sell",
+                                quantity=0.15,
+                            ),
+                        ]
+                        return trades_data

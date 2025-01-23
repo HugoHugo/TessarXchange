@@ -7817,3 +7817,37 @@ def test_calculate_score():
             leaderboard_data = response.json()
             assert leaderboard_data["username"] == "NewUser"
             assert leaderboard_data["score"] == 10
+import pytest
+from main import app, Trade
+
+
+def test_wash_trading_detector():
+    # Test with a list of trades that do not exhibit wash trading patterns
+    trades = [
+        Trade(
+            timestamp=datetime(2023, 1, 1),
+            instrument="BTCUSDT",
+            side="buy",
+            quantity=0.2,
+        ),
+        Trade(
+            timestamp=datetime(2023, 1, 1),
+            instrument="ETHUSDT",
+            side="sell",
+            quantity=0.15,
+        ),
+    ]
+    # Test the Wash Trading Detector
+    detector = Trade.WashTradingDetector()
+    with pytest.raises(ValueError):
+        detector.detect_wash_trading(trades)
+        assert len(detector.trade_counts) == 2
+
+        def test_detect_wash_trading_no_instruments():
+            trades = []
+            detector = Trade.WashTradingDetector()
+            result = detector.detect_wash_trading(trades)
+            expected_result = ValueError(
+                "No instruments detected that exhibit wash trading patterns"
+            )
+            assert isinstance(result, expected_result)
