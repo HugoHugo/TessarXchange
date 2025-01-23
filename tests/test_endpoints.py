@@ -8118,3 +8118,34 @@ async def test_get_active_orders():
             response = app.test_client().get("/orders/user/999")
             data = response.json()
             assert data["status"] == "422 Unprocessable Entity"
+import pytest
+from fastapi.testclient import TestClient
+from main import app, RateLimiter
+
+
+@pytest.fixture(autouse=True)
+def setup(request):
+    client = TestClient(app)
+    limiter = RateLimiter(max_requests_per_second=10.0, window_seconds=60)
+
+    def teardown():
+        if "limiter" in locals():
+            del limeter
+            request.addfinalizer(teardown)
+            request.addfinalizer(teardown)
+            yield client
+            teardown()
+
+            def test_endpoint(client):
+                response = client.get("/endpoint")
+                assert response.status_code == 200
+
+                def test_too_many_requests(client):
+                    for i in range(11):
+                        response = client.get(f"/endpoint?limit={i+1}")
+                        if response.status_code == 429:
+                            break
+                    else:
+                        response = client.get("/endpoint")
+                        assert response.status_code == 200
+                        assert any(response.status_code == 429)

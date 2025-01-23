@@ -8120,3 +8120,47 @@ class Order:
                 order for order in active_orders if order.status == "active"
             ]
             return active_orders
+from fastapi import FastAPI, HTTPException, Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from typing import Any
+import re
+
+app = FastAPI()
+
+
+class RateLimiter(BaseHTTPMiddleware):
+    def __init__(self, max_requests_per_second: float = 10.0, window_seconds: int = 60):
+        self.max_requests_per_second = max_requests_per_second
+        self.window_seconds = window_seconds
+        super().__init__()
+
+        async def distribute_request(self, request: Request) -> None:
+            ip_address = request.client.host
+            current_time = datetime.now()
+            # Store IP and last access time for each key (IP address)
+            key = f"{ip_address}:{self.window_seconds}"
+            if key not in self._requests:
+                self._requests[key] = [current_time]
+            else:
+                requests_in_window = len(self._requests[key])
+                while (
+                    requests_in_window
+                    >= self.max_requests_per_second * self.window_seconds
+                ):
+                    index_to_remove = 0
+                    for i, (time, _) in enumerate(self._requests.items()):
+                        if i < index_to_remove + 1:
+                            continue
+                        self._requests.pop(f"{ip_address}:{self.window_seconds}]", None)
+                        break
+                else:
+                    index_to_remove = requests_in_window // 2
+                    current_request_time = datetime.now()
+                    delta = (current_request_time - current_time).total_seconds()
+                    if (
+                        len(self._requests[key]) + delta / self.window_seconds
+                        <= self.max_requests_per_second * self.window_seconds
+                    ):
+                        self._requests[key].append(current_request_time)
+                    else:
+                        raise HTTPException(status_code=429, detail="Too many requests")
