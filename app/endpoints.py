@@ -7147,3 +7147,24 @@ def upgrade_version(config: Config, from_version: str, to_version: str):
                             "alembic.ini", "alembic.ini", "env.py"
                         )
                         downgrade_version(downgrade_version_config, "a2", "a1")
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import datetime
+
+app = FastAPI()
+
+
+class AuditLog(BaseModel):
+    timestamp: datetime.datetime
+    action: str
+    user_id: int
+    resource: str
+    details: str
+    AUDIT_LOG_LIST = []
+
+    @app.post("/audit-log/")
+    async def create_audit_log(audit_log: AuditLog):
+        if not audit_log.details:
+            raise HTTPException(status_code=400, detail="Details cannot be empty.")
+            AUDIT_LOG_LIST.append(audit_log)
+            return {"status": "success", "log_id": audit_log.id}

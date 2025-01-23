@@ -7229,3 +7229,33 @@ def client():
             def test_get_db_engine():
                 engine = get_db_engine()
                 assert isinstance(engine, create_engine)
+import pytest
+from main import app, AuditLog
+
+
+@pytest.fixture(autosuppress=True)
+def client():
+    with TestClient(app) as tc:
+        yield tc
+
+        def test_create_audit_log():
+            audit_log = AuditLog(
+                timestamp=datetime.now(),
+                action="created",
+                user_id=1,
+                resource="audit-log",
+            )
+            response = app.post("/audit-log/", json=audit_log.dict())
+            assert response.status_code == 200
+            assert "log_id" in response.json()
+
+            def test_create_audit_log_empty_details():
+                audit_log = AuditLog(
+                    timestamp=datetime.now(),
+                    action="created",
+                    user_id=1,
+                    resource="audit-log",
+                    details="",
+                )
+                with pytest.raises(HTTPException):
+                    app.post("/audit-log/", json=audit_log.dict())
