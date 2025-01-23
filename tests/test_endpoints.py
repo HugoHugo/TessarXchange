@@ -7036,3 +7036,18 @@ def setup_module(module):
                         json=input_value,
                     )
                     assert response.status_code == expected_output
+import pytest
+from main import app
+
+
+def test_monitor_smart_contract():
+    # Test if the smart contract monitoring endpoint is available.
+    response = app.test_client().get("/monitor")
+    assert response.status_code == 200
+
+    # Test that when the smart contract state changes, the new state
+    # is reflected in the API response. This requires a way to trigger the
+    # state change logic and check for the correct response.
+    def test_monitor_smart_contract_state_change():
+        response = app.test_client().get("/monitor")
+        assert "ACTIVE" in str(response.text)

@@ -6949,3 +6949,20 @@ class DelegationPool(BaseModel):
                     raise HTTPException(
                         status_code=404, detail="Delegation pool not found."
                     )
+from fastapi import FastAPI, HTTPException
+from fastapi.requests import Request
+import asyncio
+import uvicorn
+
+app = FastAPI()
+
+
+async def monitor_smart_contract():
+    while True:
+        # Simulating smart contract state changes
+        new_state = "ACTIVE"  # Replace this with actual state change logic
+        print(f"Smart Contract State: {new_state}")
+        # Update the endpoint to reflect any changes in the smart contract's state.
+        await asyncio.sleep(5)  # Adjust the sleep interval as needed
+        if __name__ == "__main__":
+            asyncio.run(monitor_smart_contract())
