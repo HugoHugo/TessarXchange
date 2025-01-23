@@ -7003,3 +7003,45 @@ class Derivative:
                                     return derivative
                                 app = FastAPI()
                                 settlement_manager = SettlementManager()
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+
+class ReputationOracle(BaseModel):
+    id: str
+    name: str
+    description: str
+    address: str
+    score: float = 0.0
+    last_updated: datetime = None
+    router = APIRouter()
+
+    @router.post("/oracle")
+    async def create_reputation_oracle(reputation_oracle: ReputationOracle):
+        # Logic to add the new oracle to our system
+        # This could involve storing the oracle in a database, for example
+        return reputation_oracle
+
+    @router.get("/oracles/{id}")
+    async def get_reputation_oracle(
+        id: str, reputation_oracle: ReputationOracle = None
+    ):
+        if not reputation_oracle:
+            # Logic to fetch the oracle from our system
+            # This could involve querying a database to retrieve the oracle details
+            # Once we have retrieved the oracle details, we can instantiate a new instance of the ReputationOracle class and pass in the fetched oracle details as its initial values
+            return reputation_oracle
+
+        @router.put("/oracles/{id}")
+        async def update_reputation_oracle(
+            id: str, reputation_oracle: ReputationOracle
+        ):
+            # Logic to update the existing oracle in our system
+            # This could involve updating the oracle details in a database table
+            return reputation_oracle
+
+        @router.delete("/oracles/{id}")
+        async def delete_reputation_oracle(id: str):
+            # Logic to remove the oracle from our system
+            # This could involve removing the oracle entry from a database table
+            return {"message": "Oracle deleted successfully"}

@@ -7072,3 +7072,93 @@ def test_create_derivative():
             assert derivative.contract_id == "new_contract_id"
             assert derivative.settlement_date is not None
             assert derivative.settlement_amount > 0
+from fastapi import HTTPException
+import pytest
+from main import app, ReputationOracle
+
+
+@pytest.mark.parametrize(
+    "input, expected_status_code, expected_error_message",
+    [
+        (
+            {
+                "id": "1",
+                "name": "John Doe",
+                "description": "Test oracle",
+                "address": "123 Test Street",
+            },
+            200,
+            "Oracle created successfully",
+        ),
+        (
+            {"id": "1"},
+            400,
+            "Invalid data provided. Please ensure the 'name', 'description' and 'address' fields are all filled with valid values.",
+        ),
+    ],
+)
+def test_create_reputation_oracle(
+    input_data, expected_status_code, expected_error_message
+):
+    client = TestClient(app)
+    response = client.post("/oracle", json=input_data)
+    assert response.status_code == expected_status_code
+    if expected_status_code == 400:
+        assert "Invalid data provided" in str(response.content)
+    else:
+        assert "Oracle created successfully" in str(response.content)
+
+        @pytest.mark.parametrize(
+            "input, expected_status_code, expected_error_message",
+            [
+                ({"id": "1"}, 200, "Oracle retrieved successfully"),
+                ({"id": "nonexistent_id"}, 404, "Oracle not found with the given ID"),
+            ],
+        )
+        def test_get_reputation_oracle(
+            input_data, expected_status_code, expected_error_message
+        ):
+            client = TestClient(app)
+            response = client.get(f"/oracle/{input_data['id']}")
+            assert response.status_code == expected_status_code
+            if expected_status_code == 404:
+                assert "Oracle not found with the given ID" in str(response.content)
+            else:
+                assert "Oracle retrieved successfully" in str(response.content)
+
+                @pytest.mark.parametrize(
+                    "input, expected_status_code, expected_error_message",
+                    [
+                        (
+                            {
+                                "id": "1",
+                                "name": "Test Updated Oracle",
+                                "description": "Updated Oracle Test",
+                                "address": "456 New Street",
+                            },
+                            200,
+                            "Oracle updated successfully",
+                        ),
+                    ],
+                )
+                def test_update_reputation_oracle(
+                    input_data, expected_status_code, expected_error_message
+                ):
+                    client = TestClient(app)
+                    response = client.put(f"/oracle/{input_data['id']}")
+                    assert response.status_code == expected_status_code
+                    assert "Oracle updated successfully" in str(response.content)
+
+                    @pytest.mark.parametrize(
+                        "input, expected_status_code, expected_error_message",
+                        [
+                            ({"id": "1"}, 200, "Oracle deleted successfully"),
+                        ],
+                    )
+                    def test_delete_reputation_oracle(
+                        input_data, expected_status_code, expected_error_message
+                    ):
+                        client = TestClient(app)
+                        response = client.delete(f"/oracle/{input_data['id']}")
+                        assert response.status_code == expected_status_code
+                        assert "Oracle deleted successfully" in str(response.content)
