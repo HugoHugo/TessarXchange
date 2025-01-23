@@ -6930,3 +6930,109 @@ def test_get_oracle_exchange_rates():
     # Additional test cases can be added here as per requirement.
     if __name__ == "__main__":
         pytest.main()
+from fastapi.testclient import TestClient
+import pytest
+from datetime import datetime, timedelta
+from main import app
+
+
+def setup_module(module):
+    client = TestClient(app)
+    # Create a new delegation pool to use in tests.
+    app.dependency_overrides[app.delegation_pool.get_all_delegation_pools] = (
+        lambda: [
+            {
+                "id": str(uuid.uuid4()),
+                "pool_name": "Test Delegation Pool",
+                "delegator_address": "test_delegator",
+                "validator_address": "test_validator",
+            },
+        ],
+    )
+    client = None
+    setup_test_data = True
+
+    @pytest.mark.parametrize(
+        "input_values, expected_output",
+        [
+            (
+                {
+                    "id": "existing_pool_id",
+                    "pool_name": "Test Pool Update",
+                    "delegator_address": "updated_delegator",
+                    "validator_address": "updated_validator",
+                },
+                None,
+            ),
+            (
+                {
+                    "pool_name": "Test Pool Update",
+                    "delegator_address": "updated_delegator",
+                    "validator_address": "updated_validator",
+                },
+                "existing_pool_id",
+            ),
+        ],
+    )
+    def test_create_update_delete_delegation_pools(client):
+        test_data = {"input_values": {}, "expected_output": None}
+        if setup_test_data:
+            input_value = test_data["input_values"]
+            expected_output = test_data["expected_output"]
+            response = client.post(
+                "/create_new_delegation_pool",
+                json=input_value,
+            )
+            pool_data = response.json()
+            assert pool_data is not None
+            assert "id" in pool_data
+            # Test update
+            input_values_update = {
+                "pool_name": "Updated Test Delegation Pool",
+                "delegator_address": "updated_test_delegator",
+                "validator_address": "updated_test_validator",
+            }
+            response = client.put(
+                f"/update_delegation_pool/{pool_data['id']}",
+                json=input_values_update,
+            )
+            assert response.status_code == 200
+            pool_data_updated = response.json()
+            assert "id" in pool_data_updated
+            # Test delete
+            response = client.delete(f"/delete_delegation_pool/{pool_data['id']}")
+            assert response.status_code == 200
+        else:
+            pytest.skip("Test data setup failed. Skipping test.")
+
+            @pytest.mark.parametrize(
+                "endpoint, method, expected_status_code",
+                [
+                    ("create_new_delegation_pool", "POST", 200),
+                    ("update_delegation_pool/{pool_id}", "PUT", 200),
+                    ("delete_delegation_pool/{pool_id}", "DELETE", 200),
+                ],
+            )
+            def test_valid_endpoints(client):
+                response = client.request("GET", endpoint)
+                assert response.status_code == expected_status_code
+
+                @pytest.mark.parametrize(
+                    "input_values, expected_output",
+                    [
+                        (
+                            {
+                                "delegator_address": "test_delegator",
+                                "validator_address": "test_validator",
+                            },
+                            200,
+                        ),
+                    ],
+                )
+                def test_invalid_endpoints(client):
+                    input_value = {"delegator_address": "invalid_test_delegator"}
+                    response = client.post(
+                        "/create_new_delegation_pool",
+                        json=input_value,
+                    )
+                    assert response.status_code == expected_output

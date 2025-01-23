@@ -6894,3 +6894,58 @@ class OracleData(BaseModel):
                     status_code=404, detail="No oracle exchange rates available."
                 )
                 return oracles_data
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from typing import List
+import uuid
+
+
+class DelegationPool(BaseModel):
+    id: str
+    pool_name: str
+    delegator_address: str
+    validator_address: str
+    start_time: int
+    end_time: int
+    delegation_router = APIRouter()
+    DELEGATION_POOLS = []
+
+    def generate_uuid():
+        return str(uuid.uuid4())
+
+    async def get_all_delegation_pools():
+        return DELEGATION_POOLS
+
+    async def create_new_delegation_pool(
+        pool_name: str, delegator_address: str, validator_address: str
+    ):
+        new_pool = DelegationPool(
+            id=generate_uuid(),
+            pool_name=pool_name,
+            delegator_address=delegator_address,
+            validator_address=validator_address,
+            start_time=datetime.now().timestamp(),
+            end_time=None,
+        )
+        DELEGATION_POOLS.append(new_pool)
+        return new_pool
+
+    async def update_delegation_pool(
+        pool_id: str, pool_name: str, delegator_address: str, validator_address: str
+    ):
+        for pool in DELEGATION_POOLS:
+            if pool.id == pool_id:
+                pool.pool_name = pool_name
+                pool.delegator_address = delegator_address
+                pool.validator_address = validator_address
+                return pool
+            raise HTTPException(status_code=404, detail="Delegation pool not found.")
+
+            async def delete_delegation_pool(pool_id: str):
+                for idx, pool in enumerate(DELEGATION_POOLS):
+                    if pool.id == pool_id:
+                        DELEGATION_POOLS.pop(idx)
+                        return
+                    raise HTTPException(
+                        status_code=404, detail="Delegation pool not found."
+                    )
