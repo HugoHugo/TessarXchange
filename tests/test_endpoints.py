@@ -6880,3 +6880,39 @@ def test_event_post_request(test_app: TestClient):
     }
     response = test_app.post("/events", json=event_data)
     assert response.status_code == 200
+import pytest
+from main import app, migrate_pool
+
+
+def test_migration_params():
+    migration_params = MigrationParams(
+        source_pool_id="source_pool_id",
+        target_pool_id="target_pool_id",
+        amount=100,
+    )
+    assert migration_params.source_pool_id == "source_pool_id"
+    assert migration_params.target_pool_id == "target_pool_id"
+    assert migration_params.amount == 100
+
+    def test_migration_success():
+        response = migrate_pool(
+            MigrationParams(
+                source_pool_id="source_pool", target_pool_id="target_pool", amount=10
+            ),
+        )
+        expected_response = {
+            "message": "Pool migration successful!",
+            "migration_id": "a2b3c4d-e5f6-7-8-9",
+        }
+        assert isinstance(response, dict)
+        assert response == expected_response
+
+        def test_migration_failure():
+            with pytest.raises(HTTPException):
+                migrate_pool(
+                    MigrationParams(
+                        source_pool_id="source_pool",
+                        target_pool_id="target_pool",
+                        amount=0,
+                    ),
+                )
