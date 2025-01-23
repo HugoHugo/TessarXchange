@@ -7568,3 +7568,23 @@ class MarginLendingRecord(BaseModel):
                         raise HTTPException(status_code=400, detail="Invalid loan_id")
                         # Implement logic to delete the loan record
                         pass
+from fastapi import FastAPI
+import uvicore.app.UvicornApp as UvicornApp
+
+app = FastAPI()
+
+
+class SpreadOptimizationAnalysis(UvicornApp):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        @app.post("/optimize")
+        async def optimize_spread(data: dict):
+            # Implement the logic for real-time spread optimization analysis
+            # For example purposes, we'll return a dummy result.
+            result = f"Optimized spread data: {data}"
+            return {"result": result}
+
+        if __name__ == "__main__":
+            app = SpreadOptimizationAnalysis()
+            app.run(host="0.0.0.0", port=8000)

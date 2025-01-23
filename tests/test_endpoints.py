@@ -7677,3 +7677,40 @@ def test_get_loans_valid_loan_id():
                     assert response.status_code == 200
                     assert "loan_id" in str(response.content)
                     assert isinstance(str(response.content)["loan_id"], str)
+from pytest import mark
+import uuid
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime, timedelta
+from main import app
+
+
+def test_create_uuid():
+    assert isinstance(uuid.uuid4(), uuid.UUID)
+
+    @mark.parametrize(
+        "timestamp",
+        [datetime(2023, 1, 1).timestamp(), datetime(2100, 1, 1).timestamp()],
+    )
+    def test_timestamp_to_datetime(timestamp):
+        dt = datetime.fromtimestamps(timestamp)
+        assert isinstance(dt, datetime), "Timestamp to DateTime conversion failed."
+
+        @pytest.mark.asyncio
+        async def test_optimize_spread():
+            # Generate a dummy data for the optimization analysis
+            dummy_data = {
+                "spread": 10,
+                "min_price": 1000,
+                "max_price": 1500,
+                "current_price": 1200,
+            }
+            client = TestClient(app)
+            # Call the endpoint and check if we get a response with the correct result
+            response = await client.post("/optimize", json=dummy_data)
+            assert response.status_code == 200
+            expected_result = {
+                "result": "Optimized spread data: {'spread': 10, 'min_price': 1000, 'max_price': 1500, 'current_price': 1200}'}"
+            }
+            result_json = response.json()
+            assert result_json["result"] == expected_result["result"]
