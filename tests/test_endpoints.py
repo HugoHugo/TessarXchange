@@ -8156,3 +8156,40 @@ class TestWalletGeneration(unittest.TestCase):
                     client_instance = client.start()
                     result = client_instance.get("/generate-wallet", None, "test")
                     self.assertEqual(400, result.status_code)
+
+
+class TestWalletGeneration(unittest.TestCase):
+
+    @patch("app.generate_wallet")
+    def test_generate_wallet_with_bothParameters(self, mock_func):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_func("BTC", "test").return_value = (mock_response, b"")
+        client = patch("http.client.Client")
+        client_instance = client.start()
+        result = client_instance.get("/generate-wallet", "BTC", "test")
+        self.assertEqual(200, result.status_code)
+
+        def test_generate_wallet_without_parameters(self):
+            response = unittest.mock.Mock()
+            response.status_code = 400
+            client = patch("http.client.Client")
+            client_instance = client.start()
+            result = client_instance.get("/generate-wallet")
+            self.assertEqual(400, result.status_code)
+
+            def test_generate_wallet_only_currency(self):
+                response = unittest.mock.Mock()
+                response.status_code = 400
+                client = patch("http.client.Client")
+                client_instance = client.start()
+                result = client_instance.get("/generate-wallet", "BTC")
+                self.assertEqual(400, result.status_code)
+
+                def test_generate_wallet_only_username(self):
+                    response = unittest.mock.Mock()
+                    response.status_code = 400
+                    client = patch("http.client.Client")
+                    client_instance = client.start()
+                    result = client_instance.get("/generate-wallet", None, "test")
+                    self.assertEqual(400, result.status_code)
