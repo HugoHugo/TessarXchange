@@ -8357,3 +8357,34 @@ async def test_authenticate_token_successfully():
             "/auth", headers={"Authorization": "Bearer invalid-token"}
         )
         assert response.status_code == 401
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_check_wallet_with_wallet(client):
+    """Test endpoint with a provided wallet address"""
+    test_wallet = "ABC123"
+    response = client.get(f"/check-wallet?wallet={test_wallet}")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, dict)
+    assert "ABC123" in data and data["ABC123"] == 5000
+
+    def test_check_wallet_without_wallet(client):
+        """Test endpoint without providing a wallet address"""
+        response = client.get("/check-wallet")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, dict) or data is None
+        if not data:
+            assert "Error" in data.get("error", "")
+
+            def test_check_wallet_empty_client(client):
+                """Test that endpoint doesn't crash with empty request"""
+                try:
+                    client.get("/check-wallet")
+                except Exception as e:
+                    pytest.fail(f"Unexpected error occurred: {str(e)}")

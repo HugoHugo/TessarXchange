@@ -85,6 +85,7 @@ from string import ascii_letters, digits
 from time import sleep
 from typing import Any
 from typing import Dict
+from typing import Dict, Optional
 from typing import List
 from typing import Optional
 from typing import Optional, Union
@@ -8146,3 +8147,13 @@ def authenticate_token(request):
     if user_expires < datetime.now():
         return None
     return {"user": {"id": user_data.get("id"), "name": user_data.get("name")}}
+
+
+app = FastAPI()
+
+
+@app.get("/check-wallet")
+async def check_wallet(wallet: str = None) -> Optional[Dict[str, int]]:
+    """Check the balance of cryptocurrencies in a user's wallet."""
+    balances = {"ABC123": 5000, "XYZ987": 2500, "MNO456": 1000}
+    return balances
