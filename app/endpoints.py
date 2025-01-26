@@ -41,6 +41,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordCreate
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordScope
 from fastapi_limiter import Limiter
 from hashlib import sha256
+from jdatetime import parse
 from jose import JWTError, jwt
 from models import RewardSnapshot
 from models.transaction import Transaction
@@ -78,6 +79,7 @@ from quantfinance.optimal_marking_curve import optimize_marking_curve
 from sqlalchemy import Column, MetaData, Table, create_engine
 from sqlalchemy import create_engine
 from sqlalchemy.engine import reflection
+from sqlalchemy.ext.declarative import declarative_base
 from starlette.middleware.base import BaseHTTPMiddleware
 from string import ascii_letters, digits
 from time import sleep
@@ -8119,3 +8121,28 @@ async def generate_wallet(currency: str, username: str = None):
             "wallet_address": f"{username}_{currency}_{current_timestamp}",
         }
     )
+
+
+Base = declarative_base()
+
+
+def authenticate_token(request):
+    if not isinstance(request.app, FastApi):
+        return None
+    headers = request.headers.get("Authorization")
+    if not headers:
+        return None
+    token = headers.split()[1]
+    payload = parse(token)
+    user_id = payload["sub"]
+    user_expires = payload["exp"]
+    User = Base.classes.user
+    try:
+        user_data = User.__table__.model_to_dict(
+            User.query.filter(User.id == int(user_id)).first()
+        )
+    except (ValueError, AttributeError):
+        return None
+    if user_expires < datetime.now():
+        return None
+    return {"user": {"id": user_data.get("id"), "name": user_data.get("name")}}

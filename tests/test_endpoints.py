@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi import HTTPException
 from fastapi import TestClient
 from fastapi.testclient import TestClient
+from jdatetime import parse
 from main import AMMPair, ammpairs_router
 from main import Bridge
 from main import CollateralPosition, app
@@ -8341,3 +8342,18 @@ class TestWalletGeneration(unittest.TestCase):
                     client_instance = client.start()
                     result = client_instance.get("/generate-wallet", None, "test")
                     self.assertEqual(400, result.status_code)
+
+
+@pytest.mark.asyncio
+async def test_authenticate_token_successfully():
+    client = TestClient(app)
+    response = await client.get("/auth")
+    assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_authenticate_token_unauthorized():
+        client = TestClient(app)
+        response = await client.get(
+            "/auth", headers={"Authorization": "Bearer invalid-token"}
+        )
+        assert response.status_code == 401
