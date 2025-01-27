@@ -130,6 +130,7 @@ from main import is_trading_pair_eligible, delist_trading_pair
 from main import netting_groups, NettingGroup
 from main import otc_router, QuoteRequest
 from main import rebalance_tokens
+from models import User, Order
 from models.collateral import Collateral
 from models.position import Position
 from pytest import mark
@@ -8869,3 +8870,57 @@ def client():
                                                         {"amount": 200, "user": user},
                                                     )
                                                     assert response.status_code == 403
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_get_active_orders_success(client):
+    user = User(email="test@example.com", username="testuser", password="testpass")
+    current_date = datetime.now()
+    order1 = Order(
+        user_id=1,
+        customer_id=1,
+        product_id=1,
+        quantity=1,
+        price=10.0,
+        status="active",
+        created_at=current_date,
+        updated_at=current_date,
+    )
+    order2 = Order(
+        user_id=1,
+        customer_id=2,
+        product_id=2,
+        quantity=2,
+        price=5.0,
+        status="active",
+        created_at=current_date,
+        updated_at=current_date,
+    )
+    User.query.delete()
+    User(user=user).add()
+    Order.query.delete()
+    order1.add()
+    order2.add()
+    client.get("/orders/1")
+
+    def test_get_active_orders_success():
+        pass
+
+        def test_get_empty_orders(client):
+            response = client.get("/orders/1")
+            assert response.status_code == 404
+            assert "Not Found" in response.content.decode()
+
+            def test_get_orders_with_correct_model(client):
+                response = client.get("/orders/1")
+                assert isinstance(response.json()["orders"], list)
+                for order in response.json()["orders"]:
+                    assert isinstance(order, dict)
+
+                    def test_get_nonexistent_user(client):
+                        response = client.get("/orders/9999")
+                        assert response.status_code == 404

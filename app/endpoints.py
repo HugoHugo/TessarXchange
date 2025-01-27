@@ -29,6 +29,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi import FastAPI, Path
 from fastapi import FastAPI, Path, Query
 from fastapi import FastAPI, Query
+from fastapi import FastAPI, Session, Query
 from fastapi import FastAPI, WebSocket
 from fastapi import File, HTTPException, UploadFile
 from fastapi.lites import APIRoot
@@ -48,6 +49,7 @@ from hashlib import sha256
 from jdatetime import parse
 from jose import JWTError, jwt
 from models import RewardSnapshot
+from models import User, Order
 from models.transaction import Transaction
 from py7plus import SevenPlus
 from pybitcoin import Bitcoin
@@ -8462,3 +8464,13 @@ def withdraw_amount(amount: int, address: str, user: User = Depends(get_db)):
                 "new_balance": user.balance,
                 "message": "Withdrawal successful",
             }
+
+
+Base = declarative_base()
+app = FastAPI()
+
+
+@app.get("/orders/:user_id")
+def get_active_orders(user_id: int):
+    orders = Base.query.filter(Order.user_id == user_id, Order.status == "active").all()
+    return {"orders": [order.to_dict() for order in orders]}
