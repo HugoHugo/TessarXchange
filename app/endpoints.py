@@ -45,6 +45,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordCreate
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordScope
 from fastapi.wsgi import WebSocket
 from fastapi_limiter import Limiter
+from functools import wraps
 from hashlib import sha256
 from jdatetime import parse
 from jose import JWTError, jwt
@@ -91,6 +92,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from string import ascii_letters, digits
 from time import sleep
 from typing import Any
+from typing import Callable, Any
 from typing import Dict
 from typing import Dict, Optional
 from typing import List
@@ -117,6 +119,7 @@ import pytrader
 import pyupbit
 import random
 import re
+import redis
 import requests
 import secrets
 import stratum
@@ -8474,3 +8477,65 @@ app = FastAPI()
 def get_active_orders(user_id: int):
     orders = Base.query.filter(Order.user_id == user_id, Order.status == "active").all()
     return {"orders": [order.to_dict() for order in orders]}
+
+
+app = FastAPI()
+redis_key = redis.Redis(
+    host=os.getenv("REDIS_KEY_HOST"), port=os.getenv("REDIS_KEY_PORT")
+)
+redisip = redis.Redis(host=os.getenv("REDIS_IP_HOST"), port=os.getenv("REDIS_IP_PORT"))
+
+
+def rate_limiting(max_calls: int, max_days: float):
+    """Limit the number of API calls based on provided maximums."""
+
+    async def decorator(func: Callable) -> Callable:
+
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            key = kwargs.get("x-api-key")
+            if key and redis_key.get(key) is not None:
+                redis_key.setex(key, max_days * 24 * 60 * 60 * 1000 + 5000, kwargs)
+                ip = kwargs.get("x-forwarded-ip", kwargs["ip"])
+                if not kwargs.get("key_limit_exceeded") and (
+                    not kwargs.get("ip_limit_exceeded")
+                ):
+                    try:
+                        current_key_count = redis_key.incr(key) if key else None
+                        current_ip_count = redis_ip.incr(ip) if ip else None
+                        if (
+                            current_key_count is not None
+                            and int(current_key_count) >= max_calls
+                        ):
+                            kwargs["key_limit_exceeded"] = True
+                        elif (
+                            current_ip_count is not None
+                            and int(current_ip_count) >= max_calls
+                        ):
+                            kwargs["ip_limit_exceeded"] = True
+                            return await func(*args, **kwargs)
+                    except:
+                        kwargs["error"] = "Rate limiting error: could not check limits"
+                        raise
+                        if kwargs.get("key_limit_exceeded"):
+                            kwargs.pop("key_limit_exceeded")
+                            raise ValueError("Exceeded API key limit")
+                            if kwargs.get("ip_limit_exceeded"):
+                                kwargs.pop("ip_limit_exceeded")
+                                raise ValueError("Exceeded IP address limit")
+                                return wrapper
+                            return wrapper
+
+                        @app.get("/api/key/{key}/limit")
+                        async def api_key_limiting(key: str):
+                            """Limit requests based on API key usage."""
+                            await rate_limiting(2, 3600)(api_key_limiting)(key)
+
+                            @app.get("/api/ip/{ip}/limit")
+                            async def ip_address_limiting(ip: str):
+                                """Limit requests based on IP address usage."""
+                                await rate_limiting(2, 3600)(ip_address_limiting)(ip)
+
+                                @app.get("/endpoint")
+                                def endpoint(**kwargs):
+                                    return {"result": "value"}

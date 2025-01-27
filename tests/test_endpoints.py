@@ -163,6 +163,7 @@ import tempfile
 import time
 import ujson
 import unittest
+import unittest.mock as mock
 import uuid
 
 
@@ -8924,3 +8925,73 @@ def test_get_active_orders_success(client):
                     def test_get_nonexistent_user(client):
                         response = client.get("/orders/9999")
                         assert response.status_code == 404
+
+
+@pytest.fixture
+def app():
+    app = FastAPI()
+    redis_key = mock.Mock()
+    redisip = mock.Mock()
+
+    @app.get("/api/key/{key}/limit")
+    async def api_key_limiting(key: str):
+        pass
+
+        @app.get("/api/ip/{ip}/limit")
+        async def ip_address_limiting(ip: str):
+            pass
+
+            @app.get("/endpoint")
+            def endpoint(**kwargs):
+                return {"result": "value"}
+
+            return app
+
+        @pytest.fixture
+        def client(app):
+            return TestClient(app)
+
+        @pytest.mark.asyncio
+        async def test_endpoint(client):
+            response = await client.get("/endpoint")
+            assert response.status_code == 200
+
+            @pytest.mark.asyncio
+            async def test_key_limit(client):
+                response = await client.get(
+                    "/api/key/test/limit", headers={"x-api-key": "test"}
+                )
+                assert response.status_code == 500
+                assert "Exceeded API key limit" in str(response.json())
+
+                @pytest.mark.asyncio
+                async def test_ip_limit(client):
+                    response = await client.get(
+                        "/api/ip/1.2.3.4/limit", headers={"x-forwarded-ip": "1.2.3.4"}
+                    )
+                    assert response.status_code == 500
+                    assert "Exceeded IP address limit" in str(response.json())
+
+                    @pytest.mark.asyncio
+                    async def test_rate_limiting(client):
+
+                        async def mock_redis_key_get(key: str) -> bytes:
+                            return b"limit_exceeded"
+
+                        async def mock_redis_incr(key: str) -> int:
+                            return 2
+
+                        with patch.getmockarry(
+                            redis_key.get, "mock_redis_key_get"
+                        ) as m:
+                            m.return_value = b"limit_exceeded"
+                            response = await client.get(
+                                "/endpoint", headers={"x-api-key": "test"}
+                            )
+                            assert response.status_code == 500
+                            assert "key_limit_exceeded" in response.json()
+                            response = await client.get(
+                                "/endpoint", headers={"x-api-key": "test"}
+                            )
+                            assert response.status_code == 429
+                            mock_redis_incr.assert_called_once_with("test")
