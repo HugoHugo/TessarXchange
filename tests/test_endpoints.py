@@ -8685,3 +8685,30 @@ class Order(BaseModel):
                 response_data = json.loads(response.content)
                 assert "filled" in response_data
                 assert len(response_data["filled"]) > 0
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_get_order_book_alpha(client):
+    """Test that GET /order_book/alpha returns a 200 status code."""
+    response = client.get("/order_book/alpha")
+    assert response.status_code == 200
+
+    def test_invalid_request_method(client):
+        """Test that invalid HTTP methods return the correct status code."""
+        response = client.post("/order_book/alpha")
+        assert response.status_code == 405
+
+        def test_missing_query_parameter(client):
+            """Test that missing query parameter returns 400 status code."""
+            response = client.get("/order_book", query_params={"symbol": "invalid"})
+            assert response.status_code == 400
+            response.json()
+
+            def test_invalid_symbol(client):
+                """Test that invalid symbol returns the correct status code."""
+                response = client.get("/order_book/abc")
+                assert response.status_code == 200

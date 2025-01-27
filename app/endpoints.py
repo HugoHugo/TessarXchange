@@ -8334,3 +8334,56 @@ class Order(BaseModel):
                                                 ]
                                             )
                                             return filled_data
+
+
+app = FastAPI()
+
+
+@app.get("/order_book/{symbol}")
+def get_order_book(symbol: str):
+    current_time = datetime.now().timestamp()
+    orders = [
+        {
+            "price": 0.15,
+            "quantity": 0.5,
+            "side": "b",
+            "order_type": "Limit",
+            "timestamp": current_time,
+        },
+        {
+            "price": 0.16,
+            "quantity": 0.3,
+            "side": "s",
+            "order_type": "Market",
+            "timestamp": current_time + 1,
+        },
+        {
+            "price": 0.17,
+            "quantity": 0.4,
+            "side": "b",
+            "order_type": "Limit",
+            "timestamp": current_time + 2,
+        },
+        {
+            "price": 0.18,
+            "quantity": 0.25,
+            "side": "s",
+            "order_type": "Market",
+            "timestamp": current_time + 3,
+        },
+        {
+            "price": 0.19,
+            "quantity": 0.35,
+            "side": "b",
+            "order_type": "Limit",
+            "timestamp": current_time + 4,
+        },
+    ]
+    buy_orders = sorted(
+        [order for order in orders if order["side"] == "b"], key=lambda x: -x["price"]
+    )
+    sell_orders = sorted(
+        [order for order in orders if order["side"] == "s"], key=lambda x: x["price"]
+    )
+    total_depth = sum((order["quantity"] for order in orders))
+    return {"buy": buy_orders, "sell": sell_orders, "total_depth": total_depth}
