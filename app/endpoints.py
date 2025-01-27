@@ -39,6 +39,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordCreate
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordScope
+from fastapi.wsgi import WebSocket
 from fastapi_limiter import Limiter
 from hashlib import sha256
 from jdatetime import parse
@@ -120,6 +121,7 @@ import ujson
 import uuid
 import uvicore.app.UvicornApp as UvicornApp
 import uvicorn
+import yfinance as yf
 
 
 app = FastAPI()
@@ -8387,20 +8389,14 @@ def get_order_book(symbol: str):
     )
     total_depth = sum((order["quantity"] for order in orders))
     return {"buy": buy_orders, "sell": sell_orders, "total_depth": total_depth}
-from fastapi import FastAPI
-from fastapi.wsgi import WebSocket
-from datetime import datetime
 
 
 class WebSocketHandler(WebSocket):
+
     def on_message(self, message: str):
-        # Format the price data with a timestamp
         pair = message.split(":")[0]
         new_price = float(message.split(":")[1])
-        current_price = (
-            new_price  # Simple example - could be replaced with real-time data source
-        )
-        # Send back confirmation of received price
+        current_price = new_price
         self.send_message(
             f"Price updated for {pair}: {current_price:.2f} at {datetime.now().isoformat()}"
         )
@@ -8409,5 +8405,36 @@ class WebSocketHandler(WebSocket):
         async def websocket_endpoint(websocket: WebSocket):
             await websocket.accept()
             app = FastAPI()
-            # Note: To use this code, you would need to implement a real WebSocket server that accepts connections
-            # and pushes price updates to clients. This is just the frontend/JS front implementation.
+
+
+app = FastAPI()
+
+
+@app.post("/historical_data")
+async def get_historical_data(symbol: str, start: str, end: str, interval: str = "1d"):
+    try:
+        data = yf.download(symbol, start=start, end=end, interval=interval)
+        if data.empty:
+            raise ValueError("No data found for the given time period or symbol.")
+            df = pd.DataFrame(data)
+            df["returns"] = df["Close"].pct_change()
+            metadata = {
+                "source": "Yahoo Finance API",
+                "symbols": [symbol],
+                "time_period": f"{start} to {end}",
+                "interval": interval,
+            }
+            result_dict = df.to_dict("records")
+            result_dict.append(metadata)
+            return json.dumps(result_dict)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+        @app.get("/example_usage")
+        async def example_usage():
+            """
+            Usage example:
+                >>> from fastapi import FastAPI
+                >>> app = FastAPI()
+                >>> app.post("/historical_data", "AAPL", "2023-01-01", "2023-12-31", "1d")
+            """

@@ -2,11 +2,13 @@ from datetime import datetime
 from datetime import datetime, time
 from datetime import datetime, timedelta
 from datetime import datetime, timezone
+from fastapi import FastAPI
 from fastapi import FastAPI, HTTPException
 from fastapi import HTTPException
 from fastapi import TestClient
 from fastapi.test import TestClient
 from fastapi.testclient import TestClient
+from fastapi.wsgi import WebSocket
 from jdatetime import parse
 from main import AMMPair, ammpairs_router
 from main import Bridge
@@ -131,12 +133,14 @@ from models.position import Position
 from pytest import mark
 from pytest import mark, raises
 from pytest import raises
+from pytestws import WebSocket as WsClient
 from typing import IO
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 from unittest.mock import patch, MagicMock
+from yfinance import download as yf_download
 from your_app import app
 from your_app_validator_node import ValidatorNode, validator_node_router
 from your_main import app, KycDocument, UserKyc, KYCManager
@@ -147,6 +151,7 @@ import asyncio
 import csv
 import json
 import os
+import pandas as pd
 import pytest
 import re
 import tempfile
@@ -8712,12 +8717,6 @@ def test_get_order_book_alpha(client):
                 """Test that invalid symbol returns the correct status code."""
                 response = client.get("/order_book/abc")
                 assert response.status_code == 200
-import pytest
-from fastapi.testclient import TestClient
-from fastapi.wsgi import WebSocket
-from datetime import datetime
-from pytestws import WebSocket as WsClient
-from unittest.mock import patch
 
 
 @pytest.fixture
@@ -8727,9 +8726,7 @@ def websocket_client():
 
         async def test_websocket_message(ws: WsClient):
             """Test receiving a message via WebSocket handler."""
-            # Simulate sending a message to the WebSocket endpoint
             await ws.send("test-message")
-            # Check if the message was received by checking for an error
             with pytest.raises(Exception) as excinfo:
                 await ws.get("/ws/trade-pairs")
                 assert "Message received" in str(excinfo.value)
@@ -8738,11 +8735,91 @@ def websocket_client():
                 async def test_websocket_endpoint(websocket_client: TestClient):
                     """Test the WebSocket endpoint functionality."""
                     try:
-                        # Accept the WebSocket connection
                         await websocket_client.get("/ws/trade-pairs")
-                        # The endpoint should return a message confirming it was accepted
                         response = await websocket_client.get("/ws/trade-pairs").json()
                         assert isinstance(response, dict)
                         assert "message" in response
                     except Exception as e:
                         print(f"Error testing WebSocket endpoint: {e}")
+
+
+app = FastAPI()
+
+
+@pytest.fixture
+def test_client():
+    return TestClient(app)
+
+
+def test_get_historical_data正常响应(test_client):
+    """
+    测试/historical_data endpoint返回正常的响应数据
+    """
+    symbol = "AAPL"
+    start_date = datetime(2023, 1, 1).isoformat()
+    end_date = datetime(2023, 12, 31).isoformat()
+    interval = "1d"
+    try:
+        response = test_client.post(
+            "/historical_data",
+            symbol=symbol,
+            start=start_date,
+            end=end_date,
+            interval=interval,
+        )
+        assert response.status_code == 200
+        assert "data" in response.json()
+    except Exception as e:
+        pytest.fail(f"Request failed: {str(e)}")
+
+        def test_get_historical_data_empty_time_period(test_client):
+            """
+            测试提供无效的时间范围（start > end）导致的错误响应
+            """
+            symbol = "AAPL"
+            start_date = "2023-12-31"
+            end_date = "2023-01-01"
+            try:
+                response = test_client.post(
+                    "/historical_data", symbol=symbol, start=start_date, end=end_date
+                )
+                assert response.status_code == 500
+            except Exception as e:
+                pytest.fail(f"Request failed: {str(e)}")
+
+                def test_get_historical_data_invalid_symbol(test_client):
+                    """
+                    测试提供无效的股票符号导致的错误响应
+                    """
+                    symbol = "XYZX"
+                    start_date = "2023-01-01"
+                    end_date = "2023-12-31"
+                    try:
+                        response = test_client.post(
+                            "/historical_data",
+                            symbol=symbol,
+                            start=start_date,
+                            end=end_date,
+                        )
+                        assert response.status_code == 500
+                    except Exception as e:
+                        pytest.fail(f"Request failed: {str(e)}")
+
+                        def test_get_historical_data_invalid_interval(test_client):
+                            """
+                            测试提供无效的时间区间导致的错误响应
+                            """
+                            symbol = "AAPL"
+                            start_date = "2023-01-01"
+                            end_date = "2023-12-31"
+                            try:
+                                response = test_client.post(
+                                    "/historical_data",
+                                    symbol=symbol,
+                                    start=start_date,
+                                    end=end_date,
+                                    interval="1y",
+                                )
+                                assert response.status_code == 500
+                            except Exception as e:
+                                pytest.fail(f"Request failed: {str(e)}")
