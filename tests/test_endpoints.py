@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from fastapi import HTTPException
 from fastapi import TestClient
+from fastapi.test import TestClient
 from fastapi.testclient import TestClient
 from jdatetime import parse
 from main import AMMPair, ammpairs_router
@@ -8388,3 +8389,82 @@ def test_check_wallet_with_wallet(client):
                     client.get("/check-wallet")
                 except Exception as e:
                     pytest.fail(f"Unexpected error occurred: {str(e)}")
+
+
+client = TestClient(api)
+
+
+@pytest.mark.asyncio
+async def test_successful_order_placement():
+    """Test placing a valid order with all required parameters."""
+    data = {
+        "trade_pair": "BTC/USDT",
+        "amount": 1.0,
+        "stop_price": None,
+        "venue": "exchange",
+    }
+    response = await client.post("/test", json=data)
+    assert response.status_code == 200
+    response_data = await response.json()
+    assert "order_id" in response_data
+
+    @pytest.mark.asyncio
+    async def test_order_without_trade_pair():
+        """Test error handling when 'trade_pair' is missing."""
+        data = {"amount": None, "stop_price": None, "venue": None}
+        with pytest.raises(Exception) as excinfo:
+            await client.post("/test", json=data)
+            assert str(excinfo.value) == "missing 'trade_pair' required"
+
+            @pytest.mark.asyncio
+            async def test_order_without_venue():
+                """Test error handling when 'venue' is missing."""
+                data = {"trade_pair": "BTC/USDT", "amount": 1.0, "stop_price": None}
+                with pytest.raises(Exception) as excinfo:
+                    await client.post("/test", json=data)
+                    assert str(excinfo.value) == "missing 'venue' required"
+
+                    @pytest.mark.asyncio
+                    async def test_order_with_invalid_amount_type():
+                        """Test error handling when 'amount' is not a valid number."""
+                        data = {
+                            "trade_pair": "BTC/USDT",
+                            "amount": "1.0",
+                            "stop_price": None,
+                            "venue": "exchange",
+                        }
+                        with pytest.raises(Exception) as excinfo:
+                            await client.post("/test", json=data)
+                            assert str(excinfo.value).startswith(
+                                "could not convert string to float"
+                            )
+
+                            @pytest.mark.asyncio
+                            async def test_order_with_invalid_venue():
+                                """Test error handling when 'venue' is an invalid or missing value."""
+                                data = {
+                                    "trade_pair": "BTC/USDT",
+                                    "amount": 1.0,
+                                    "stop_price": None,
+                                    "venue": None,
+                                }
+                                with pytest.raises(Exception) as excinfo:
+                                    await client.post("/test", json=data)
+                                    assert (
+                                        str(excinfo.value) == "missing 'venue' required"
+                                    )
+
+                                    @pytest.mark.asyncio
+                                    async def test_order_with_valid_data():
+                                        """Test a completely valid order with all required parameters."""
+                                        data = {
+                                            "trade_pair": "ETH/USDT",
+                                            "amount": 0.5,
+                                            "stop_price": 30000,
+                                            "venue": "exchange",
+                                        }
+                                        response = await client.post("/test", json=data)
+                                        assert response.status_code == 200
+                                        response_data = await response.json()
+                                        assert isinstance(response_data, dict)
+                                        assert "order_id" in response_data
