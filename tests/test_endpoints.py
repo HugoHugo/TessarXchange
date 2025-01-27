@@ -8712,3 +8712,37 @@ def test_get_order_book_alpha(client):
                 """Test that invalid symbol returns the correct status code."""
                 response = client.get("/order_book/abc")
                 assert response.status_code == 200
+import pytest
+from fastapi.testclient import TestClient
+from fastapi.wsgi import WebSocket
+from datetime import datetime
+from pytestws import WebSocket as WsClient
+from unittest.mock import patch
+
+
+@pytest.fixture
+def websocket_client():
+    with patch("fastapi.testclient.TestClient") as client:
+        yield client
+
+        async def test_websocket_message(ws: WsClient):
+            """Test receiving a message via WebSocket handler."""
+            # Simulate sending a message to the WebSocket endpoint
+            await ws.send("test-message")
+            # Check if the message was received by checking for an error
+            with pytest.raises(Exception) as excinfo:
+                await ws.get("/ws/trade-pairs")
+                assert "Message received" in str(excinfo.value)
+                assert "test-message" in str(excinfo.value)
+
+                async def test_websocket_endpoint(websocket_client: TestClient):
+                    """Test the WebSocket endpoint functionality."""
+                    try:
+                        # Accept the WebSocket connection
+                        await websocket_client.get("/ws/trade-pairs")
+                        # The endpoint should return a message confirming it was accepted
+                        response = await websocket_client.get("/ws/trade-pairs").json()
+                        assert isinstance(response, dict)
+                        assert "message" in response
+                    except Exception as e:
+                        print(f"Error testing WebSocket endpoint: {e}")

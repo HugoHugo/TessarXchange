@@ -8387,3 +8387,27 @@ def get_order_book(symbol: str):
     )
     total_depth = sum((order["quantity"] for order in orders))
     return {"buy": buy_orders, "sell": sell_orders, "total_depth": total_depth}
+from fastapi import FastAPI
+from fastapi.wsgi import WebSocket
+from datetime import datetime
+
+
+class WebSocketHandler(WebSocket):
+    def on_message(self, message: str):
+        # Format the price data with a timestamp
+        pair = message.split(":")[0]
+        new_price = float(message.split(":")[1])
+        current_price = (
+            new_price  # Simple example - could be replaced with real-time data source
+        )
+        # Send back confirmation of received price
+        self.send_message(
+            f"Price updated for {pair}: {current_price:.2f} at {datetime.now().isoformat()}"
+        )
+
+        @app.get("/ws/trade-pairs")
+        async def websocket_endpoint(websocket: WebSocket):
+            await websocket.accept()
+            app = FastAPI()
+            # Note: To use this code, you would need to implement a real WebSocket server that accepts connections
+            # and pushes price updates to clients. This is just the frontend/JS front implementation.
