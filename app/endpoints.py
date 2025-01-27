@@ -8178,3 +8178,29 @@ class BuyOrderRequest(BaseModel):
                 }
         except Exception as e:
             return {"error": f"Failed to place buy order: {str(e)}"}
+
+
+app = FastAPI()
+order_book = [
+    {"price": 100.0, "quantity": 5},
+    {"price": 98.0, "quantity": 3},
+    {"price": 102.0, "quantity": 4},
+]
+
+
+@app.get("/limit-sell-order")
+def place_limit_sell_order(
+    price: float, quantity: int, current_time: datetime = datetime.now()
+):
+    """Place a limit sell order based on the provided price and quantity"""
+    new_order = {"price": price, "quantity": quantity, "current_time": time.time()}
+    existing_order = None
+    for order in order_book:
+        if order.get("price") == new_order["price"]:
+            existing_order = order
+            break
+        if existing_order:
+            existing_order["quantity"] += quantity
+        else:
+            order_book.insert(0, new_order)
+            return {"order_book": order_book, "message": "Order placed successfully"}

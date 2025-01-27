@@ -8468,3 +8468,145 @@ async def test_successful_order_placement():
                                         response_data = await response.json()
                                         assert isinstance(response_data, dict)
                                         assert "order_id" in response_data
+
+
+@pytest.fixture
+def order_book() -> list:
+    return [
+        {"price": 100.0, "quantity": 5},
+        {"price": 98.0, "quantity": 3},
+        {"price": 102.0, "quantity": 4},
+    ]
+
+
+@pytest.fixture
+def order_book_updated(order_book: list) -> list:
+    return [
+        {"price": 100.0, "quantity": 5},
+        {"price": 98.0, "quantity": 3},
+        {"price": 102.0, "quantity": 4},
+    ]
+
+
+@pytest.mark.parametrize(
+    "price, quantity", [(101.0, 5), (98.0, 3), (102.0, 4), (110.0, 5)]
+)
+def test_place_limit_sell_order_success(
+    client: TestClient,
+    order_book: list,
+    order_book_updated: list,
+    price: float,
+    quantity: int,
+):
+    """Test placing a limit sell order with various prices and quantities"""
+    new_order = {
+        "price": price,
+        "quantity": quantity,
+        "current_time": datetime.now().time(),
+    }
+    if any((order["price"] == price for order in order_book)):
+        order = [order for order in order_book if order["price"] == price][0]
+        order["quantity"] += quantity
+        response = client.post("/limit-sell-order", json=new_order)
+    else:
+        order_book_copy = order_book.copy()
+        order_book_copy.insert(0, new_order)
+        response = client.post("/limit-sell-order", json=new_order)
+        assert response.status_code == 200
+        if any((order["price"] == price for order in order_book)):
+            assert "Order placed successfully" in str(response.json())
+            assert all(
+                (
+                    order["price"] != new_order["price"] or order["quantity"] > quantity
+                    for order in order_book_copy
+                )
+            )
+        else:
+            assert any(
+                (order["price"] == price for order in response.json()["order_book"])
+            )
+            order_found = [
+                order
+                for order in response.json()["order_book"]
+                if order["price"] == price
+            ][0]
+            assert (
+                "quantity" in order_found and int(order_found["quantity"]) == quantity
+            )
+
+            def test_place_limit_sell_order_same_price(
+                client: TestClient, order_book: list
+            ):
+                """Test updating an existing order at the same price"""
+                new_order = {
+                    "price": 100.0,
+                    "quantity": 5,
+                    "current_time": datetime.now().time(),
+                }
+                order_book_copy = [order.copy() for order in order_book]
+                response = client.post("/limit-sell-order", json=new_order)
+                assert response.status_code == 200
+                existing_order = None
+                for order in order_book_copy:
+                    if order["price"] == new_order["price"]:
+                        existing_order = order.copy()
+                        break
+                else:
+                    assert response.json()["order_book"][0]["price"] != 100.0
+                    if existing_order:
+                        assert existing_order["quantity"] == new_order["quantity"]
+                        assert "Order placed successfully" in str(response.json())
+
+                        def test_place_limit_sell_order_no_existing_price(
+                            client: TestClient, order_book: list
+                        ):
+                            """Test placing an order with a price that doesn't exist"""
+                            new_order = {
+                                "price": 95.0,
+                                "quantity": 2,
+                                "current_time": datetime.now().time(),
+                            }
+                            response = client.post("/limit-sell-order", json=new_order)
+                            assert response.status_code == 200
+                            order_book_copy = [order.copy() for order in order_book]
+                            existing_orders_at_95 = sum(
+                                (
+                                    order["quantity"]
+                                    for order in order_book_copy
+                                    if order["price"] == 95.0
+                                )
+                            )
+                            assert new_order not in order_book_copy
+                            assert "Order placed successfully" in str(response.json())
+                            assert len(order_book_copy) + 1 == len(
+                                response.json()["order_book"]
+                            )
+
+                            def test_place_limit_sell_order_multiple_orders(
+                                client: TestClient, order_book: list
+                            ):
+                                """Test handling multiple orders at the same price"""
+                                new_order = {
+                                    "price": 98.0,
+                                    "quantity": 5,
+                                    "current_time": datetime.now().time(),
+                                }
+                                response = client.post(
+                                    "/limit-sell-order", json=new_order
+                                )
+                                assert response.status_code == 200
+                                order_book_copy = [order.copy() for order in order_book]
+                                existing_orders_at_98 = sum(
+                                    (
+                                        order["quantity"]
+                                        for order in order_book_copy
+                                        if order["price"] == 98.0
+                                    )
+                                )
+                                new_quantity = (
+                                    new_order["quantity"] + existing_orders_at_98
+                                )
+                                assert order_book_copy[1]["quantity"] == new_quantity
+                                assert "Order placed successfully" in str(
+                                    response.json()
+                                )
