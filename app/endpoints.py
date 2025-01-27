@@ -87,6 +87,7 @@ from typing import Any
 from typing import Dict
 from typing import Dict, Optional
 from typing import List
+from typing import List, Optional
 from typing import Optional
 from typing import Optional, Union
 from typing import UUID
@@ -8204,3 +8205,132 @@ def place_limit_sell_order(
         else:
             order_book.insert(0, new_order)
             return {"order_book": order_book, "message": "Order placed successfully"}
+
+
+class Order(BaseModel):
+    id: str
+    symbol: str
+    quantity: float
+    price: float
+    side: str
+
+    class FilledOrder(BaseModel):
+        id: str
+        order_id: str
+        symbol: str
+        filled_quantity: float
+        price: float
+        app = FastAPI()
+
+        @app.get("/order_book")
+        async def get_order_book(
+            buy_orders: List[Order] = [], sell_orders: List[Order] = []
+        ):
+            return {"buy": buy_orders, "sell": sell_orders}
+
+        @app.get("/match_order")
+        async def match_limit_order(
+            symbol: str, quantity: float, price: float, side: str
+        ):
+            if side == "buy":
+                buy_orders = [
+                    Order(
+                        id=f"new_buy_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                        symbol=symbol,
+                        quantity=quantity,
+                        price=price,
+                        side="buy",
+                    )
+                ]
+            else:
+                sell_orders = [
+                    Order(
+                        id=f"new_sell_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                        symbol=symbol,
+                        quantity=quantity,
+                        price=price,
+                        side="sell",
+                    )
+                ]
+                filled = []
+                remaining_quantity = quantity
+                if side == "buy":
+                    for order in reversed(sell_orders):
+                        if order.price > price:
+                            match_quantity = min(order.quantity, remaining_quantity)
+                            filled.append(
+                                filled_order(
+                                    ORDER_ID=order.id,
+                                    symbol=symbol,
+                                    filled_quantity=match_quantity,
+                                    price=price,
+                                )
+                            )
+                            sell_orders.remove(order)
+                            remaining_quantity -= match_quantity
+                            if remaining_quantity == 0:
+                                break
+                        else:
+                            for order in reversed(buy_orders):
+                                if order.price < price:
+                                    match_quantity = min(
+                                        order.quantity, remaining_quantity
+                                    )
+                                    filled.append(
+                                        filled_order(
+                                            ORDER_ID=order.id,
+                                            symbol=symbol,
+                                            filled_quantity=match_quantity,
+                                            price=price,
+                                        )
+                                    )
+                                    buy_orders.remove(order)
+                                    remaining_quantity -= match_quantity
+                                    if remaining_quantity == 0:
+                                        break
+                                    if remaining_quantity > 0:
+                                        if side == "buy":
+                                            buy_orders.append(
+                                                Order(
+                                                    id=f"unfilled_buy_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                                                    symbol=symbol,
+                                                    quantity=remaining_quantity,
+                                                    price=price,
+                                                    side="buy",
+                                                )
+                                            )
+                                        else:
+                                            sell_orders.append(
+                                                Order(
+                                                    id=f"unfilled_sell_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                                                    symbol=symbol,
+                                                    quantity=remaining_quantity,
+                                                    price=price,
+                                                    side="sell",
+                                                )
+                                            )
+                                            return {
+                                                "matched": len(filled),
+                                                "filled": filled,
+                                            }
+
+                                        @app.get("/filled_orders")
+                                        async def get_filled_orders():
+                                            filled_data = (
+                                                app.state.filled_orders
+                                                + [
+                                                    order
+                                                    for order in reversed(
+                                                        getattr(app.state, "buy", [])
+                                                    )
+                                                    if order.filled_quantity > 0
+                                                ]
+                                                + [
+                                                    order
+                                                    for order in reversed(
+                                                        getattr(app.state, "sell", [])
+                                                    )
+                                                    if order.filled_quantity > 0
+                                                ]
+                                            )
+                                            return filled_data

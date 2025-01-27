@@ -8610,3 +8610,78 @@ def test_place_limit_sell_order_success(
                                 assert "Order placed successfully" in str(
                                     response.json()
                                 )
+
+
+class Order(BaseModel):
+    id: str
+    symbol: str
+    quantity: float
+    price: float
+    side: str
+
+    @pytest.fixture
+    def client():
+        return TestClient(app)
+
+    def test_get_order_book(client):
+        buy_orders = [
+            Order(
+                id=f"new_buy_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                symbol="BTC",
+                quantity=1.0,
+                price=45000,
+                side="buy",
+            )
+        ]
+        sell_orders = [
+            Order(
+                id=f"new_sell_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                symbol="ETH",
+                quantity=2.0,
+                price=30000,
+                side="sell",
+            )
+        ]
+        response = client.get("/order_book")
+        assert response.status_code == 200
+        response_data = json.loads(response.content)
+        assert "buy" in response_data and "sell" in response_data
+        assert len(response_data["buy"]) > 0
+        assert len(response_data["sell"]) > 0
+
+        def test_match_limit_order(client):
+            buy_orders = []
+            sell_orders = []
+            response = client.post(
+                "/match_order",
+                json={"symbol": "BTC", "quantity": 1.0, "price": 45000, "side": "buy"},
+            )
+            assert response.status_code == 200
+            response_data = json.loads(response.content)
+            assert "filled" in response_data and "matched" in response_data
+            assert len(response_data["filled"]) == 0
+
+            def test_filled_orders(client):
+                buy_orders = [
+                    Order(
+                        id=f"new_buy_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                        symbol="BTC",
+                        quantity=1.0,
+                        price=45000,
+                        side="buy",
+                    )
+                ]
+                sell_orders = [
+                    Order(
+                        id=f"new_sell_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                        symbol="ETH",
+                        quantity=2.0,
+                        price=30000,
+                        side="sell",
+                    )
+                ]
+                response = client.post("/filled_orders")
+                assert response.status_code == 200
+                response_data = json.loads(response.content)
+                assert "filled" in response_data
+                assert len(response_data["filled"]) > 0
