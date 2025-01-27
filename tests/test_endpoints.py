@@ -1,3 +1,5 @@
+from ..db import get_db
+from contextlib import suppress
 from datetime import datetime
 from datetime import datetime, time
 from datetime import datetime, timedelta
@@ -134,7 +136,9 @@ from pytest import mark
 from pytest import mark, raises
 from pytest import raises
 from pytestws import WebSocket as WsClient
+from sqlalchemy.orm import Session
 from typing import IO
+from typing import Optional
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 from unittest.mock import MagicMock
@@ -8823,3 +8827,45 @@ def test_get_historical_data正常响应(test_client):
                                 assert response.status_code == 500
                             except Exception as e:
                                 pytest.fail(f"Request failed: {str(e)}")
+
+
+@pytest.fixture
+def client():
+    with Session() as db:
+        yield db
+
+        @pytest.fixture
+        def db_client(db):
+            with FastAPI.testappTestClient(app, db) as client:
+                yield client
+
+                async def test_successful_withdraw():
+                    async with db_client:
+                        async with suppress(Exception):
+                            response = await app.get(
+                                "/api/v1/withdraw/test-address",
+                                {"amount": 100, "user": {"balance": 200}},
+                            )
+                            assert response.status_code == 200
+
+                            async def test_inufficient_balance():
+                                async with db_client:
+                                    async with suppress(Exception):
+                                        response = await app.get(
+                                            "/api/v1/withdraw/test-address",
+                                            {"amount": 300, "user": {"balance": 200}},
+                                        )
+                                        assert response.status_code == 403
+
+                                        async def test_unauthorized_withdraw():
+                                            async with db_client:
+                                                user = {
+                                                    "balance": 500,
+                                                    "isAdmin": False,
+                                                }
+                                                async with suppress(HTTPException):
+                                                    response = await app.get(
+                                                        "/api/v1/withdraw/test-address",
+                                                        {"amount": 200, "user": user},
+                                                    )
+                                                    assert response.status_code == 403

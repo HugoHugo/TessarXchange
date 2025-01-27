@@ -1,3 +1,5 @@
+from ..db import Base, get_db
+from ..models.user import User
 from aiomysql.pool import create_pool as create_mysql_pool
 from alembic.config import Config
 from backend.models.order import Order
@@ -19,6 +21,7 @@ from fastapi import BackgroundTasks, FastAPI
 from fastapi import Depends, FastAPI
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi import FastAPI, File, UploadFile
 from fastapi import FastAPI, HTTPException
 from fastapi import FastAPI, HTTPException, Path
@@ -81,6 +84,7 @@ from sqlalchemy import Column, MetaData, Table, create_engine
 from sqlalchemy import create_engine
 from sqlalchemy.engine import reflection
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 from string import ascii_letters, digits
 from time import sleep
@@ -8438,3 +8442,23 @@ async def get_historical_data(symbol: str, start: str, end: str, interval: str =
                 >>> app = FastAPI()
                 >>> app.post("/historical_data", "AAPL", "2023-01-01", "2023-12-31", "1d")
             """
+
+
+app = FastAPI()
+
+
+@app.get("/api/v1/withdraw/{address}", response_model=dict)
+def withdraw_amount(amount: int, address: str, user: User = Depends(get_db)):
+    if user.balance < amount:
+        raise HTTPException(status_code=403, detail="Insufficient balance")
+        if not user.isAdmin:
+            raise HTTPException(
+                status_code=403, detail="Unauthorized to withdraw funds"
+            )
+            user.balance -= amount
+            db.session.commit()
+            return {
+                "amount_withdrawn": amount,
+                "new_balance": user.balance,
+                "message": "Withdrawal successful",
+            }
