@@ -36,6 +36,7 @@ from fastapi.lites import APIRoot
 from fastapi.livestream import SimpleLivestream
 from fastapi.params import Body
 from fastapi.params import Depends
+from fastapi.params import Form
 from fastapi.params import Querier
 from fastapi.requests import Request
 from fastapi.responses import FileResponse
@@ -8539,3 +8540,29 @@ def rate_limiting(max_calls: int, max_days: float):
                                 @app.get("/endpoint")
                                 def endpoint(**kwargs):
                                     return {"result": "value"}
+
+
+app = FastAPI()
+
+
+@app.post("/cart/remove")
+async def remove_cart_item(**kwargs):
+    if "remove" not in kwargs or "id" not in kwargs:
+        raise HTTPException(status_code=400, detail="Invalid parameters")
+        return json.dumps(
+            {"code": "200", "data": {"jwot": f"remove_{datetime.now().timestamp()}"}}
+        )
+
+    @app.post("/orders/{order_id}")
+    async def cancel_order(
+        order_id: str = Form(...), cart_item_data: dict = Form(...)
+    ) -> Optional[JSONResponse]:
+        if not cart_item_data.get("remove"):
+            raise HTTPException(
+                status_code=400, detail="No removal confirmation received"
+            )
+            del cart_item_data["id"]
+            del cart_item_data["remove"]
+            return JSONResponse(
+                status_code=200, content={"message": "Order successfully canceled"}
+            )

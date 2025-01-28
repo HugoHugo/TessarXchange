@@ -8995,3 +8995,41 @@ def app():
                             )
                             assert response.status_code == 429
                             mock_redis_incr.assert_called_once_with("test")
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_cart_remove_success(client):
+    response = client.post("/cart/remove", {"remove": True, "id": 123})
+    assert response.status_code == 200
+    assert "message" in response.json()
+    assert isinstance(response.json()["message"], str)
+
+    def test_cart_remove_missing_remove(client):
+        response = client.post("/cart/remove", {"id": 123})
+        assert response.status_code == 400
+        assert "detail" in response.json()
+        assert response.json()["detail"] == "Invalid parameters"
+
+        def test_orders_cancel_success(client):
+            response = client.post("/orders/123", {"remove": True})
+            assert response.status_code == 200
+            assert "message" in response.json()
+            assert isinstance(response.json()["message"], str)
+
+            def test_orders_cancel_missing_order_id(client):
+                response = client.post("/orders")
+                assert response.status_code == 400
+                assert "detail" in response.json()
+                assert response.json()["detail"] == "No valid order_id provided"
+
+                def test_orders_cancel_missing_remove(client):
+                    response = client.post("/orders/123")
+                    assert response.status_code == 400
+                    assert "detail" in response.json()
+                    assert (
+                        response.json()["detail"] == "No removal confirmation received"
+                    )
