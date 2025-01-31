@@ -49,6 +49,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordCreate
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordScope
 from fastapi.wsgi import WebSocket
 from fastapi_limiter import Limiter
+from fastapi上传文件 import UploadFile
 from functools import wraps
 from hashlib import sha256
 from jdatetime import parse
@@ -120,6 +121,7 @@ import numpy as np
 import os
 import pandas as pd
 import pydocumenter as pdoc
+import pytesseract
 import pytrader
 import pyupbit
 import random
@@ -130,6 +132,7 @@ import secrets
 import stratum
 import string
 import stryker
+import tesseract
 import time
 import ujson
 import uuid
@@ -8787,3 +8790,29 @@ async def get_audit_log():
     ]
     audit_log = {"user_actions": user_actions, "system_events": system_events}
     return {"audit_log": json.dumps(audit_log)}
+
+
+app = FastAPI()
+
+
+@app.post("/kyc")
+async def kc_endpoint(file: UploadFile):
+    (img_bytes, _) = await tesseract.upload_file(file.file)
+    extracted_text = pytesseract.image_to_string(img_bytes)
+    cleaned_data = re.sub("\\s+", " ", extracted_text.strip()).strip()
+    document_count = len([d for d in cleaned_data.split("\n") if d])
+    has_valid_documents = document_count >= 2
+    personal_info_match = False
+    try:
+        name_parts = cleaned_data.lower().split()
+        personal_info_match = (
+            len(name_parts) == 3
+            and name_parts[0].startswith("mr." or "mrs.")
+            and (len(name_parts[-1]) >= 3)
+        )
+    except Exception as e:
+        personal_info_match = False
+        return {
+            "documents_accepted": has_valid_documents,
+            "personal_info_matched": personal_info_match,
+        }

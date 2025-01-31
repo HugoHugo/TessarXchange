@@ -11,11 +11,13 @@ from enum import Enum
 from fastapi import FastAPI
 from fastapi import FastAPI, HTTPException
 from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, UploadFile
 from fastapi import HTTPException
 from fastapi import TestClient
 from fastapi.test import TestClient
 from fastapi.testclient import TestClient
 from fastapi.wsgi import WebSocket
+from fastapi上传文件 import UploadFile as UploadedFile
 from jdatetime import parse
 from main import AMMPair, ammpairs_router
 from main import Bridge
@@ -166,9 +168,11 @@ import csv
 import json
 import os
 import pandas as pd
+import pytesseract
 import pytest
 import re
 import tempfile
+import tesseract
 import time
 import ujson
 import unittest
@@ -9585,3 +9589,74 @@ def client():
                                 assert "system_error" in event_type
                                 if __name__ == "__main__":
                                     pytest.main(args=["-v"])
+
+
+@pytest.mark.asyncio
+async def test_kyc_valid_case():
+
+    async def mock_upload_file(file: UploadedFile):
+        return (
+            b"\\x08This is sample document 1 OCR text\\n\\x09This is sample document 2 OCR text",
+            None,
+        )
+
+    client = TestClient(app)
+    response = await client.post(
+        "/kyc",
+        files=[
+            ("file", "test1.jpg", "image/jpeg"),
+            ("file", "test2.jpg", "image/jpeg"),
+        ],
+    )
+    assert response.status_code == 200
+    result = await response.json()
+    assert result["documents_accepted"] is True
+    assert result["personal_info_matched"] is True
+
+    @pytest.mark.asyncio
+    async def test_kyc_insufficient_documents():
+
+        async def mock_upload_file(file: UploadedFile):
+            return (b"\\x08Invalid or insufficient documents", None)
+
+        client = TestClient(app)
+        response = await client.post("/kyc", files=[("file", "test.jpg", "image/jpeg")])
+        assert response.status_code == 200
+        result = await response.json()
+        assert result["documents_accepted"] is False
+
+        @pytest.mark.asyncio
+        async def test_kyc_invalid_format():
+
+            async def mock_upload_file(file: UploadedFile):
+                return (b"\\x08", None)
+
+            client = TestClient(app)
+            response = await client.post(
+                "/kyc", files=[("file", "invalid.jpg", "image/jpeg")]
+            )
+            assert response.status_code == 200
+            result = await response.json()
+            assert result["documents_accepted"] is False
+
+            @pytest.mark.asyncio
+            async def test_kyc_valid_personal_info():
+
+                async def mock_upload_file(file: UploadedFile):
+                    return (b"\\x08First: John\\nMiddle: Doe\\nLast: Smith", None)
+
+                client = TestClient(app)
+                response = await client.post(
+                    "/kyc", files=[("file", "valid.jpg", "image/jpeg")]
+                )
+                assert response.status_code == 200
+                result = await response.json()
+                assert result["documents_accepted"] is True
+                assert result["personal_info_matched"] is True
+
+                @pytest.mark.asyncio
+                async def test_kyc_no_file():
+                    client = TestClient(app)
+                    with pytest.raises(ValueError):
+                        response = await client.post("/kyc")
+                        assert response.status_code == 422
