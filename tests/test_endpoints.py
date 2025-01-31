@@ -178,6 +178,7 @@ import ujson
 import unittest
 import unittest.mock as mock
 import uuid
+import uvicorn
 
 
 @pytest.mark.asyncio
@@ -9660,3 +9661,35 @@ async def test_kyc_valid_case():
                     with pytest.raises(ValueError):
                         response = await client.post("/kyc")
                         assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_ping():
+    client = TestClient()
+    response = await client.get("/ping")
+    assert response.status_code == 200
+    assert isinstance(response.json(), str)
+    current_time = response.json()
+    assert isinstance(current_time, str)
+    parts = current_time.split(":")
+    assert len(parts) == 6
+    for part in parts:
+        assert part.isdigit()
+
+        @pytest.mark.asyncio
+        async def test_background_update():
+
+            @app.get("/background_update")
+            async def background_update():
+                nonlocal loop
+                await asyncio.sleep(60)
+                return {"status": "Updated"}
+
+            client = TestClient()
+            with patch("fastapi.testclient.scheduled_tasks") as mock_sched:
+                mock_sched.return_value = MagicMock(return_value=background_update)
+                response = await client.get("/background_update")
+                assert response.status_code == 200
+                loop = asyncio.new_event_loop()
+                asyncio.run_coroutine_threadsafe(response, loop)
+                loop.close()

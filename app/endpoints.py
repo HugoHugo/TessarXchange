@@ -8816,3 +8816,22 @@ async def kc_endpoint(file: UploadFile):
             "documents_accepted": has_valid_documents,
             "personal_info_matched": personal_info_match,
         }
+
+
+async def background_job():
+    await asyncio.sleep(60)
+
+    @app.get("/ping")
+    async def ping() -> str:
+        return f"Current time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+    app = FastAPI()
+
+    @app.get("/background_update")
+    async def background_update():
+        await background_job()
+        return {"status": "Updated"}
+
+    app.add_task(background_update)
+    if __name__ == "__main__":
+        uvicorn.run(app, host="0.0.0.0", port=8000)
