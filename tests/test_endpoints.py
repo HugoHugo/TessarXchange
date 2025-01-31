@@ -9392,3 +9392,66 @@ def test_get_trading_fee_rate_with_volume_over_10000(client):
                                     == "Trading fee rate calculated successfully"
                                 )
                                 assert data["fee_rate"] == 0.3
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_trading_statistics_error(client):
+    response = client.get("/trading_statistics")
+    assert response.status_code == 200
+    assert "error" in response.json()
+    assert response.json() != {}
+
+    def test_trading_statistics_single_pair(client):
+        bid1 = 100.0
+        ask1 = 99.0
+        pair1 = {"bid": bid1, "ask": ask1}
+        response = client.get(f"/trading_statistics")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data["data"], list)
+        assert len(data["data"]) == 1
+        first_pair = data["data"][0]
+        assert f"{first_pair['pair']:.4f}" == "100.00.00/99.00.00"
+        for key in ["last_price", "highest_price", "lowest_price", "volume"]:
+            value = first_pair[key]
+            if key != "volume":
+                assert isinstance(value, float)
+                formatted_value = f"{value:.2f}"
+                assert formatted_value == str(value).replace(".", "").ljust(4, "0")[:4]
+
+                def test_trading_statistics_multiple_pairs(client):
+                    bid1 = 100.0
+                    ask1 = 99.0
+                    bid2 = 150.0
+                    ask2 = 149.0
+                    pair1 = {"bid": bid1, "ask": ask1}
+                    pair2 = {"bid": bid2, "ask": ask2}
+                    response = client.get(f"/trading_statistics")
+                    assert response.status_code == 200
+                    data = response.json()
+                    assert isinstance(data["data"], list)
+                    assert len(data["data"]) == 2
+                    first_pair = data["data"][0]
+                    second_pair = data["data"][1]
+                    assert f"{first_pair['pair']:.4f}" == "100.00.00/99.00.00"
+                    assert f"{second_pair['pair']:.4f}" == "150.00.00/149.00.00"
+                    last_price = (bid1 + ask1) / 2
+                    highest_price = max(bid1, ask1)
+                    lowest_price = min(bid1, ask1)
+                    volume = bid1 + ask1
+                    assert round(first_pair["last_price"], 2) == round(last_price, 2)
+                    assert first_pair["highest_price"] == last_price
+                    assert first_pair["lowest_price"] == lowest_price
+                    assert first_pair["volume"] == volume
+                    last_price = (bid2 + ask2) / 2
+                    highest_price = max(bid2, ask2)
+                    lowest_price = min(bid2, ask2)
+                    volume = bid2 + ask2
+                    assert round(second_pair["last_price"], 2) == round(last_price, 2)
+                    assert second_pair["highest_price"] == last_price
+                    assert second_pair["lowest_price"] == lowest_price
+                    assert second_pair["volume"] == volume

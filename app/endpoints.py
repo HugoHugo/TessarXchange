@@ -8656,3 +8656,28 @@ async def get_trading_fee_rate(user_data: dict):
         "fee_rate": fee_rate,
         "message": "Trading fee rate calculated successfully",
     }
+
+
+app = FastAPI()
+
+
+@app.get("/trading_statistics")
+async def trading_statistics(*args):
+    if not args:
+        return {"error": "No pairs provided"}
+    results = []
+    for pair in args:
+        last_price = (pair.bid + pair.ask) / 2
+        high_price = max(pair.bid, pair.ask)
+        low_price = min(pair.bid, pair.ask)
+        total_volume = pair.bid_volume + pair.ask_volume
+        results.append(
+            {
+                "pair": f"{pair.bid:.4f}/{pair.ask:.4f}",
+                "last_price": last_price,
+                "highest_price": high_price,
+                "lowest_price": low_price,
+                "volume": total_volume,
+            }
+        )
+        return {"data": results}
