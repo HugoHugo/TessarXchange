@@ -147,6 +147,7 @@ from pytestws import WebSocket as WsClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from typing import IO
+from typing import List, Optional
 from typing import Optional
 from typing import Optional, List
 from unittest import mock
@@ -171,6 +172,7 @@ import pandas as pd
 import pytesseract
 import pytest
 import re
+import secrets
 import tempfile
 import tesseract
 import time
@@ -9693,3 +9695,70 @@ async def test_ping():
                 loop = asyncio.new_event_loop()
                 asyncio.run_coroutine_threadsafe(response, loop)
                 loop.close()
+
+
+@pytest.fixture
+def app():
+    return app
+
+
+@pytest.fixture
+def client(app):
+    return TestClient(app)
+
+
+def test_get_buy_order_by_id(client):
+    order_id = "test123"
+    response = client.get(f"/api/buy-order/{order_id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, dict)
+    assert all((isinstance(v, str) for v in data.values()))
+
+    def test_get_all_buy_orders(client):
+        order1_id = "order1"
+        order2_id = "order2"
+        response = client.get("/api/buy-orders")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) >= 2
+        for order in data:
+            assert "id" in order
+            assert "created_at" in order
+            assert "status" in order
+            assert "buy_orders" in order
+
+            def test_create_buy_order(client):
+                symbol = "BTC/USDT"
+                position_size = 1.0
+                stop_loss = 0.05
+                take_profit = 0.1
+                start_time = datetime.now()
+                response = client.post(
+                    "/api/create-buy-order",
+                    json={
+                        "symbol": symbol,
+                        "position_size": position_size,
+                        "stop_loss": stop_loss,
+                        "take_profit": take_profit,
+                        "start_time": start_time.isoformat(),
+                    },
+                )
+                assert response.status_code == 201
+                data = response.json()
+                assert isinstance(data, dict)
+                response = client.post(
+                    "/api/create-buy-order",
+                    json={
+                        "symbol": symbol,
+                        "position_size": position_size,
+                        "stop_loss": stop_loss,
+                        "take_profit": take_profit,
+                        "start_time": start_time.isoformat(),
+                        "schedule_interval": "0 15 * * 1",
+                    },
+                )
+                assert response.status_code == 201
+                data = response.json()
+                assert isinstance(data, dict)

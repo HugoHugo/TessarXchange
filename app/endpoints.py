@@ -23,6 +23,7 @@ from fastapi import Depends, FastAPI
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi import FastAPI
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, status
 from fastapi import FastAPI, File, UploadFile
 from fastapi import FastAPI, HTTPException
 from fastapi import FastAPI, HTTPException, Path
@@ -8835,3 +8836,82 @@ async def background_job():
     app.add_task(background_update)
     if __name__ == "__main__":
         uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+app = FastAPI()
+
+
+class BuyOrderInput:
+    symbol: str
+    position_size: float
+    stop_loss: float
+    take_profit: float
+    start_time: datetime
+
+    @classmethod
+    def get_order_id(cls):
+        return f"{secrets.token_hex(4)}_{current_datetime.isoformat('_')}"
+
+    def validate(self) -> bool:
+        return True
+
+    class RecurringBuyOrders:
+        id: str
+        created_at: datetime
+        buy_orders: List[BuyOrderInput]
+        order_count: int
+        status: str
+        app.add_middleware(
+            Depends,
+            key_func=lambda dependency: secrets.token_hex(4),
+            secret_key="your-secret-token",
+        )
+
+        def create_recurring_buy_order(app: FastAPI, buy_order_input: BuyOrderInput):
+            order_id = BuyOrderInput.get_order_id()
+            current_time = datetime.now(tz=buy_order_input.start_time.tzinfo)
+            nextRecurrenceTime = current_time + timedelta(days=1)
+            return {
+                "id": order_id,
+                "created_at": current_time.isoformat(),
+                "buy_orders": [
+                    buy_order_input.dict(),
+                    {"symbol": None, "start_time": nextRecurrenceTime.isoformat()},
+                ],
+                "order_count": 2,
+                "status": "recurring",
+            }
+
+        @app.get("/api/buy-order/{order_id}")
+        async def get_recurring_buy_order(order_id: str):
+            return {"order_id": order_id, "status": "recurring"}
+
+        @app.get("/api/buy-orders")
+        async def get_all_recurring_buy_orders(current_time: datetime = datetime.now()):
+            orders = await session.all()
+            result = []
+            for order in orders:
+                result.append(
+                    {
+                        "id": order.id,
+                        "created_at": order.created_at.isoformat(),
+                        "status": (
+                            "recurring" if order.status == "recurring" else "regular"
+                        ),
+                        "buy_orders": [bo.dict() for bo in order.buy_orders],
+                    }
+                )
+                return {"orders": result}
+
+            @app.post("/api/create-buy-order")
+            async def create_buy_order(
+                buy_order_input: BuyOrderInput, current_time: datetime = datetime.now()
+            ):
+                if not buy_order_input.validate():
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="Invalid or missing required parameters in request body.",
+                    )
+                    order_id = BuyOrderInput.get_order_id()
+                    createdOrder = create_recurring_buy_order(app, buy_order_input)
+                    return {"order": createdOrder}
