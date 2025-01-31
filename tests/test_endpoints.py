@@ -9100,3 +9100,192 @@ async def test_get_balance_success(client: TestClient):
                     assert "Amount must be positive." in exc_info.value.json()
                     if __name__ == "__main__":
                         pytest.main()
+import pytest
+from fastapi.testclient import TestClient
+from uuid import uuid4
+from datetime import datetime
+import os
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+@pytest.mark.asyncio
+async def test_generate_key_with_all_parameters(client):
+    response = await client.get(
+        "/api/generate-key",
+        username="testuser",
+        email="test@example.com",
+        password="testpass",
+        include_read=True,
+        include_write=False,
+        include_admin=True,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "api_key" in data
+    assert "username" in data
+    assert "email" in data
+    assert "role" in data
+    assert "created_at" in data
+    assert "expires_at" in data
+
+    @pytest.mark.asyncio
+    async def test_include_read_only(client):
+        response = await client.get(
+            "/api/generate-key",
+            username="testuser",
+            email="test@example.com",
+            password="testpass",
+            include_read=True,
+            include_write=False,
+            include_admin=False,
+        )
+        assert response.status_code == 200
+        data = response.json()
+        role = "Read"
+        assert role in data["role"]
+        assert not any(s in data["role"] for s in ["Write", "Admin"])
+
+        @pytest.mark.asyncio
+        async def test_include_write_only(client):
+            response = await client.get(
+                "/api/generate-key",
+                username="testuser",
+                email="test@example.com",
+                password="testpass",
+                include_read=False,
+                include_write=True,
+                include_admin=False,
+            )
+            assert response.status_code == 200
+            data = response.json()
+            role = "Write"
+            assert role in data["role"]
+            assert not any(s in data["role"] for s in ["Read", "Admin"])
+
+            @pytest.mark.asyncio
+            async def test_include_admin_only(client):
+                response = await client.get(
+                    "/api/generate-key",
+                    username="testuser",
+                    email="test@example.com",
+                    password="testpass",
+                    include_read=False,
+                    include_write=False,
+                    include_admin=True,
+                )
+                assert response.status_code == 200
+                data = response.json()
+                role = "Admin"
+                assert role in data["role"]
+                assert not any(s in data["role"] for s in ["Read", "Write"])
+
+                @pytest.mark.asyncio
+                async def test_include_read_and_write(client):
+                    response = await client.get(
+                        "/api/generate-key",
+                        username="testuser",
+                        email="test@example.com",
+                        password="testpass",
+                        include_read=True,
+                        include_write=True,
+                        include_admin=False,
+                    )
+                    assert response.status_code == 200
+                    data = response.json()
+                    role = "Read Write"
+                    assert role in data["role"]
+                    assert not ("Admin" in data["role"])
+
+                    @pytest.mark.asyncio
+                    async def test_include_read_and_admin(client):
+                        response = await client.get(
+                            "/api/generate-key",
+                            username="testuser",
+                            email="test@example.com",
+                            password="testpass",
+                            include_read=True,
+                            include_write=False,
+                            include_admin=True,
+                        )
+                        assert response.status_code == 200
+                        data = response.json()
+                        role = "Read Admin"
+                        assert role in data["role"]
+                        assert not ("Write" in data["role"])
+
+                        @pytest.mark.asyncio
+                        async def test_include_write_and_admin(client):
+                            response = await client.get(
+                                "/api/generate-key",
+                                username="testuser",
+                                email="test@example.com",
+                                password="testpass",
+                                include_read=False,
+                                include_write=True,
+                                include_admin=True,
+                            )
+                            assert response.status_code == 200
+                            data = response.json()
+                            role = "Write Admin"
+                            assert role in data["role"]
+                            assert not ("Read" in data["role"])
+
+                            @pytest.mark.asyncio
+                            async def test_empty_parameters(client):
+                                with pytest.raises(
+                                    ValueError,
+                                    match="Username, Email, and Password are required",
+                                ):
+                                    client.get("/api/generate-key")
+
+                                    @pytest.mark.asyncio
+                                    async def test_incomplete_parameters(client):
+                                        response = await client.get(
+                                            "/api/generate-key",
+                                            username="testuser",
+                                            email=None,
+                                            password=None,
+                                        )
+                                        assert response.status_code == 422
+
+                                        @pytest.mark.asyncio
+                                        async def test_empty_username(client):
+                                            response = await client.get(
+                                                "/api/generate-key",
+                                                username="",
+                                                email="test@example.com",
+                                                password="testpass",
+                                            )
+                                            data = response.json()
+                                            role = "Read"
+                                            assert not any(
+                                                s in data["role"]
+                                                for s in ["Write", "Admin"]
+                                            )
+
+                                            @pytest.mark.asyncio
+                                            async def test_expires_at(client):
+                                                response = await client.get(
+                                                    "/api/generate-key",
+                                                    username="testuser",
+                                                    email="test@example.com",
+                                                    password="testpass",
+                                                    include_read=True,
+                                                    include_write=False,
+                                                    include_admin=False,
+                                                )
+                                                data = response.json()
+                                                assert "expires_at" in data
+                                                current_time = time.time()
+                                                expected_expires = (
+                                                    current_time + 3600
+                                                )  # Assuming 1 hour for test
+                                                assert data["expires_at"] > (
+                                                    expected_expires - 3600
+                                                ) and data["expires_at"] < (
+                                                    expected_expires + 3600
+                                                )

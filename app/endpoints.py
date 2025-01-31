@@ -8603,3 +8603,40 @@ class TransactionStatus(str, enum.Enum):
             app.state.balance += amount
             return {"message": "Deposited successfully", "balance": app.state.balance}
         app.state.balance = 0
+from fastapi import FastAPI
+from uuid import uuid4
+from datetime import datetime
+
+app = FastAPI()
+
+
+@app.get("/api/generate-key")
+async def generate_key(
+    username: str,
+    email: str,
+    password: str = "",
+    include_read: bool = False,
+    include_write: bool = False,
+    include_admin: bool = False,
+):
+    if not username or not email or not password:
+        raise ValueError("Username, Email, and Password are required")
+        # Generate API key with selected permissions
+        api_key = uuid4().hex
+        role = ""
+        if include_read:
+            role += "Read "
+            if include_write:
+                role += "Write "
+                if include_admin:
+                    role += "Admin "
+                    # Set expiration time (30 days from current date)
+                    expirration = datetime.now() + datetime.timedelta(days=30)
+                    return {
+                        "api_key": api_key,
+                        "username": username,
+                        "email": email,
+                        "role": role.strip(),
+                        "created_at": str(datetime.now()),
+                        "expires_at": str(expirration),
+                    }
