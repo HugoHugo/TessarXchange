@@ -101,6 +101,7 @@ from typing import List, Optional
 from typing import Optional
 from typing import Optional, Union
 from typing import UUID
+from uuid import uuid4
 import asyncio
 import base64
 import csv
@@ -8603,9 +8604,7 @@ class TransactionStatus(str, enum.Enum):
             app.state.balance += amount
             return {"message": "Deposited successfully", "balance": app.state.balance}
         app.state.balance = 0
-from fastapi import FastAPI
-from uuid import uuid4
-from datetime import datetime
+
 
 app = FastAPI()
 
@@ -8619,9 +8618,8 @@ async def generate_key(
     include_write: bool = False,
     include_admin: bool = False,
 ):
-    if not username or not email or not password:
+    if not username or not email or (not password):
         raise ValueError("Username, Email, and Password are required")
-        # Generate API key with selected permissions
         api_key = uuid4().hex
         role = ""
         if include_read:
@@ -8630,7 +8628,6 @@ async def generate_key(
                 role += "Write "
                 if include_admin:
                     role += "Admin "
-                    # Set expiration time (30 days from current date)
                     expirration = datetime.now() + datetime.timedelta(days=30)
                     return {
                         "api_key": api_key,
@@ -8640,3 +8637,22 @@ async def generate_key(
                         "created_at": str(datetime.now()),
                         "expires_at": str(expirration),
                     }
+
+
+app = FastAPI()
+
+
+@app.get("/trading-fee-rate")
+async def get_trading_fee_rate(user_data: dict):
+    username = user_data.get("username")
+    balance = user_data.get("balance")
+    volume = user_data.get("30_day_volume", 0)
+    fee_rate = 0.2 if volume > 10000 else 0.3 if volume >= 5000 else 0.5
+    return {
+        "username": username,
+        "balance": balance,
+        "volume_start": datetime.now().date() - timedelta(days=90),
+        "volume_end": datetime.now().date(),
+        "fee_rate": fee_rate,
+        "message": "Trading fee rate calculated successfully",
+    }

@@ -1,5 +1,6 @@
 from ..db import get_db
 from contextlib import suppress
+from datetime import date as dt_date, timedelta
 from datetime import datetime
 from datetime import datetime, time
 from datetime import datetime, timedelta
@@ -9100,11 +9101,6 @@ async def test_get_balance_success(client: TestClient):
                     assert "Amount must be positive." in exc_info.value.json()
                     if __name__ == "__main__":
                         pytest.main()
-import pytest
-from fastapi.testclient import TestClient
-from uuid import uuid4
-from datetime import datetime
-import os
 
 
 @pytest.fixture
@@ -9147,7 +9143,7 @@ async def test_generate_key_with_all_parameters(client):
         data = response.json()
         role = "Read"
         assert role in data["role"]
-        assert not any(s in data["role"] for s in ["Write", "Admin"])
+        assert not any((s in data["role"] for s in ["Write", "Admin"]))
 
         @pytest.mark.asyncio
         async def test_include_write_only(client):
@@ -9164,7 +9160,7 @@ async def test_generate_key_with_all_parameters(client):
             data = response.json()
             role = "Write"
             assert role in data["role"]
-            assert not any(s in data["role"] for s in ["Read", "Admin"])
+            assert not any((s in data["role"] for s in ["Read", "Admin"]))
 
             @pytest.mark.asyncio
             async def test_include_admin_only(client):
@@ -9181,7 +9177,7 @@ async def test_generate_key_with_all_parameters(client):
                 data = response.json()
                 role = "Admin"
                 assert role in data["role"]
-                assert not any(s in data["role"] for s in ["Read", "Write"])
+                assert not any((s in data["role"] for s in ["Read", "Write"]))
 
                 @pytest.mark.asyncio
                 async def test_include_read_and_write(client):
@@ -9198,7 +9194,7 @@ async def test_generate_key_with_all_parameters(client):
                     data = response.json()
                     role = "Read Write"
                     assert role in data["role"]
-                    assert not ("Admin" in data["role"])
+                    assert not "Admin" in data["role"]
 
                     @pytest.mark.asyncio
                     async def test_include_read_and_admin(client):
@@ -9215,7 +9211,7 @@ async def test_generate_key_with_all_parameters(client):
                         data = response.json()
                         role = "Read Admin"
                         assert role in data["role"]
-                        assert not ("Write" in data["role"])
+                        assert not "Write" in data["role"]
 
                         @pytest.mark.asyncio
                         async def test_include_write_and_admin(client):
@@ -9232,7 +9228,7 @@ async def test_generate_key_with_all_parameters(client):
                             data = response.json()
                             role = "Write Admin"
                             assert role in data["role"]
-                            assert not ("Read" in data["role"])
+                            assert not "Read" in data["role"]
 
                             @pytest.mark.asyncio
                             async def test_empty_parameters(client):
@@ -9263,8 +9259,10 @@ async def test_generate_key_with_all_parameters(client):
                                             data = response.json()
                                             role = "Read"
                                             assert not any(
-                                                s in data["role"]
-                                                for s in ["Write", "Admin"]
+                                                (
+                                                    s in data["role"]
+                                                    for s in ["Write", "Admin"]
+                                                )
                                             )
 
                                             @pytest.mark.asyncio
@@ -9281,11 +9279,116 @@ async def test_generate_key_with_all_parameters(client):
                                                 data = response.json()
                                                 assert "expires_at" in data
                                                 current_time = time.time()
-                                                expected_expires = (
-                                                    current_time + 3600
-                                                )  # Assuming 1 hour for test
-                                                assert data["expires_at"] > (
-                                                    expected_expires - 3600
-                                                ) and data["expires_at"] < (
-                                                    expected_expires + 3600
+                                                expected_expires = current_time + 3600
+                                                assert (
+                                                    data["expires_at"]
+                                                    > expected_expires - 3600
+                                                    and data["expires_at"]
+                                                    < expected_expires + 3600
                                                 )
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_get_trading_fee_rate_with_volume_over_10000(client):
+    user_data = {"username": "test_user", "balance": 10000, "30_day_volume": 15000}
+    expected_fee = 0.2
+    response = client.get("/trading-fee-rate", user_data)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["message"] == "Trading fee rate calculated successfully"
+    assert data["fee_rate"] == expected_fee
+
+    def test_get_trading_fee_rate_with_volume_5000(client):
+        user_data = {"username": "test_user", "balance": 10000, "30_day_volume": 5000}
+        expected_fee = 0.3
+        response = client.get("/trading-fee-rate", user_data)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["message"] == "Trading fee rate calculated successfully"
+        assert data["fee_rate"] == expected_fee
+
+        def test_get_trading_fee_rate_with_volume_10000(client):
+            user_data = {
+                "username": "test_user",
+                "balance": 10000,
+                "30_day_volume": 10000,
+            }
+            expected_fee = 0.2
+            response = client.get("/trading-fee-rate", user_data)
+            assert response.status_code == 200
+            data = response.json()
+            assert data["message"] == "Trading fee rate calculated successfully"
+            assert data["fee_rate"] == expected_fee
+
+            def test_get_trading_fee_rate_with_volume_under_5000(client):
+                user_data = {
+                    "username": "test_user",
+                    "balance": 10000,
+                    "30_day_volume": 4999,
+                }
+                expected_fee = 0.5
+                response = client.get("/trading-fee-rate", user_data)
+                assert response.status_code == 200
+                data = response.json()
+                assert data["message"] == "Trading fee rate calculated successfully"
+                assert data["fee_rate"] == expected_fee
+
+                def test_get_trading_fee_rate_with_volume_over_10000_with_string_values(
+                    client,
+                ):
+                    user_data = {
+                        "username": "test_user",
+                        "balance": "10000",
+                        "30_day_volume": "15000",
+                    }
+                    expected_fee = 0.2
+                    response = client.get("/trading-fee-rate", user_data)
+                    assert response.status_code == 200
+                    data = response.json()
+                    assert data["message"] == "Trading fee rate calculated successfully"
+                    assert data["fee_rate"] == expected_fee
+
+                    def test_get_trading_fee_rate_with_no_volume(client):
+                        user_data = {"username": "test_user", "balance": 10000}
+                        response = client.get("/trading-fee-rate", user_data)
+                        assert response.status_code == 200
+                        data = response.json()
+                        assert (
+                            data["message"]
+                            == "Trading fee rate calculated successfully"
+                        )
+                        assert data["fee_rate"] == 0.5
+
+                        def test_get_trading_fee_rate_with_non_number_volume(client):
+                            user_data = {
+                                "username": "test_user",
+                                "balance": 10000,
+                                "30_day_volume": "abc",
+                            }
+                            response = client.get("/trading-fee-rate", user_data)
+                            assert response.status_code == 200
+                            data = response.json()
+                            assert (
+                                data["message"]
+                                == "Trading fee rate calculated successfully"
+                            )
+                            assert data["fee_rate"] == 0.5
+
+                            def test_get_trading_fee_rate_with_missing_data(client):
+                                user_data = {
+                                    "username": None,
+                                    "balance": None,
+                                    "30_day_volume": 10000,
+                                }
+                                response = client.get("/trading-fee-rate", user_data)
+                                assert response.status_code == 200
+                                data = response.json()
+                                assert (
+                                    data["message"]
+                                    == "Trading fee rate calculated successfully"
+                                )
+                                assert data["fee_rate"] == 0.3
