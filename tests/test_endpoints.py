@@ -9506,3 +9506,82 @@ def test_migrate_success(client):
                     status_code=status.HTTP_500_INTERNAL_ERROR,
                     detail=f"Schema endpoint failed: {str(e)}",
                 )
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as client:
+        yield client
+
+        def create_audit_log_data(user_actions=None, system_events=None):
+            user_actions = user_actions or []
+            system_events = system_events or []
+            return {"user_actions": user_actions, "system_events": system_events}
+
+        @pytest.fixture
+        def audit_log_data():
+            user_actions = [
+                {
+                    "id": f"user_action_{datetime.now().timestamp()}",
+                    "username": "system_user",
+                    "action_type": "login",
+                    "timestamp": datetime.now(),
+                    "duration": 1234,
+                    "description": "Successful login attempt",
+                }
+            ]
+            system_events = [
+                {
+                    "id": f"system_event_{datetime.now().timestamp()}",
+                    "event_type": "system_error",
+                    "timestamp": datetime.now(),
+                    "message": "Database connection error detected",
+                }
+            ]
+            return create_audit_log_data(user_actions, system_events)
+
+        def test_get_audit_log(client):
+            response = client.get("/audit-log")
+            assert response.status_code == 200
+            assert isinstance(response.json(), dict)
+
+            def test_audit_log_response_exists(client, audit_log_data):
+                response = client.get("/audit-log")
+                response_data = response.json()
+                assert "user_actions" in response_data
+                assert "system_events" in response_data
+
+                def test_user_actions_exist(client, audit_log_data):
+                    response = client.get("/audit-log")
+                    response_data = response.json()
+                    assert isinstance(response_data["user_actions"], list)
+
+                    def test_system_events_exist(client, audit_log_data):
+                        response = client.get("/audit-log")
+                        response_data = response.json()
+                        assert isinstance(response_data["system_events"], list)
+
+                        def test_specific_user_action_username_exists(
+                            client, audit_log_data
+                        ):
+                            response = client.get("/audit-log")
+                            response_data = response.json()
+                            user_actions = response_data["user_actions"]
+                            assert len(user_actions) >= 1
+                            assert "system_user" in [
+                                action["username"] for action in user_actions
+                            ]
+
+                            def test_specific_system_event_type_exists(
+                                client, audit_log_data
+                            ):
+                                response = client.get("/audit-log")
+                                response_data = response.json()
+                                system_events = response_data["system_events"]
+                                assert len(system_events) >= 1
+                                event_type = [
+                                    event["event_type"] for event in system_events
+                                ]
+                                assert "system_error" in event_type
+                                if __name__ == "__main__":
+                                    pytest.main(args=["-v"])

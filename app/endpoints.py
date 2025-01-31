@@ -8746,3 +8746,44 @@ def run_migrate(migration_dir: str = "/migrations"):
                             return {"schema_version": os.getenv("CURRENT_MIGRATION", 0)}
                         if __name__ == "__main__":
                             run_migrate()
+
+
+app = FastAPI()
+
+
+@app.get("/audit-log")
+async def get_audit_log():
+    user_actions = [
+        {
+            "id": f"user_action_{datetime.now().timestamp()}",
+            "username": "system_user",
+            "action_type": "login",
+            "timestamp": datetime.now(),
+            "duration": 1234,
+            "description": "Successful login attempt",
+        },
+        {
+            "id": f"user_action_{datetime.now().timestamp()}",
+            "username": "user1",
+            "action_type": "resource_update",
+            "timestamp": datetime.now(),
+            "duration": 5678,
+            "description": "Resource update completed successfully",
+        },
+    ]
+    system_events = [
+        {
+            "id": f"system_event_{datetime.now().timestamp()}",
+            "event_type": "system_error",
+            "timestamp": datetime.now(),
+            "message": "Database connection error detected",
+        },
+        {
+            "id": f"system_event_{datetime.now().timestamp()}",
+            "event_type": "network_exception",
+            "timestamp": datetime.now(),
+            "message": "Network request failed due to timeout",
+        },
+    ]
+    audit_log = {"user_actions": user_actions, "system_events": system_events}
+    return {"audit_log": json.dumps(audit_log)}
