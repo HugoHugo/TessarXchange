@@ -1,13 +1,16 @@
 from ..db import get_db
+from alembic import context
 from contextlib import suppress
 from datetime import date as dt_date, timedelta
 from datetime import datetime
 from datetime import datetime, time
 from datetime import datetime, timedelta
 from datetime import datetime, timezone
+from datetime import timedelta
 from enum import Enum
 from fastapi import FastAPI
 from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from fastapi import HTTPException
 from fastapi import TestClient
 from fastapi.test import TestClient
@@ -139,6 +142,7 @@ from pytest import mark
 from pytest import mark, raises
 from pytest import raises
 from pytestws import WebSocket as WsClient
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from typing import IO
 from typing import Optional
@@ -148,6 +152,7 @@ from unittest.mock import AsyncMock, MagicMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 from unittest.mock import patch, MagicMock
+from urllib.parse import quote
 from uuid import uuid4
 from yfinance import download as yf_download
 from your_app import app
@@ -9455,3 +9460,49 @@ def test_trading_statistics_error(client):
                     assert second_pair["highest_price"] == last_price
                     assert second_pair["lowest_price"] == lowest_price
                     assert second_pair["volume"] == volume
+
+
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
+)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///database.db")
+DB_USER = os.getenv("DB_USER", "user")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
+DB_NAME = os.getenv("DB_NAME", "maindb")
+
+
+def get_db_url():
+    return f"postgresql://{DB_USER}:{quote(DB_PASSWORD)}@{os.getenv('DB_HOST', 'localhost')}/{DB_NAME}"
+
+
+@pytest.fixture
+def client():
+    """Create a FastAPI test client instance."""
+    return TestClient(app)
+
+
+def test_migrate_success(client):
+    """Test that the database can be migrated successfully."""
+    try:
+        response = client.post("/migrate", json={"migrate": 1})
+        assert response.status_code == status.HTTP_200_OK
+        assert "Migrated successfully" in response.json()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_ERROR,
+            detail=f"Migration failed: {str(e)}",
+        )
+
+        def test_schema_endpoint(client):
+            """Test that the schema endpoint returns the correct version."""
+            try:
+                current_head = os.getenv("CURRENT_MIGRATION", "0")
+                response = client.get("/schema")
+                assert response.status_code == status.HTTP_200_OK
+                assert response.json() == {"schema_version": int(current_head)}
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_ERROR,
+                    detail=f"Schema endpoint failed: {str(e)}",
+                )

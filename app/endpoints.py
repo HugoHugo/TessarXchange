@@ -1,6 +1,7 @@
 from ..db import Base, get_db
 from ..models.user import User
 from aiomysql.pool import create_pool as create_mysql_pool
+from alembic import context
 from alembic.config import Config
 from backend.models.order import Order
 from database import SessionLocal
@@ -26,6 +27,7 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi import FastAPI, HTTPException
 from fastapi import FastAPI, HTTPException, Path
 from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, status
 from fastapi import FastAPI, Path
 from fastapi import FastAPI, Path, Query
 from fastapi import FastAPI, Query
@@ -34,6 +36,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi import File, HTTPException, UploadFile
 from fastapi.lites import APIRoot
 from fastapi.livestream import SimpleLivestream
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Body
 from fastapi.params import Depends
 from fastapi.params import Form
@@ -8681,3 +8684,65 @@ async def trading_statistics(*args):
             }
         )
         return {"data": results}
+
+
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
+)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///database.db")
+DB_USER = os.getenv("DB_USER", "user")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
+DB_NAME = os.getenv("DB_NAME", "maindb")
+
+
+def get_db_url():
+    return f"postgresql://{DB_USER}:{DB_PASSWORD}@{os.getenv('DB_HOST', 'localhost')}/{DB_NAME}"
+
+
+def run_migrate(migration_dir: str = "/migrations"):
+    url = get_db_url()
+    engine = create_engine(url)
+    context.configure(
+        url=url,
+        target_metadata=None,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
+    with context.begin_transaction():
+        context.run_migrations()
+
+        def run_upward(migrate: int):
+            current_head = os.getenv("CURRENT_MIGRATION", 0)
+            if not current_head:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_ERROR,
+                    detail="Current migration is not set",
+                )
+                try:
+                    run_migrate()
+                    updated_head = current_head + migrate
+                    os.environ["CURRENT_MIGRATION"] = str(updated_head)
+                    print(f"Migrated successfully to {updated_head}")
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_ERROR,
+                        detail=f"Migration failed: {str(e)}",
+                    )
+
+                    @app.post("/migrate")
+                    async def migrate_db(migrate: int):
+                        run_upward(migrate)
+                        return {"message": "Migrated successfully"}
+
+                    @app.get("/schema")
+                    def get_schema_version():
+                        current_head = os.getenv("CURRENT_MIGRATION", 0)
+                        if not current_head:
+                            raise HTTPException(
+                                status_code=status.HTTP_500_INTERNAL_ERROR,
+                                detail="Current migration is not set",
+                            )
+                            return {"schema_version": os.getenv("CURRENT_MIGRATION", 0)}
+                        if __name__ == "__main__":
+                            run_migrate()
