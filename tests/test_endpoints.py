@@ -4,6 +4,7 @@ from datetime import datetime
 from datetime import datetime, time
 from datetime import datetime, timedelta
 from datetime import datetime, timezone
+from enum import Enum
 from fastapi import FastAPI
 from fastapi import FastAPI, HTTPException
 from fastapi import HTTPException
@@ -140,11 +141,13 @@ from pytestws import WebSocket as WsClient
 from sqlalchemy.orm import Session
 from typing import IO
 from typing import Optional
+from typing import Optional, List
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 from unittest.mock import patch, MagicMock
+from uuid import uuid4
 from yfinance import download as yf_download
 from your_app import app
 from your_app_validator_node import ValidatorNode, validator_node_router
@@ -9033,3 +9036,67 @@ def test_cart_remove_success(client):
                     assert (
                         response.json()["detail"] == "No removal confirmation received"
                     )
+
+
+def create_transaction(
+    sender: str = "Unknown", receiver: str = "Unknown", amount: float = 1.0
+) -> dict:
+    return {
+        "id": str(uuid4()),
+        "date": datetime.now().isoformat(),
+        "sender": sender,
+        "receiver": receiver,
+        "amount": amount,
+        "status": TransactionStatus.PENDING,
+    }
+
+
+@pytest.fixture
+def client() -> TestClient:
+    return TestClient(app)
+
+
+@pytest.mark.asyncio
+async def test_get_balance_success(client: TestClient):
+    """Test that the /balance endpoint returns the current balance."""
+    response = await client.get("/balance")
+    assert response.status_code == 200
+    data = await response.json()
+    assert "balance" in app.state
+    assert data["balance"] == app.state.balance
+
+    @pytest.mark.asyncio
+    async def test_get_transactions(client: TestClient):
+        """Test that the /transactions endpoint returns a list of transactions."""
+        response = await client.get("/transactions")
+        assert response.status_code == 200
+        data = await response.json()
+        assert isinstance(data, List)
+        assert len(data) > 0
+        transaction = data[0]
+        assert "id" in transaction
+        assert "date" in transaction
+        assert "sender" in transaction
+        assert "receiver" in transaction
+        assert "amount" in transaction
+        assert "status" in transaction
+
+        @pytest.mark.asyncio
+        async def test_deposit_success(client: TestClient):
+            """Test that a successful deposit increases the balance."""
+            response = await client.post("/deposit", json=10.0)
+            assert response.status_code == 200
+            assert "message" in response.json()
+            assert "balance" in response.json()
+            assert app.state.balance > 0
+
+            @pytest.mark.asyncio
+            async def test_deposit_invalid_amount(client: TestClient):
+                """Test that depositing a non-positive amount raises an error."""
+                with pytest.raises(HTTPException) as exc_info:
+                    await client.post("/deposit", json=-1.0)
+                    assert exc_info.value.status_code == 400
+                    assert "detail" in exc_info.value.json()
+                    assert "Amount must be positive." in exc_info.value.json()
+                    if __name__ == "__main__":
+                        pytest.main()

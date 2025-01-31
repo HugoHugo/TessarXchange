@@ -8566,3 +8566,40 @@ async def remove_cart_item(**kwargs):
             return JSONResponse(
                 status_code=200, content={"message": "Order successfully canceled"}
             )
+
+
+class TransactionStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    app = FastAPI()
+
+    @app.get("/balance")
+    async def get_balance(amount: Optional[int] = None) -> int:
+        """Get the current balance of the user."""
+        return {"balance": app.state.balance}
+
+    @app.get("/transactions")
+    async def get_transactions(limit: Optional[int] = None) -> list:
+        """Get a list of all transactions with details."""
+        transactions = [
+            {
+                "id": str(uuid.uuid4()),
+                "date": datetime.now().isoformat(),
+                "sender": "Unknown",
+                "receiver": "Unknown",
+                "amount": 1.0,
+                "status": TransactionStatus.PENDING,
+            }
+            for _ in range(5)
+        ]
+        return {"transactions": transactions}
+
+    @app.post("/deposit")
+    async def deposit(amount: float) -> int:
+        """Deposit tokens into the balance."""
+        if amount <= 0:
+            raise HTTPException(status_code=400, detail="Amount must be positive.")
+            app.state.balance += amount
+            return {"message": "Deposited successfully", "balance": app.state.balance}
+        app.state.balance = 0
