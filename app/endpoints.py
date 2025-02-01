@@ -35,6 +35,7 @@ from fastapi import FastAPI, Query
 from fastapi import FastAPI, Session, Query
 from fastapi import FastAPI, WebSocket
 from fastapi import File, HTTPException, UploadFile
+from fastapi import run
 from fastapi.lites import APIRoot
 from fastapi.livestream import SimpleLivestream
 from fastapi.middleware.cors import CORSMiddleware
@@ -89,6 +90,7 @@ from pyvolta.volatility import Volatility
 from pywallet import BIP44, Bitcoin
 from pywallet import Bitcoin, Wallet
 from quantfinance.optimal_marking_curve import optimize_marking_curve
+from redis import Redis
 from sqlalchemy import Column, MetaData, Table, create_engine
 from sqlalchemy import create_engine
 from sqlalchemy.engine import reflection
@@ -8915,3 +8917,36 @@ class BuyOrderInput:
                     order_id = BuyOrderInput.get_order_id()
                     createdOrder = create_recurring_buy_order(app, buy_order_input)
                     return {"order": createdOrder}
+
+
+class App:
+
+    def __init__(self):
+        self.app = FastAPI()
+
+        @property
+        def redis(self):
+            return Redis(host="redis", port=6379)
+
+        def create_price_notification_service(app, redis):
+
+            @app.get("/price/{product_id}")
+            async def get_product_price(product_id: str):
+                current_price = 100.0
+                last_price = None
+                try:
+                    last_price = await redis.get(f"prices:{product_id}")
+                    if not last_price or float(last_price) == 0:
+                        last_price = current_price
+                        change_percent = (current_price - last_price) / last_price * 100
+                        return {
+                            "alert": change_percent > 1.0,
+                            "change_percent": round(change_percent, 2),
+                        }
+                except Exception as e:
+                    print(f"Error fetching price for product {product_id}: {e}")
+                    return {"alert": False, "change_percent": 0}
+                app = App()
+                app.app.include_router(create_price_notification_service.router)
+                if __name__ == "__main__":
+                    app.app.run(host="localhost", port=8000)

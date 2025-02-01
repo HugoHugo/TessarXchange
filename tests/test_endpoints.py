@@ -9762,3 +9762,25 @@ def test_get_buy_order_by_id(client):
                 assert response.status_code == 201
                 data = response.json()
                 assert isinstance(data, dict)
+
+
+@pytest.mark.asyncio
+async def test_price():
+    client = TestClient(app)
+    mock_redis = patch("redis.Redis").start()
+    mock_client = MagicMock()
+    mock_client.get.return_value = None
+
+    async def fake_get(key):
+        return mock_client.get(key)
+
+    with patch.dict(app.__dict__, {"get": fake_get}) as mocked_app:
+        try:
+            await client.get("/price/something")
+            assert False, "No exception was raised when expected"
+        except Exception as e:
+            assert str(e) in [
+                "Key not found in Redis",
+                "Could not find price for product something",
+            ]
+            mock_redis.stop()
