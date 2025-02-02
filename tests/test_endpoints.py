@@ -10601,3 +10601,25 @@ async def test_main_success():
                                                 assert "matched_orders" in str(
                                                     response.json()
                                                 )
+
+
+def test_get_parameters_without_params():
+    client = TestClient(app)
+    response = client.get("/parameters")
+    assert response.status_code == 200
+    results = response.json()
+    assert isinstance(results, list)
+
+    def test_get_parameters_with_page():
+        client = TestClient(app)
+        response = client.get("/parameters?page=2")
+        assert response.status_code == 200
+        results = response.json()
+        assert isinstance(results, list)
+
+        def test_get_parameters_with_limit():
+            client = TestClient(app)
+            response = client.get("/parameters?limit=50")
+            assert response.status_code == 200
+            results = response.json()
+            assert isinstance(results, list)

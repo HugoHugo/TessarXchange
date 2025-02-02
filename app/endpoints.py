@@ -115,6 +115,7 @@ from typing import List, Dict, Union
 from typing import List, Optional
 from typing import Optional
 from typing import Optional, Union
+from typing import Optional, Union, Dict, Any, List
 from typing import UUID
 from uuid import UUID
 from uuid import uuid4
@@ -9488,3 +9489,95 @@ class Order(BaseModel):
                             print(f"Error:", str(e))
                             if __name__ == "__main__":
                                 main()
+
+
+app = FastAPI()
+
+
+class ParameterModel:
+    __slots__ = (
+        "strategy_name",
+        "trade_frequency",
+        "risk_tolerance",
+        "stop_loss",
+        "take_profit",
+        "entry_exit_min_price",
+        "entry_exit_max_price",
+    )
+
+    def __init__(
+        self,
+        strategy_name: str,
+        trade_frequency: int,
+        risk_tolerance: float,
+        stop_loss: Optional[float] = None,
+        take_profit: Optional[float] = None,
+        entry_exit_min_price: Optional[float] = None,
+        entry_exit_max_price: Optional[float] = None,
+    ):
+        self.strategy_name = strategy_name
+        self.trade_frequency = trade_frequency
+        self.risk_tolerance = risk_tolerance
+        self.stop_loss = stop_loss
+        self.take_profit = take_profit
+        self.entry_exit_min_price = entry_exit_min_price
+        self.entry_exit_max_price = entry_exit_max_price
+
+        def __json__(self):
+            return json.dumps(self.__dict__)
+
+        class ParameterParams:
+            pass
+
+            @app.get("/parameters")
+            async def get_parameters(
+                params: Optional[ParameterModel] = None, page: int = 1, limit: int = 100
+            ) -> Union[List["ParameterModel"], ParameterParams]:
+                """Get all parameters"""
+
+                @app.get("/parameters/{id}")
+                async def get_parameter(
+                    id: Union[int, str]
+                ) -> Union[ParameterModel, ParameterParams]:
+                    """Get a specific parameter by ID"""
+
+                    @app.post("/parameters")
+                    async def create_parameter(
+                        data: ParameterModel,
+                    ) -> Union[ParameterModel, ParameterParams]:
+                        """Create new parameter"""
+
+                        @app.put("/parameters/{id}")
+                        async def update_parameter(
+                            id: int, data: ParameterUpdateForm
+                        ) -> Union[ParameterModel, ParameterParams]:
+                            """Update existing parameter"""
+
+                            class ParameterForm:
+                                strategy_name: str = "MovingAverage"
+                                trade_frequency: int = 30
+                                risk_tolerance: float = 0.5
+
+                                @app.post("/parameters", response_model=ParameterModel)
+                                async def create_parameters(
+                                    data: ParameterForm,
+                                ) -> Union[ParameterModel, ParameterParams]:
+                                    """Create new parameter"""
+
+                                    class ParameterUpdateForm:
+                                        id: int = None
+                                        strategy_name: Optional[str] = None
+                                        trade_frequency: Optional[int] = None
+                                        risk_tolerance: Optional[float] = None
+                                        stop_loss: Optional[float] = None
+                                        take_profit: Optional[float] = None
+                                        entry_exit_min_price: Optional[float] = None
+                                        entry_exit_max_price: Optional[float] = None
+
+                                        @app.put(
+                                            "/parameters", response_model=ParameterModel
+                                        )
+                                        async def update_parameters(
+                                            data: ParameterUpdateForm,
+                                        ) -> Union[ParameterModel, ParameterParams]:
+                                            """Update existing parameter"""
