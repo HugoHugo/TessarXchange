@@ -35,6 +35,7 @@ from main import CustodyRotation, app
 from main import DIDDocument, AttestationState, AttestationRequest, AttestationResponse
 from main import DarkPool, app
 from main import Derivative, SettlementManager
+from main import FastAPI
 from main import Identity, DecentralizedIdentityRecoveryApp
 from main import (
     LiquidityPool,
@@ -143,6 +144,7 @@ from main import rebalance_tokens
 from models import User, Order
 from models.collateral import Collateral
 from models.position import Position
+from pydantic import BaseModel
 from pytest import mark
 from pytest import mark, raises
 from pytest import raises
@@ -9969,3 +9971,187 @@ async def test_successful_response():
                                 assert str(excinfo.value).startswith(
                                     "Invalid type for date field"
                                 )
+
+
+class RewardData(BaseModel):
+    amount: float
+
+    class TradeData(BaseModel):
+        last_price: float
+        volume: float
+        timestamp: datetime
+
+        class OrderBookData(BaseModel):
+            buy1_price: float
+            sell1_price: float
+            buy1_volume: float
+            sell1_volume: float
+
+            class VolumeData(BaseModel):
+                twenty_fourhour_volume: float
+                twenty_fourhour_percentage: float
+
+                @app.get("/get_rewards")
+                async def get_rewards(
+                    reward_data: RewardData,
+                    trade_data: TradeData,
+                    order_book_data: OrderBookData,
+                    volume_data: VolumeData,
+                ):
+                    current_price = trade_data.last_price
+                    previous_price = max(
+                        order_book_data.buy1_price, order_book_data.sell1_price
+                    )
+                    if previous_price == 0 or current_price is None:
+                        return {"reward": None}
+                    spread_percentage = (
+                        (current_price - previous_price) / previous_price * 100
+                    )
+                    spread_percentage = round(spread_percentage, 2)
+                    weight_volume = 0.4
+                    weight_spread = 0.6
+                    volume = volume_data.twenty_fourhour_volume or 0
+                    total_reward = (
+                        volume * weight_volume
+                        + (spread_percentage if abs(spread_percentage) <= 1 else None)
+                        * weight_spread
+                    )
+                    return {"total_reward": max(total_reward, 0)}
+
+                @pytest.fixture
+                def client():
+                    return TestClient(FastAPI())
+
+                def test_get_rewards_basic(client):
+                    response = client.get(
+                        "/get_rewards",
+                        {
+                            "amount": 100,
+                            "TradeData": {
+                                "last_price": 254.37,
+                                "volume": 100.0,
+                                "timestamp": datetime.now() - timedelta(hours=24),
+                                "OrderBookData": {
+                                    "buy1_price": 200.0,
+                                    "sell1_price": 260.0,
+                                    "buy1_volume": 50.0,
+                                    "sell1_volume": 50.0,
+                                },
+                                "VolumeData": {
+                                    "twenty_fourhour_volume": 500.0,
+                                    "twenty_fourhour_percentage": 87.43,
+                                },
+                            },
+                        },
+                    )
+                    assert response.status_code == 200
+
+                    def test_get_rewards_previous_price_zero(client):
+                        response = client.get(
+                            "/get_rewards",
+                            {
+                                "amount": 100,
+                                "TradeData": {
+                                    "last_price": 0.0,
+                                    "volume": 100.0,
+                                    "timestamp": datetime.now() - timedelta(hours=24),
+                                    "OrderBookData": {
+                                        "buy1_price": 0.0,
+                                        "sell1_price": 0.0,
+                                        "buy1_volume": 50.0,
+                                        "sell1_volume": 50.0,
+                                    },
+                                    "VolumeData": {
+                                        "twenty_fourhour_volume": 500.0,
+                                        "twenty_fourhour_percentage": None,
+                                    },
+                                },
+                            },
+                        )
+                        assert response.status_code == 200
+                        assert (
+                            "total_reward" in response.json()
+                            and response.json()["total_reward"] is None
+                        )
+
+                        def test_get_rewards_negative_spread(client):
+                            response = client.get(
+                                "/get_rewards",
+                                {
+                                    "amount": 100,
+                                    "TradeData": {
+                                        "last_price": 254.37,
+                                        "volume": 100.0,
+                                        "timestamp": datetime.now()
+                                        - timedelta(hours=24),
+                                        "OrderBookData": {
+                                            "buy1_price": 260.0,
+                                            "sell1_price": 250.0,
+                                            "buy1_volume": 50.0,
+                                            "sell1_volume": 50.0,
+                                        },
+                                        "VolumeData": {
+                                            "twenty_fourhour_volume": 500.0,
+                                            "twenty_fourhour_percentage": None,
+                                        },
+                                    },
+                                },
+                            )
+                            assert response.status_code == 200
+                            assert "total_reward" in response.json()
+
+                            def test_get_rewards_zero_volume(client):
+                                response = client.get(
+                                    "/get_rewards",
+                                    {
+                                        "amount": 100,
+                                        "TradeData": {
+                                            "last_price": 254.37,
+                                            "volume": 0.0,
+                                            "timestamp": datetime.now()
+                                            - timedelta(hours=24),
+                                            "OrderBookData": {
+                                                "buy1_price": 260.0,
+                                                "sell1_price": 250.0,
+                                                "buy1_volume": 50.0,
+                                                "sell1_volume": 50.0,
+                                            },
+                                            "VolumeData": {
+                                                "twenty_fourhour_volume": 0.0,
+                                                "twenty_fourhour_percentage": 87.43,
+                                            },
+                                        },
+                                    },
+                                )
+                                assert response.status_code == 200
+                                assert "total_reward" in response.json()
+                                assert (
+                                    "total_reward" in response.json()
+                                    and response.json()["total_reward"] == 0
+                                )
+
+                                def test_get_rewards_zero_spread(client):
+                                    response = client.get(
+                                        "/get_rewards",
+                                        {
+                                            "amount": 100,
+                                            "TradeData": {
+                                                "last_price": 254.37,
+                                                "volume": 100.0,
+                                                "timestamp": datetime.now()
+                                                - timedelta(hours=24),
+                                                "OrderBookData": {
+                                                    "buy1_price": 260.0,
+                                                    "sell1_price": 260.0,
+                                                    "buy1_volume": 50.0,
+                                                    "sell1_volume": 50.0,
+                                                },
+                                                "VolumeData": {
+                                                    "twenty_fourhour_volume": 500.0,
+                                                    "twenty_fourhour_percentage": None,
+                                                },
+                                            },
+                                        },
+                                    )
+                                    assert response.status_code == 200
+                                    assert "total_reward" in response.json()

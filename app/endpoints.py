@@ -9082,3 +9082,58 @@ app = FastAPI()
 async def generate_tax_report(start_date: str, end_date: str):
     tax_data = await get_tax_data(start_date, end_date)
     return {"tax_report": tax_data, "status": "success"}
+
+
+class RewardData(BaseModel):
+    amount: float
+
+    class TradeData(BaseModel):
+        last_price: float
+        volume: float
+        timestamp: datetime
+
+        class OrderBookData(BaseModel):
+            buy1_price: float
+            sell1_price: float
+            buy1_volume: float
+            sell1_volume: float
+
+            class VolumeData(BaseModel):
+                twenty_fourhour_volume: float
+                twenty_fourhour_percentage: float
+                app = FastAPI()
+
+                @app.get("/get_rewards")
+                async def get_rewards(
+                    reward_data: RewardData,
+                    trade_data: TradeData,
+                    order_book_data: OrderBookData,
+                    volume_data: VolumeData,
+                ):
+                    current_price = trade_data.last_price
+                    previous_price = max(
+                        order_book_data.buy1_price, order_book_data.sell1_price
+                    )
+                    if previous_price == 0:
+                        return {"reward": None}
+                    spread_percentage = (
+                        (current_price - previous_price) / previous_price * 100
+                    )
+                    weight_volume = 0.4
+                    weight_spread = 0.6
+                    volume = volume_data.twenty_fourhour_volume or 0
+                    spread = round(spread_percentage, 2) if spread_percentage else None
+                    total_reward = volume * weight_volume + spread * weight_spread
+                    return {"total_reward": max(total_reward, 0)}
+
+                @app.get("/last_trade")
+                async def get_last_trade(trade_data: TradeData):
+                    return trade_data.dict()
+
+                @app.get("/order_book")
+                async def get_order_book(order_book_data: OrderBookData):
+                    return order_book_data.dict()
+
+                @app.get("/current_volume")
+                async def get_current_volume(volume_data: VolumeData):
+                    return volume_data.dict()
