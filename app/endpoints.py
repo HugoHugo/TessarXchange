@@ -59,6 +59,7 @@ from fastapi_limiter import Limiter
 from fastapi上传文件 import UploadFile
 from functools import wraps
 from hashlib import sha256
+from isodatetime import ISODateTime
 from jdatetime import parse
 from jose import JWTError, jwt
 from models import RewardSnapshot
@@ -9244,3 +9245,44 @@ class Alert(Base):
                                             status_code=422,
                                             detail="Failed to delete alert",
                                         )
+
+
+class FastAPI:
+
+    def __init__(self):
+        pass
+
+        @property
+        def now(self):
+            return ISODateTime.now()
+
+        async def health(self) -> dict:
+            metrics = {
+                "cpu_usage": {
+                    "name": "CPU Usage",
+                    "value": 75.4,
+                    "unit": "%",
+                    "description": "Current CPU usage percentage",
+                },
+                "memory_usage": {
+                    "name": "Memory Usage",
+                    "value": 68.2,
+                    "unit": "%",
+                    "description": "Current memory usage percentage",
+                },
+                "network_requests": {
+                    "name": "Network Requests",
+                    "value": 1234,
+                    "unit": "/second",
+                    "description": "Number of network requests received per second",
+                },
+                "response_time": {
+                    "name": "Response Time",
+                    "value": 0.543,
+                    "unit": "seconds",
+                    "description": "Average response time of the server in seconds",
+                },
+            }
+            current_time = self.now.isoformat()
+            formatted_time = datetime.now().isoformat(sep="T", timespec="minutes")
+            return {"timestamp": formatted_time, "metrics": metrics}

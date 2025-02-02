@@ -22,6 +22,7 @@ from fastapi.test import TestClient
 from fastapi.testclient import TestClient
 from fastapi.wsgi import WebSocket
 from fastapi上传文件 import UploadFile as UploadedFile
+from isodatetime import ISODateTime
 from jdatetime import parse
 from main import AMMPair, ammpairs_router
 from main import Bridge
@@ -10297,3 +10298,65 @@ def db():
                                                     print(
                                                         f"Alert Data After Delete: {result}"
                                                     )
+
+
+@pytest.fixture
+def app():
+    return FastAPI()
+
+
+@pytest.mark.asyncio
+async def test_health_async(app: FastAPI, client: TestClient):
+
+    async def mock_now(future: None = None):
+        future.setdefault()
+        return datetime.now()
+
+    FastAPI.__now__ = mock_now
+    response = await client.get("/health")
+    assert isinstance(response.json(), dict)
+    data = response.json()
+    assert "timestamp" in data
+    metrics = data["metrics"]
+    for metric in metrics.values():
+        assert "name" in metric
+        assert "value" in metric
+        assert "unit" in metric
+        assert "description" in metric
+
+        @pytest.mark.asyncio
+        async def test_health_async_with_mocking(app: FastAPI, client: TestClient):
+
+            async def mock_now(future: None = None):
+                future.setdefault()
+                return datetime.now()
+
+            FastAPI.__now__ = mock_now
+            response = await client.get("/health")
+            assert isinstance(response.json(), dict)
+            data = response.json()
+            assert "timestamp" in data
+            metrics = data["metrics"]
+            assert len(metrics) == 4
+
+            @pytest.mark.slow
+            def test_health_sync(app: FastAPI, client: TestClient):
+                response = client.get("/health")
+                assert isinstance(response.json(), dict)
+                data = response.json()
+                assert "timestamp" in data
+                metrics = data["metrics"]
+                for metric in metrics.values():
+                    assert "name" in metric
+                    assert "value" in metric
+                    assert "unit" in metric
+                    assert "description" in metric
+
+                    @pytest.mark.asyncio
+                    async def test_health_integration(client: TestClient):
+                        response = await client.get("/health")
+                        data = response.json()
+                        assert isinstance(data, dict)
+                        assert "timestamp" in data
+                        metrics = data["metrics"]
+                        assert len(metrics) == 4
