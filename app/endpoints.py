@@ -1,4 +1,6 @@
+from ..database import get_db
 from ..db import Base, get_db
+from ..models import Order, Trade, User
 from ..models.user import User
 from aiomysql.pool import create_pool as create_mysql_pool
 from alembic import context
@@ -99,6 +101,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 from string import ascii_letters, digits
 from time import sleep
+from tradingview_ta import indicators
 from typing import Any
 from typing import Callable, Any
 from typing import Dict
@@ -8950,3 +8953,122 @@ class App:
                 app.app.include_router(create_price_notification_service.router)
                 if __name__ == "__main__":
                     app.app.run(host="localhost", port=8000)
+
+
+app = FastAPI()
+SessionLocal = Session
+
+
+class OrderBase:
+    symbol: str
+    stop_loss_price: float
+    last_executed_price: Optional[float] = None
+    quantity: int
+    user_id: int
+
+    class TradeBase:
+        symbols: dict
+        orders: list[Order]
+
+        @app.post("/api/orders", response_model=Order)
+        async def create_order(
+            symbol: str,
+            stop_loss_price: float,
+            last_executed_price: Optional[float],
+            quantity: int,
+            user_id: int,
+            db: Session = Depends(get_db),
+        ) -> Union[dict, bool]:
+            existing_order = (
+                db.query(Order).filter_by(symbol=symbol, user_id=user_id).first()
+            )
+            if existing_order:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Order already in progress",
+                )
+                try:
+                    stop_loss_price_with_tax = calculate_stop_loss_price(
+                        last_executed_price, stop_loss_price, quantity
+                    )
+                    new_order = Order(
+                        id=None,
+                        symbol=symbol,
+                        user_id=user_id,
+                        created_at=datetime.now(),
+                        price=stop_loss_price_with_tax,
+                        trailing_stop_enabled=False,
+                    )
+                    if "trailing_stop" in request:
+                        new_order.trailing_stop_enabled = True
+                        new_trailing_stop_order = Order(
+                            id=None,
+                            symbol=symbol,
+                            user_id=user_id,
+                            created_at=datetime.now(),
+                            price=stop_loss_price_with_tax,
+                            trailing_stop=False,
+                        )
+                        db.add(new_trailing_stop_order)
+                    else:
+                        new_trailing_stop_order = None
+                        db.add(new_order)
+                        db.commit()
+                        return new_order
+                except Exception as e:
+                    db.rollback()
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                    )
+
+                    @app.get("/api/orders/{order_id}", response_model=Order)
+                    async def get_order(order_id: int, db: Session = Depends(get_db)):
+                        order = db.query(Order).filter_by(id=order_id).first()
+                        if not order:
+                            raise HTTPException(
+                                status_code=status.HTTP_404_NOT_FOUND,
+                                detail="Order not found",
+                            )
+                            trailing_stop_info = None
+                            if order.trailing_stop:
+                                trailing_stop_order = (
+                                    db.query(Order)
+                                    .filter_by(id=order.trailing_stop.id)
+                                    .first()
+                                )
+                                trailing_stop_info = {
+                                    "trailing_stop_price": trailing_stop_order.price,
+                                    "quantity": trailing_stop_order.quantity,
+                                    "created_at": trailing_stop_order.created_at,
+                                }
+                                return order._replace(
+                                    **{"trailing_stop_info": trailing_stop_info}
+                                )
+
+                            def calculate_stop_loss_price(
+                                last_executed_price: float,
+                                stop_loss_price: float,
+                                quantity: int,
+                            ) -> float:
+                                if last_executed_price is None:
+                                    return stop_loss_price
+                                position_type = next(
+                                    (
+                                        position
+                                        for position in ("long", "short")
+                                        if getattr(new_order.contract.symbol, position)
+                                    ),
+                                    None,
+                                )
+                                if (
+                                    not position_type
+                                    or new_order.contract.symbol not in position_type
+                                ):
+                                    return last_executed_price
+                                step_size = 0.0001
+                                pips = quantity * (last_executed_price - price)
+                                if position_type == "long":
+                                    stop_price = last_executed_price + pips / 10000.0
+                                else:
+                                    stop_price = last_executed_price - pips / 10000.0
+                                    return stop_price

@@ -1,4 +1,6 @@
+from ..database import get_db
 from ..db import get_db
+from ..models import Order, Trade, User
 from alembic import context
 from contextlib import suppress
 from datetime import date as dt_date, timedelta
@@ -9784,3 +9786,115 @@ async def test_price():
                 "Could not find price for product something",
             ]
             mock_redis.stop()
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+@pytest.fixture
+def db_session():
+    db = SessionLocal()
+    yield db
+    db.close()
+
+    def test_create_order_basic(client):
+        response = client.post(
+            "/api/orders",
+            json={
+                "symbol": "BTC/USDT",
+                "stop_loss_price": 45000,
+                "last_executed_price": 46000,
+                "quantity": 1,
+                "user_id": 1,
+            },
+        )
+        assert response.status_code == 200
+
+        def test_create_order_invalid_symbol(client):
+            response = client.post(
+                "/api/orders",
+                json={
+                    "symbol": "INVALID",
+                    "stop_loss_price": 45000,
+                    "last_executed_price": 46000,
+                    "quantity": 1,
+                    "user_id": 1,
+                },
+            )
+            assert response.status_code == 400
+            assert "Invalid symbol" in str(response.json())
+
+            def test_create_order_missing_quantity(client):
+                response = client.post(
+                    "/api/orders",
+                    json={
+                        "symbol": "BTC/USDT",
+                        "stop_loss_price": 45000,
+                        "last_executed_price": 46000,
+                        "user_id": 1,
+                    },
+                )
+                assert response.status_code == 400
+                assert "Quantity is required" in str(response.json())
+
+                def test_retrieve_order_with_trailing_stop(client, db_session):
+                    order_data = {
+                        "symbol": "BTC/USDT",
+                        "stop_loss_price": 45000,
+                        "last_executed_price": 46000,
+                        "quantity": 1,
+                        "user_id": 1,
+                        "trailing_stop": True,
+                    }
+                    response = client.post("/api/orders", json=order_data)
+                    assert response.status_code == 200
+                    order_id = str(response.json["_id"])
+                    response = client.get(f"/api/orders/{order_id}")
+                    assert response.status_code == 200
+
+                    def test_retrieve_order_non_existent(client, db_session):
+                        order_id = "12345"
+                        response = client.get(f"/api/orders/{order_id}")
+                        assert response.status_code == 404
+
+                        def test_create_order_with_trailing_stop(client, db_session):
+                            order_data = {
+                                "symbol": "BTC/USDT",
+                                "stop_loss_price": 45000,
+                                "last_executed_price": 46000,
+                                "quantity": 1,
+                                "user_id": 1,
+                                "trailing_stop": True,
+                            }
+                            response = client.post("/api/orders", json=order_data)
+                            assert response.status_code == 200
+                            db = get_db()
+                            query = Trade.find(db).filter(Trade.user_id == 1)
+                            has_trailing_stop = False
+                            while query.has_next():
+                                result = next(query)
+                                if result.symbol == "BTC/USDT":
+                                    assert str(result["_id"]) != order_id
+                                    has_trailing_stop = True
+                                    break
+                                assert has_trailing_stop
+
+                                def test_database_rollback_on_error(client, db_session):
+                                    mock_session.rollback = True
+                                    try:
+                                        response = client.post(
+                                            "/api/orders",
+                                            json={
+                                                "symbol": "BTC/USDT",
+                                                "stop_loss_price": 45000,
+                                                "last_executed_price": 46000,
+                                                "quantity": 1,
+                                                "user_id": 1,
+                                                "trailing_stop": True,
+                                            },
+                                        )
+                                        assert response.status_code == 200
+                                    finally:
+                                        mock_session.rollback = False
