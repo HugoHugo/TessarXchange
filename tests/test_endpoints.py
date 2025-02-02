@@ -10360,3 +10360,102 @@ async def test_health_async(app: FastAPI, client: TestClient):
                         assert "timestamp" in data
                         metrics = data["metrics"]
                         assert len(metrics) == 4
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_batch_order_valid_data(client):
+    body = [
+        {
+            "symbol": "BTC/USDT",
+            "position_size": 1.0,
+            "buy_price": 45000,
+            "sell_price": None,
+            "side": "buy",
+        },
+        {
+            "symbol": "ETH/USDC",
+            "position_size": 2.0,
+            "buy_price": 32000,
+            "sell_price": None,
+            "side": "sell",
+        },
+    ]
+    client.get("/batch_order", body=body)
+
+    def test_batch_order_missing_symbol(client):
+        body = [
+            {
+                "symbol": "",
+                "position_size": 1.0,
+                "buy_price": None,
+                "sell_price": None,
+                "side": None,
+            },
+            {"symbol": "BTC/USDT", "position_size": 2.0},
+        ]
+        with pytest.raises(HTTPException) as exc_info:
+            client.get("/batch_order", body=body)
+            assert "Missing required field(s): symbol" in str(exc_info.value)
+
+            def test_batch_order_missing_position_size(client):
+                body = [
+                    {
+                        "symbol": "BTC/USDT",
+                        "position_size": "",
+                        "buy_price": None,
+                        "sell_price": None,
+                        "side": None,
+                    },
+                    {"symbol": "ETH/USDC", "position_size": 2.0},
+                ]
+                with pytest.raises(HTTPException) as exc_info:
+                    client.get("/batch_order", body=body)
+                    assert "Missing required field(s): position_size" in str(
+                        exc_info.value
+                    )
+
+                    def test_batch_order_side_mismatch(client):
+                        body = [
+                            {
+                                "symbol": "BTC/USDT",
+                                "position_size": 1.0,
+                                "buy_price": None,
+                                "sell_price": None,
+                                "side": None,
+                            },
+                            {
+                                "symbol": "ETH/USDC",
+                                "position_size": 2.0,
+                                "buy_price": 32000,
+                                "sell_price": None,
+                            },
+                        ]
+                        with pytest.raises(HTTPException) as exc_info:
+                            client.get("/batch_order", body=body)
+                            assert "Missing required field(s): side" in str(
+                                exc_info.value
+                            )
+
+                            def test_batch_order_stop_loss_calculation(client):
+                                buy_order = {
+                                    "symbol": "BTC/USDT",
+                                    "position_size": 1.0,
+                                    "buy_price": 45000,
+                                    "sell_price": None,
+                                    "side": "buy",
+                                }
+                                client.get("/batch_order", body=[buy_order])
+
+                                def test_batch_order_stop_loss_calculation_sell(client):
+                                    sell_order = {
+                                        "symbol": "ETH/USDC",
+                                        "position_size": 2.0,
+                                        "buy_price": None,
+                                        "sell_price": 32000,
+                                        "side": "sell",
+                                    }
+                                    client.get("/batch_order", body=[sell_order])

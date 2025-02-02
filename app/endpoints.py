@@ -111,10 +111,12 @@ from typing import Callable, Any
 from typing import Dict
 from typing import Dict, Optional
 from typing import List
+from typing import List, Dict, Union
 from typing import List, Optional
 from typing import Optional
 from typing import Optional, Union
 from typing import UUID
+from uuid import UUID
 from uuid import uuid4
 import asyncio
 import base64
@@ -9286,3 +9288,127 @@ class FastAPI:
             current_time = self.now.isoformat()
             formatted_time = datetime.now().isoformat(sep="T", timespec="minutes")
             return {"timestamp": formatted_time, "metrics": metrics}
+
+
+app = FastAPI()
+
+
+class OrderData:
+
+    def __init__(
+        self,
+        symbol: str,
+        position_size: float,
+        buy_price: int | None = None,
+        sell_price: int | None = None,
+        side: str | None = None,
+    ):
+        self.symbol = symbol
+        self.position_size = position_size
+        self.buy_price = buy_price
+        self.sell_price = sell_price
+        self.side = side
+
+        @app.get("/batch_order")
+        def create_batch_order(body: Dict[str, Union[List[OrderData], str]]):
+            if "body" not in body or not isinstance(body["body"], list):
+                raise HTTPException(
+                    status_code=422, detail="Invalid request body format"
+                )
+                orders = body["body"]
+                for order_data in orders:
+                    if not isinstance(order_data, OrderData) or any(
+                        (
+                            field is None
+                            for field in [
+                                order_data.symbol,
+                                order_data.position_size,
+                                (
+                                    order_data.buy_price
+                                    if order_data.side == "buy"
+                                    else None
+                                ),
+                                (
+                                    order_data.sell_price
+                                    if order_data.side == "sell"
+                                    else None
+                                ),
+                                order_data.side,
+                            ]
+                        )
+                    ):
+                        missing_fields = []
+                        if not order_data.symbol:
+                            missing_fields.append("symbol")
+                            if not order_data.position_size:
+                                missing_fields.append("position_size")
+                                if (
+                                    order_data.side is None
+                                    or (
+                                        not order_data.buy_price
+                                        and order_data.side == "buy"
+                                    )
+                                    or (
+                                        not order_data.sell_price
+                                        and order_data.side == "sell"
+                                    )
+                                ):
+                                    missing_fields.append(
+                                        "side" if side else "buy/sell price"
+                                    )
+                                    raise HTTPException(
+                                        status_code=422,
+                                        detail=f"Missing required field(s): {', '.join(missing_fields)}",
+                                    )
+                                    stop_loss_price = None
+                                    for order_data in orders:
+                                        if order_data.side == "buy":
+                                            if (
+                                                order_data.buy_price is not None
+                                                and order_data.sell_price is None
+                                            ):
+                                                continue
+                                        elif (
+                                            order_data.buy_price is None
+                                            and order_data.sell_price is not None
+                                        ):
+                                            stop_loss_price = order_data.sell_price
+                                        elif order_data.side == "sell":
+                                            if (
+                                                order_data.sell_price is not None
+                                                and order_data.buy_price is None
+                                            ):
+                                                continue
+                                        elif (
+                                            order_data.sell_price is None
+                                            and order_data.buy_price is not None
+                                        ):
+                                            stop_loss_price = order_data.buy_price
+                                            batch_order_id = str(UUID())
+                                            return {
+                                                "order_id": batch_order_id,
+                                                "symbol": (
+                                                    orders[0].symbol if orders else None
+                                                ),
+                                                "type": "batch_order",
+                                                "side": [
+                                                    order_data.side
+                                                    for order_data in orders
+                                                ],
+                                                "position_size": [
+                                                    order_data.position_size
+                                                    for order_data in orders
+                                                ],
+                                                "buy_price": [
+                                                    order_data.buy_price
+                                                    or order_data.sell_price
+                                                    for order_data in orders
+                                                ],
+                                                "sell_price": [
+                                                    order_data.sell_price
+                                                    or order_data.buy_price
+                                                    for order_data in orders
+                                                ],
+                                                "stop_loss_price": stop_loss_price,
+                                                "execution_time": datetime.now().isoformat(),
+                                            }
