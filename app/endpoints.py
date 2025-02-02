@@ -8,6 +8,7 @@ from alembic.config import Config
 from backend.models.order import Order
 from database import SessionLocal
 from database.database import get_db
+from datetime import date as dt_date
 from datetime import date, timedelta
 from datetime import datetime
 from datetime import datetime, timedelta
@@ -9072,3 +9073,12 @@ class OrderBase:
                                 else:
                                     stop_price = last_executed_price - pips / 10000.0
                                     return stop_price
+
+
+app = FastAPI()
+
+
+@app.post("/tax-report-generator")
+async def generate_tax_report(start_date: str, end_date: str):
+    tax_data = await get_tax_data(start_date, end_date)
+    return {"tax_report": tax_data, "status": "success"}

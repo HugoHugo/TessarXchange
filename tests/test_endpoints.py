@@ -3,6 +3,7 @@ from ..db import get_db
 from ..models import Order, Trade, User
 from alembic import context
 from contextlib import suppress
+from datetime import date as dt_date
 from datetime import date as dt_date, timedelta
 from datetime import datetime
 from datetime import datetime, time
@@ -9898,3 +9899,73 @@ def db_session():
                                         assert response.status_code == 200
                                     finally:
                                         mock_session.rollback = False
+
+
+app = FastAPI()
+
+
+@pytest.mark.asyncio
+async def test_successful_response():
+    start_date = "2023-10-01"
+    end_date = "2023-10-05"
+    client = TestClient(app)
+    response = await client.post(
+        "/tax-report-generator", json={"start_date": start_date, "end_date": end_date}
+    )
+    assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_invalid_date_range():
+        start_date = "2023-10-05"
+        end_date = "2023-10-01"
+        client = TestClient(app)
+        with pytest.raises(HTTPException) as excinfo:
+            await client.post(
+                "/tax-report-generator",
+                json={"start_date": start_date, "end_date": end_date},
+            )
+            assert str(excinfo.value).startswith("Invalid date range")
+
+            @pytest.mark.asyncio
+            async def test_same_day_period():
+                start_date = dt_date(2023, 10, 1)
+                end_date = dt_date(2023, 10, 1)
+                client = TestClient(app)
+                response = await client.post(
+                    "/tax-report-generator",
+                    json={
+                        "start_date": start_date.isoformat(),
+                        "end_date": end_date.isoformat(),
+                    },
+                )
+                assert response.status_code == 200
+
+                @pytest.mark.asyncio
+                async def test_invalid_dates():
+                    invalid_date = dt_date(2023, 12, 31).isoformat() + "1"
+                    client = TestClient(app)
+                    with pytest.raises(HTTPException) as excinfo:
+                        await client.post(
+                            "/tax-report-generator",
+                            json={
+                                "start_date": invalid_date,
+                                "end_date": dt_date(2023, 10, 1).isoformat(),
+                            },
+                        )
+                        assert str(excinfo.value).startswith("Invalid date format")
+
+                        @pytest.mark.asyncio
+                        async def test_invalid_types():
+                            non_str_start = 2023
+                            client = TestClient(app)
+                            with pytest.raises(HTTPException) as excinfo:
+                                await client.post(
+                                    "/tax-report-generator",
+                                    json={
+                                        "start_date": non_str_start,
+                                        "end_date": dt_date(2023, 10, 1).isoformat(),
+                                    },
+                                )
+                                assert str(excinfo.value).startswith(
+                                    "Invalid type for date field"
+                                )
