@@ -6,6 +6,7 @@ from contextlib import suppress
 from datetime import date as dt_date
 from datetime import date as dt_date, timedelta
 from datetime import datetime
+from datetime import datetime as dt
 from datetime import datetime, time
 from datetime import datetime, timedelta
 from datetime import datetime, timezone
@@ -10155,3 +10156,144 @@ class RewardData(BaseModel):
                                     )
                                     assert response.status_code == 200
                                     assert "total_reward" in response.json()
+
+
+@pytest.fixture
+def db():
+    """In-memory SQLAlchemy session fixture."""
+    db = SessionLocal()
+    yield db
+    db.close()
+
+    @pytest.mark.asyncio
+    async def test_create_alert(client: TestClient):
+        """Test creating a new alert with required fields."""
+        mock_data = {
+            "product_name": "Test Product",
+            "notification_type": "price",
+            "email_address": "test@example.com",
+            "price": 100.0,
+            "expiration_date": dt.now().date(),
+        }
+        with db() as session:
+            response = client.post("/api/alerts", data=mock_data)
+            assert response.status_code == 201, "Failed to create alert"
+            result = await response.json()
+            print(f"Test Data: {result}")
+            assert "id" in result
+            assert isinstance(result["id"], int)
+
+            @pytest.mark.asyncio
+            async def test_create_alert_missing_field(client: TestClient, mock_data):
+                """Test creating an alert with missing required field."""
+                with db() as session:
+                    response = client.post("/api/alerts", data=mock_data)
+                    assert response.status_code == 422, "Failed to create alert"
+                    result = await response.json()
+                    print(f"Error Data: {result}")
+                    assert "Missing required fields" in str(result.get("detail"))
+
+                    @pytest.mark.asyncio
+                    async def test_get_single_alert(client: TestClient):
+                        """Test retrieving a single alert by ID."""
+                        mock_data = {
+                            "id": 1,
+                            "product_name": "Test Product",
+                            "notification_type": "email",
+                            "email_address": "test@example.com",
+                            "price": 50.0,
+                            "expiration_date": dt.now().date(),
+                        }
+                        with db() as session:
+                            Alert(**mock_data).save - binding(session)
+                            response = client.get(f"/api/alerts/1")
+                            assert response.status_code == 200, "Failed to get alert"
+                            result = await response.json()
+                            print(f"Alert Data: {result}")
+                            assert "id" in result
+                            assert isinstance(result["id"], int)
+                            assert all(
+                                (
+                                    key in result
+                                    for key in [
+                                        "product_name",
+                                        "notification_type",
+                                        "email_address",
+                                        "price",
+                                        "expiration_date",
+                                    ]
+                                )
+                            )
+
+                            @pytest.mark.asyncio
+                            async def test_get_all_alerts(
+                                client: TestClient, mock_data
+                            ):
+                                """Test retrieving all alerts."""
+                                with db() as session:
+                                    Alert(**mock_data).save - binding(session)
+                                    response = client.get("/api/alerts")
+                                    assert (
+                                        response.status_code == 200
+                                    ), "Failed to get alerts"
+                                    result = await response.json()
+                                    print(f"All Alert Data: {result}")
+                                    assert isinstance(result, list)
+
+                                    @pytest.mark.asyncio
+                                    async def test_update_alert(client: TestClient):
+                                        """Test updating an alert with existing ID."""
+                                        mock_data_initial = {
+                                            "id": 1,
+                                            "product_name": "Original Product",
+                                            "notification_type": "email",
+                                            "email_address": "test@example.com",
+                                            "price": 50.0,
+                                            "expiration_date": dt.now().date(),
+                                        }
+                                        with db() as session:
+                                            Alert(**mock_data_initial).save - binding(
+                                                session
+                                            )
+                                            response = client.put(
+                                                f"/api/alerts/1",
+                                                data={
+                                                    "product_name": "Updated Product"
+                                                },
+                                            )
+                                            assert (
+                                                response.status_code == 200
+                                            ), "Failed to update alert"
+                                            result = await response.json()
+                                            print(f"Updated Alert Data: {result}")
+                                            assert "Updated Product" in str(
+                                                result.get("product_name")
+                                            )
+
+                                            @pytest.mark.asyncio
+                                            async def test_delete_alert(
+                                                client: TestClient,
+                                            ):
+                                                """Test deleting an alert by ID."""
+                                                mock_data = {
+                                                    "id": 1,
+                                                    "product_name": "Test Product",
+                                                    "notification_type": "email",
+                                                    "email_address": "test@example.com",
+                                                    "price": 50.0,
+                                                    "expiration_date": dt.now().date(),
+                                                }
+                                                with db() as session:
+                                                    Alert(**mock_data).save - binding(
+                                                        session
+                                                    )
+                                                    response = client.delete(
+                                                        f"/api/alerts/1"
+                                                    )
+                                                    assert (
+                                                        response.status_code == 200
+                                                    ), "Failed to delete alert"
+                                                    result = await response.json()
+                                                    print(
+                                                        f"Alert Data After Delete: {result}"
+                                                    )

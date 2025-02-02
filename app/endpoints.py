@@ -11,6 +11,7 @@ from database.database import get_db
 from datetime import date as dt_date
 from datetime import date, timedelta
 from datetime import datetime
+from datetime import datetime as dt
 from datetime import datetime, timedelta
 from datetime import time
 from datetime import timedelta
@@ -18,6 +19,7 @@ from decimal_identities import DecentralizedIdentity
 from eth_account import Account
 from fastapi import APIRouter, Body, Path
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import APIRouter, HTTPException
 from fastapi import APIRouter, Path
 from fastapi import APIRouter, Path, Query
@@ -9137,3 +9139,108 @@ class RewardData(BaseModel):
                 @app.get("/current_volume")
                 async def get_current_volume(volume_data: VolumeData):
                     return volume_data.dict()
+
+
+Base = TypeVar("Base")
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+    id = Column(Integer, primary_key=True)
+    product_name = Column(String(255), nullable=False)
+    notification_type = Column(String(50), default="price")
+    email_address = Column(String(100), nullable=False)
+    price = Column(Float)
+    expiration_date = Column(Date)
+    router = APIRouter()
+
+    @router.post("/api/alerts")
+    async def create_alert(data: dict, db: Session):
+        if not all(
+            (
+                key in data
+                for key in ["product_name", "notification_type", "email_address"]
+            )
+        ):
+            raise HTTPException(status_code=422, detail="Missing required fields")
+            new_alert = Alert(
+                product_name=data["product_name"],
+                notification_type=data.get("notification_type") or "price",
+                email_address=data["email_address"],
+                price=data["price"],
+                expiration_date=(
+                    datetime.now().date()
+                    if data.get("expiration_date") is None
+                    else data["expiration_date"]
+                ),
+            )
+            db.add(new_alert)
+            try:
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=422, detail="Failed to create alert")
+            finally:
+                db.refresh(new_alert)
+                return new_alert
+
+            @router.get("/api/alerts/{alert_id}")
+            async def get_alert(alert_id: int, db: Session):
+                alert = db.query(Alert).filter(Alert.id == alert_id).first()
+                if not alert:
+                    raise HTTPException(status_code=404, detail="Alert not found")
+                    return {
+                        "id": alert.id,
+                        "product_name": alert.product_name,
+                        "notification_type": alert.notification_type,
+                        "email_address": alert.email_address,
+                        "price": alert.price,
+                        "expiration_date": (
+                            alert.expiration_date.isoformat()
+                            if alert.expiration_date
+                            else None
+                        ),
+                    }
+
+                @router.get("/api/alerts")
+                async def get_all_alerts(db: Session):
+                    alerts = db.query(Alert).all()
+                    return {"alerts": [alert.to_dict() for alert in alerts]}
+
+                @router.put("/api/alerts/{alert_id}")
+                async def update_alert(alert_id: int, data: dict, db: Session):
+                    alert = db.query(Alert).filter(Alert.id == alert_id).first()
+                    if not alert:
+                        raise HTTPException(status_code=404, detail="Alert not found")
+                        for key, value in data.items():
+                            setattr(alert, key, value)
+                            db.add(alert)
+                            try:
+                                db.commit()
+                            except Exception as e:
+                                db.rollback()
+                                raise HTTPException(
+                                    status_code=422, detail="Failed to update alert"
+                                )
+                            finally:
+                                db.refresh(alert)
+                                return alert
+
+                            @router.delete("/api/alerts/{alert_id}")
+                            async def delete_alert(alert_id: int, db: Session):
+                                alert = (
+                                    db.query(Alert).filter(Alert.id == alert_id).first()
+                                )
+                                if not alert:
+                                    raise HTTPException(
+                                        status_code=404, detail="Alert not found"
+                                    )
+                                    db.delete(alert)
+                                    try:
+                                        db.commit()
+                                    except Exception as e:
+                                        db.rollback()
+                                        raise HTTPException(
+                                            status_code=422,
+                                            detail="Failed to delete alert",
+                                        )
