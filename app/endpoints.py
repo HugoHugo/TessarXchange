@@ -9412,3 +9412,79 @@ class OrderData:
                                                 "stop_loss_price": stop_loss_price,
                                                 "execution_time": datetime.now().isoformat(),
                                             }
+
+
+router = APIRouter()
+
+
+class Order(BaseModel):
+    order_id: str
+    instrument: str
+    quantity: float
+    price: float
+    order_type: str
+    client_order_id: Optional[str] = None
+
+    class ExchangeMarketplace:
+        name: str
+        is_margin: bool
+        min_quantity: float
+        tick_size: float
+
+        @router.post("/route")
+        async def route_order(
+            incoming_order: Order, exchanges: List[ExchangeMarketplace]
+        ):
+            matched_orders = []
+            for exchange in exchanges:
+                if (
+                    incoming_order.is_margin
+                    and exchange.min_quantity <= incoming_order.quantity
+                    and (exchange.tick_size <= incoming_order.price * 0.02)
+                ):
+                    matched_order = {
+                        "id": f"MO-{datetime.now().strftime('%Y%m%d_%H%M%S')}-{exchange.name}",
+                        "exchange_name": exchange.name,
+                        "order_type": "limit",
+                        "size": incoming_order.quantity,
+                        "price": round(incoming_order.price * 100) / 100,
+                        "fee_basis": "TWAP",
+                        "status": "filled",
+                    }
+                    matched_orders.append(matched_order)
+                    if not matched_orders:
+                        raise HTTPException(
+                            status_code=status.HTTP404_BAD_REQUEST,
+                            detail="No matching orders found",
+                        )
+                        return {"matched_orders": matched_orders}
+
+                    async def main():
+                        incoming_order = Order(
+                            order_id="ORDER-20231025-1423",
+                            instrument="BTC/USDT",
+                            quantity=0.5,
+                            price=32000.0,
+                            order_type="limit",
+                        )
+                        exchanges = [
+                            ExchangeMarketplace(
+                                name="Binance",
+                                is_margin=True,
+                                min_quantity=0.1,
+                                tick_size=0.0001,
+                            ),
+                            ExchangeMarketplace(
+                                name="Bybit",
+                                is_margin=False,
+                                min_quantity=0.01,
+                                tick_size=0.0002,
+                            ),
+                        ]
+                        try:
+                            response = await route_order(incoming_order, exchanges)
+                            print("API Response:", response)
+                        except HTTPException as e:
+                            print(f"Error:", str(e))
+                            if __name__ == "__main__":
+                                main()

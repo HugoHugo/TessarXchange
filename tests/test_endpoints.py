@@ -10459,3 +10459,145 @@ def test_batch_order_valid_data(client):
                                         "side": "sell",
                                     }
                                     client.get("/batch_order", body=[sell_order])
+
+
+@pytest.mark.asyncio
+async def test_main_success():
+
+    async def mock_datetime() -> datetime:
+        pass
+        client = TestClient(app)
+        incoming_order = Order(
+            order_id="ORDER-20231025-1423",
+            instrument="BTC/USDT",
+            quantity=0.5,
+            price=32000.0,
+            order_type="limit",
+        )
+        exchanges = [
+            ExchangeMarketplace(
+                name="Binance", is_margin=True, min_quantity=0.1, tick_size=0.0001
+            ),
+            ExchangeMarketplace(
+                name="Bybit", is_margin=False, min_quantity=0.01, tick_size=0.0002
+            ),
+        ]
+
+        async def mock_route_order(
+            _incoming_order: Order, _exchanges: List[ExchangeMarketplace]
+        ):
+            return {"matched_orders": ["order-1"]}
+
+        with client:
+            setattr(mock_datetime(), "return_value", None)
+            response = await client.get(
+                "/route",
+                params={
+                    "incoming_order": incoming_order.dict(),
+                    "exchanges": [e.dict() for e in exchanges],
+                },
+            )
+            assert response.status_code == 200
+            assert response.json() == {"matched_orders": ["order-1"]}
+
+            @pytest.mark.asyncio
+            async def test_main_exception():
+
+                async def mock_datetime() -> datetime:
+                    pass
+                    client = TestClient(app)
+                    incoming_order = Order(
+                        order_id="ORDER-20231025-1423",
+                        instrument="BTC/USDT",
+                        quantity=1.0,
+                        price=32000.0,
+                        order_type="limit",
+                        is_margin=True,
+                    )
+                    exchanges = [
+                        ExchangeMarketplace(
+                            name="Binance",
+                            is_margin=True,
+                            min_quantity=0.5,
+                            tick_size=0.0001,
+                        )
+                    ]
+
+                    async def mock_route_order(
+                        _incoming_order: Order, _exchanges: List[ExchangeMarketplace]
+                    ):
+                        if _incoming_order.is_margin and (
+                            any(
+                                (
+                                    e.min_quantity > incoming_order.quantity
+                                    for e in _exchanges
+                                )
+                            )
+                            or any(
+                                (
+                                    e.tick_size > incoming_order.price * 0.02
+                                    for e in _exchanges
+                                )
+                            )
+                        ):
+                            raise HTTPException(
+                                status_code=status.HTTP404_BAD_REQUEST,
+                                detail="No matching orders found",
+                            )
+                            with client:
+                                setattr(mock_datetime(), "return_value", None)
+                                response = await client.get(
+                                    "/route",
+                                    params={
+                                        "incoming_order": incoming_order.dict(),
+                                        "exchanges": [e.dict() for e in exchanges],
+                                    },
+                                )
+                                assert response.status_code == 404
+                                assert "No matching orders found" in str(
+                                    response.json()
+                                )
+
+                                @pytest.mark.asyncio
+                                async def test_main_missing_dependencies():
+
+                                    async def mock_datetime() -> datetime:
+                                        pass
+                                        client = TestClient(app)
+                                        incoming_order = Order(
+                                            order_id="ORDER-20231025-1423",
+                                            instrument="BTC/USDT",
+                                            quantity=0.5,
+                                            price=32000.0,
+                                            order_type="limit",
+                                        )
+                                        exchanges = [
+                                            ExchangeMarketplace(
+                                                name="Binance",
+                                                is_margin=True,
+                                                min_quantity=0.1,
+                                                tick_size=0.0001,
+                                            )
+                                        ]
+
+                                        async def mock_route_order(
+                                            _incoming_order: Order,
+                                            _exchanges: List[ExchangeMarketplace],
+                                        ):
+                                            if hasattr(datetime, "now"):
+                                                return {"matched_orders": ["order-2"]}
+                                            with client:
+                                                setattr(mock_datetime(), "now", None)
+                                                response = await client.get(
+                                                    "/route",
+                                                    params={
+                                                        "incoming_order": incoming_order.dict(),
+                                                        "exchanges": [
+                                                            e.dict() for e in exchanges
+                                                        ],
+                                                    },
+                                                )
+                                                assert response.status_code == 200
+                                                assert "matched_orders" in str(
+                                                    response.json()
+                                                )
