@@ -10623,10 +10623,6 @@ def test_get_parameters_without_params():
             assert response.status_code == 200
             results = response.json()
             assert isinstance(results, list)
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime, timedelta
-import json
 
 
 @pytest.fixture
@@ -10636,18 +10632,15 @@ def app():
 
 @pytest.mark.asyncio
 async def test_get_risk_assessment正常情况和异常情况的测试(app: FastAPI):
-    # 正常情况
     request_data = {"date": "2023-01-01", "risk_score": 5}
     client = TestClient(app)
     response = await client.get("/risk-assessment", json=request_data)
     assert response.status_code == 200
     response_data = await response.json()
     assert isinstance(response_data, dict)
-    # 考虑日期无效的情况
     request_data = {"date": "invalid_date", "risk_score": 5}
     response = await client.get("/risk-assessment", json=request_data)
     assert response.status_code == 422
-    # 考虑风险评分无效的情况（默认值0）
     request_data = {"date": "2023-01-01"}
     response = await client.get("/risk-assessment", json=request_data)
     assert response.status_code == 422
@@ -10656,12 +10649,10 @@ async def test_get_risk_assessment正常情况和异常情况的测试(app: Fast
 
     @pytest.mark.asyncio
     async def test_limit_risk_exposure正常情况和异常情况的测试(app: FastAPI):
-        # 正常情况：传入一个有效的动作列表
         actions = ["action1", "action2"]
         client = TestClient(app)
         response = await client.put("/limit-risk", json={"actions": actions})
         assert response.status_code == 200
-        # 错误情况1：非列表类型
         try:
             actions = {"invalid": "data"}
             response = await client.put("/limit-risk", json={"actions": actions})
@@ -10670,7 +10661,6 @@ async def test_get_risk_assessment正常情况和异常情况的测试(app: Fast
             print("TypeError:", e)
         else:
             assert False
-            # 错误情况2：空列表（允许）
             response = await client.put("/limit-risk", json={"actions": []})
             assert response.status_code == 200
             try:
@@ -10684,7 +10674,6 @@ async def test_get_risk_assessment正常情况和异常情况的测试(app: Fast
 
                 @pytest.mark.asyncio
                 async def test_errors处理异常情况的测试(app: FastAPI):
-                    # 测试/errors路由中的异常处理
                     client = TestClient(app)
                     try:
                         response = await client.get("/errors", json={"invalid": "data"})
@@ -10693,7 +10682,6 @@ async def test_get_risk_assessment正常情况和异常情况的测试(app: Fast
                         print("ValueError:", e)
                     else:
                         assert False
-                        # 测试不同的输入类型
                         for test_input in [123, None]:
                             try:
                                 response = await client.get("/errors", json=test_input)
@@ -10705,7 +10693,6 @@ async def test_get_risk_assessment正常情况和异常情况的测试(app: Fast
 
                                 @pytest.mark.asyncio
                                 async def test_log_requests日志处理和验证(app: FastAPI):
-                                    # 测试日志请求的正常情况和异常情况
                                     client = TestClient(app)
                                     try:
                                         response = await client.get(
@@ -10721,7 +10708,6 @@ async def test_get_risk_assessment正常情况和异常情况的测试(app: Fast
                                         print("ValueError:", e)
                                     else:
                                         assert False
-                                        # 测试不同的输入类型
                                         for test_input in [123, None]:
                                             try:
                                                 response = await client.get(
@@ -10732,3 +10718,46 @@ async def test_get_risk_assessment正常情况和异常情况的测试(app: Fast
                                                 print("TypeError:", e)
                                             else:
                                                 assert False
+
+
+@pytest.fixture
+def app_client():
+    client = TestClient(__main__.app)
+    return client
+
+
+async def test_create_position(app_client):
+    position_data = {
+        "symbol": "BTC",
+        "position_id": "12345",
+        "amount": 0.5,
+        "leverage": 10,
+        "entry_price": 45000,
+        "last_updated": datetime.now(),
+        "liquidation_triggered_at": None,
+    }
+    response = await app_client.post("/positions", json=position_data)
+    assert response.status_code == 201
+
+    async def test_read_position(app_client):
+        position_id = "12345"
+        response = await app_client.get(f"/positions/{position_id}")
+        assert response.status_code == 200
+
+        async def test_create_liquidation_threshold(app_client):
+            threshold_data = {
+                "threshold_id": "LTH123",
+                "pnl_percentage": -5,
+                "margin_level": 80,
+            }
+            response = await app_client.post(
+                "/liquidation-thresholds", json=threshold_data
+            )
+            assert response.status_code == 201
+
+            async def test_read_liquidation_threshold(app_client):
+                threshold_id = "LTH123"
+                response = await app_client.get(
+                    f"/liquidation-thresholds/{threshold_id}"
+                )
+                assert response.status_code == 200

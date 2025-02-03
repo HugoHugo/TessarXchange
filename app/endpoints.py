@@ -128,6 +128,7 @@ import hashlib
 import hmac
 import json
 import jwt
+import logging
 import math
 import models
 import numpy as np
@@ -9581,9 +9582,7 @@ class ParameterModel:
                                             data: ParameterUpdateForm,
                                         ) -> Union[ParameterModel, ParameterParams]:
                                             """Update existing parameter"""
-from fastapi import FastAPI
-from datetime import datetime
-import logging
+
 
 app = FastAPI()
 
@@ -9611,7 +9610,7 @@ async def get_risk_assessment(request_data: dict):
             actions = request_data or []
             if not isinstance(actions, list):
                 raise TypeError("Actions must be a list")
-                new_risk_level = "high"  # Default value
+                new_risk_level = "high"
                 return {"action": actions, "new_risk_level": new_risk_level}
         except Exception as e:
             logging.error(f"Error in limit_risk_exposure: {str(e)}")
@@ -9642,3 +9641,68 @@ async def get_risk_assessment(request_data: dict):
                 except Exception as e:
                     logging.error(f"Error in log_requests: {str(e)}")
                     return {"error": str(e)}
+
+
+class PositionBase(BaseModel):
+    symbol: str
+    position_id: str
+    amount: float
+    leverage: int
+    entry_price: float
+    last_updated: datetime
+    liquidation_triggered_at: datetime | None = None
+
+    class PositionCreate(PositionBase):
+        pass
+
+        class PositionUpdatePayload(PositionBase):
+            amount: float | None = None
+            leverage: int | None = None
+            entry_price: float | None = None
+            last_updated: datetime | None = None
+            liquidation_triggered_at: datetime | None = None
+
+            class PositionPositions(BaseModel):
+                positions: list[PositionCreate]
+
+                class LiquidationThresholdLiquidationBase(BaseModel):
+                    threshold_id: str
+                    pnl_percentage: float
+                    margin_level: float
+
+                    class LiquidationThresholdLiquidation(
+                        LiquidationThresholdLiquidationBase
+                    ):
+                        pass
+                        app = FastAPI()
+
+                        @app.post("/positions", response_model=PositionPositions)
+                        async def create_position(position: PositionCreate):
+                            return {"result": "success"}
+
+                        @app.get(
+                            "/positions/{position_id}", response_model=PositionPositions
+                        )
+                        async def read_position(
+                            position_id: str, update_data: PositionUpdatePayload = None
+                        ):
+                            return {"result": "success"}
+
+                        @app.post(
+                            "/liquidation-thresholds",
+                            response_model=LiquidationThresholdLiquidation,
+                        )
+                        async def create_liquidation_threshold(
+                            threshold: LiquidationThresholdLiquidationBase,
+                        ):
+                            return {"result": "success"}
+
+                        @app.get(
+                            "/liquidation-thresholds/{threshold_id}",
+                            response_model=LiquidationThresholdLiquidation,
+                        )
+                        async def read_liquidation_threshold(
+                            threshold_id: str,
+                            update_data: LiquidationThresholdLiquidationBase = None,
+                        ):
+                            return {"result": "success"}
