@@ -68,6 +68,7 @@ from jose import JWTError, jwt
 from models import RewardSnapshot
 from models import User, Order
 from models.transaction import Transaction
+from motor.motor_asyncio import AsyncIOMotorClient
 from py7plus import SevenPlus
 from pybitcoin import Bitcoin
 from pybitcoin import BitcoinAddress
@@ -9887,3 +9888,39 @@ class MarketImpactCalculator:
                     detail="End price cannot be negative.",
                 )
                 return result
+
+
+app = FastAPI()
+motor = AsyncIOMotorClient()
+db = motor.get_db()
+
+
+async def get_token(token_id):
+    token = await db.tokens.find_one({"id": token_id})
+    if not token:
+        return {
+            "id": str(uuid.uuid4()),
+            "name": "Unknown Token",
+            "votes": {},
+            "score": 0,
+        }
+    return token
+
+
+@app.get("/token-lists/{id}")
+async def list_tokens(id: int):
+    token = await get_token(id)
+    return {"token": token}
+
+
+@app.post("/voting")
+async def vote(votes_data: dict):
+    if not votes_data or "id" not in votes_data or "value" not in votes_data:
+        raise HTTPException(status_code=422, detail="Invalid request body")
+        token = await get_token(votes_data["id"])
+        token["votes"][str(votes_data["id"])] = votes_data["value"]
+        updated_score = token.get("score", 0) + (1 if votes_data["value"] == 1 else -1)
+        token["score"] = updated_score
+        return {"token": token, "message": "Vote successfully recorded"}
+    if __name__ == "__main__":
+        pass

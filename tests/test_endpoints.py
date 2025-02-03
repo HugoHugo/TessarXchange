@@ -146,6 +146,7 @@ from main import rebalance_tokens
 from models import User, Order
 from models.collateral import Collateral
 from models.position import Position
+from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 from pytest import mark
 from pytest import mark, raises
@@ -10909,3 +10910,47 @@ def test_market_impact_calculator_success(client):
                             for key in ["end_price", "total_cost", "market_impact"]
                         )
                     )
+
+
+@pytest.fixture
+async def client():
+    async with TestClient(app) as client:
+        yield client
+
+        @pytest.mark.asyncio
+        async def test_get_token_list(client):
+            token_id = 12345
+            response = await client.get(f"/token-lists/{token_id}")
+            assert response.status_code == 200
+            motor = db.command("ping")
+            assert motor["ping"] is not None
+
+            @pytest.mark.asyncio
+            async def test_vote(client):
+                votes_data = {"id": 1, "value": 1}
+
+                async def _get_token(id: int):
+                    return await get_token(id)
+
+                token_id = 45678
+                initial_token = await _get_token(token_id)
+                assert "votes" in initial_token
+                response = await client.post("/voting", json=votes_data)
+                assert response.status_code == 200
+                final_token = await _get_token(token_id)
+                assert (
+                    final_token["votes"].get(str(votes_data["id"]))
+                    == votes_data["value"]
+                )
+                initial_score = initial_token.get("score", 0)
+                final_score = final_token.get("score", 0)
+                expected_score = initial_score + (1 if votes_data["value"] == 1 else -1)
+                assert final_score == expected_score
+
+                @pytest.mark.asyncio
+                async def test_get_token_unknown_id():
+                    token_id = 98765
+                    response = await client.get(f"/token-lists/{token_id}")
+                    assert response.status_code == 404
+                    if __name__ == "__main__":
+                        pytest.main()
