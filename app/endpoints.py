@@ -21,6 +21,7 @@ from eth_account import Account
 from fastapi import APIRouter, Body, Path
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi import APIRouter, HTTPException
 from fastapi import APIRouter, Path
 from fastapi import APIRouter, Path, Query
@@ -9818,3 +9819,71 @@ async def bulk_withdrawal_approvals(current_user: Depends(dependantsDepends)):
     except Exception as e:
         print(f"Error processing bulk withdrawal approvals: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+router = APIRouter()
+
+
+class MarketImpactCalculator:
+
+    def calculate_market_impact(
+        self,
+        order_size: float,
+        start_price: float,
+        end_price: float,
+        trade_direction: str,
+        position_type: str,
+        volatility: float = 0.025,
+        transaction_cost: Optional[float] = None,
+        time_horizon: int = 1440,
+    ):
+        sqrt_time = np.sqrt(time_horizon)
+        if not transaction_cost:
+            transaction_cost = 0.002
+            price_change = (
+                volatility
+                * (end_price - start_price)
+                / ((start_price + end_price) / 2)
+                * sqrt_time
+            )
+            direction = 1 if trade_direction == "buy" else -1
+            price_impact = direction * price_change
+            total_cost = transaction_cost * order_size
+            market_impact = price_impact + total_cost
+            new_price = (
+                start_price + direction * price_impact + direction * market_impact
+            )
+            return {
+                "end_price": round(new_price, 2),
+                "total_cost": round(total_cost, 2),
+                "market_impact": round(market_impact, 4),
+            }
+
+        @app.get("/api/market-impact-calculator", response_model=MarketImpactCalculator)
+        async def calculate_market_impact(
+            order_size: float,
+            start_price: float,
+            end_price: float,
+            trade_direction: str,
+            position_type: str,
+            volatility: float = 0.025,
+            transaction_cost: Optional[float] = None,
+            time_horizon: int = 1440,
+        ):
+            calculator = MarketImpactCalculator()
+            result = calculator.calculate_market_impact(
+                order_size=order_size,
+                start_price=start_price,
+                end_price=end_price,
+                trade_direction=trade_direction,
+                position_type=position_type,
+                volatility=volatility,
+                transaction_cost=transaction_cost,
+                time_horizon=time_horizon,
+            )
+            if result["end_price"] < 0:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="End price cannot be negative.",
+                )
+                return result

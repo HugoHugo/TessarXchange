@@ -10825,3 +10825,87 @@ async def test_bulk_withdrawal_approvals():
     response = await client.get("/admin/bulk_withdrawal_approvals")
     result = await response
     assert result.status_code == 200
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_market_impact_calculator_success(client):
+    order_size = 10.0
+    start_price = 100.0
+    end_price = 98.5
+    trade_direction = "buy"
+    position_type = "long"
+    result = client.get(
+        "/api/market-impact-calculator",
+        params={
+            "order_size": order_size,
+            "start_price": start_price,
+            "end_price": end_price,
+            "trade_direction": trade_direction,
+            "position_type": position_type,
+        },
+    )
+    assert result.status_code == status.HTTP_200_OK
+    response_data = result.json()
+    assert all(
+        (key in response_data for key in ["end_price", "total_cost", "market_impact"])
+    )
+    assert round(response_data["end_price"], 2) == pytest.approx(97.56)
+    assert round(response_data["total_cost"], 2) == pytest.approx(0.18)
+    assert round(abs(response_data["market_impact"]), 4) == pytest.approx(0.12)
+
+    def test_market_impact_calculator_optional_params(client):
+        result = client.get(
+            "/api/market-impact-calculator",
+            params={
+                "order_size": 5.0,
+                "start_price": 98.5,
+                "end_price": 96.2,
+                "trade_direction": "sell",
+            },
+        )
+        assert result.status_code == status.HTTP_200_OK
+        response_data = result.json()
+        assert all(
+            (
+                key in response_data
+                for key in ["end_price", "total_cost", "market_impact"]
+            )
+        )
+
+        def test_market_impact_calculator_negative_price(client):
+            with pytest.raises(HTTPException) as exc_info:
+                result = client.get(
+                    "/api/market-impact-calculator",
+                    params={
+                        "order_size": 1.0,
+                        "start_price": 50.0,
+                        "end_price": -25.0,
+                        "trade_direction": "buy",
+                    },
+                )
+                assert exc_info.type == HTTPException
+                assert "End price cannot be negative." in str(exc_info.value)
+
+                def test_market_impact_calculator_with_position_type(client):
+                    result = client.get(
+                        "/api/market-impact-calculator",
+                        params={
+                            "order_size": 10.0,
+                            "start_price": 100.0,
+                            "end_price": 98.5,
+                            "trade_direction": "sell",
+                            "position_type": "short",
+                        },
+                    )
+                    assert result.status_code == status.HTTP_200_OK
+                    response_data = result.json()
+                    assert all(
+                        (
+                            key in response_data
+                            for key in ["end_price", "total_cost", "market_impact"]
+                        )
+                    )
