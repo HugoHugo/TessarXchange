@@ -10817,3 +10817,11 @@ def test_orderbook_endpoint(client):
                         )
                         assert response.status_code == 200
                         _()
+
+
+@pytest.mark.asyncio
+async def test_bulk_withdrawal_approvals():
+    client = TestClient(app)
+    response = await client.get("/admin/bulk_withdrawal_approvals")
+    result = await response
+    assert result.status_code == 200

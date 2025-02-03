@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from datetime import time
 from datetime import timedelta
 from decimal_identities import DecentralizedIdentity
+from dependants import dependants
 from eth_account import Account
 from fastapi import APIRouter, Body, Path
 from fastapi import APIRouter, Depends, HTTPException
@@ -37,6 +38,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi import FastAPI, Path
 from fastapi import FastAPI, Path, Query
 from fastapi import FastAPI, Query
+from fastapi import FastAPI, Session, Depends, HTTPException
 from fastapi import FastAPI, Session, Query
 from fastapi import FastAPI, WebSocket
 from fastapi import File, HTTPException, UploadFile
@@ -9784,3 +9786,35 @@ async def websocket_endpoint(websocket: WebSocket):
                                                 HTTPHeaders=["websocket"],
                                             )
                                             await websocket.connect("/trades")
+
+
+Base = declarative_base()
+app = FastAPI()
+
+
+@app.get("/admin/bulk_withdrawal_approvals")
+async def bulk_withdrawal_approvals(current_user: Depends(dependantsDepends)):
+    try:
+        pending_requests = Base.query.filter(
+            WithdrawalRequest.status == "pending"
+        ).all()
+        if not pending_requests:
+            return {"count": 0, "total_amount": 0.0}
+        if current_user.role != "admin":
+            raise HTTPException(status_code=401, detail="Unauthorized")
+            pending_requests = sorted(pending_requests, key=lambda x: x.created_at)
+            total_amount = sum((request.amount for request in pending_requests))
+            app_record = await Base.query.delete(Approvals)
+            new_approval = Approvers(
+                user_id=current_user.id, created_at=datetime.now(), is_approved=False
+            )
+            app_result = await app_record.insert([new_approval])
+            return {
+                "count": len(pending_requests),
+                "total_amount": total_amount,
+                "requests": [dict(request.__dict__) for request in pending_requests],
+                "approval_record_id": app_result.inserted_id,
+            }
+    except Exception as e:
+        print(f"Error processing bulk withdrawal approvals: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
