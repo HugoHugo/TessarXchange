@@ -9706,3 +9706,81 @@ class PositionBase(BaseModel):
                             update_data: LiquidationThresholdLiquidationBase = None,
                         ):
                             return {"result": "success"}
+
+
+app = FastAPI()
+
+
+@app.websocket("/orderbook")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+
+    def on_message(msg: str) -> None:
+        if msg.startswith("type"):
+            data_type = msg.split(" ")[0]
+            if data_type == "trade":
+                new_trade = {
+                    "id": datetime.now().isoformat(),
+                    "side": "buy",
+                    "quantity": 1.23,
+                    "price": 4567.89,
+                    "status": "filled",
+                }
+                await websocket.send(json.dumps(new_trade), HTTPHeaders=["websocket"])
+                await websocket.connect("/orderbook")
+                await websocket.send("Order book is initially empty")
+
+                @app.get("/api/v1/trades")
+                async def get_trades(limit: int = 0, start: int = 0):
+                    pass
+
+                    @app.get("/api/v1/orders")
+                    async def get_orders(
+                        limit: int = 0, start: int = 0, since_id: str | None = None
+                    ):
+                        pass
+
+                        def generate_fake_trade() -> dict:
+                            return {
+                                "id": datetime.now().isoformat(),
+                                "side": random.choice(["buy", "sell"]),
+                                "quantity": random.uniform(0.1, 1.0),
+                                "price": random.uniform(100, 10000),
+                                "status": random.choice(
+                                    ["new", "filled", "partially_filled"]
+                                ),
+                            }
+
+                        def generate_fake_orderbook() -> dict:
+                            buys = []
+                            sells = []
+                            for _ in range(5):
+                                buy = generate_fake_trade()
+                                sell = generate_fake_trade()
+                                buys.append(buy)
+                                sells.insert(0, sell)
+                                return {
+                                    "bids": [
+                                        f"{bid['side']} {bid['price']}, {bid['quantity']}"
+                                        for bid in buys
+                                    ],
+                                    "asks": [
+                                        f"{ask['side']} {ask['price']}, {ask['quantity']}"
+                                        for ask in sells
+                                    ],
+                                }
+
+                            @app.websocket("/trades")
+                            async def websocket_trades_endpoint(websocket: WebSocket):
+                                await websocket.accept()
+
+                                def on_message(msg: str) -> None:
+                                    if "type" in msg:
+                                        data_type = msg.split(" ")[0]
+                                        if data_type == "update":
+                                            orderbook = generate_fake_orderbook()
+                                            await websocket.send(
+                                                json.dumps(orderbook),
+                                                HTTPHeaders=["websocket"],
+                                            )
+                                            await websocket.connect("/trades")

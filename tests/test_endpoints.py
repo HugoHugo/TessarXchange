@@ -10761,3 +10761,59 @@ async def test_create_position(app_client):
                     f"/liquidation-thresholds/{threshold_id}"
                 )
                 assert response.status_code == 200
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_orderbook_endpoint(client):
+    """Test the WebSocket orderbook endpoint"""
+
+    async def _():
+        response = await client.get("/orderbook")
+        assert response.status_code == 200
+        _()
+
+        def test_api_v1_trades_get(client):
+            """Test GET /api/v1/trades endpoint"""
+
+            async def _():
+                response = client.get_test_body(
+                    "/api/v1/trades",
+                    json={
+                        "trades": [
+                            {
+                                "id": "1",
+                                "side": "buy",
+                                "quantity": 0.5,
+                                "price": 1000,
+                                "status": "filled",
+                            }
+                        ]
+                    },
+                )
+                assert response.status_code == 200
+                _()
+
+                def test_api_v1_orders_get(client):
+                    """Test GET /api/v1/orders endpoint"""
+
+                    async def _():
+                        response = client.get_test_body(
+                            "/api/v1/orders",
+                            json={
+                                "orders": [
+                                    {
+                                        "id": "1",
+                                        "side": "buy",
+                                        "quantity": 0.5,
+                                        "price": 1000,
+                                        "status": "filled",
+                                    }
+                                ]
+                            },
+                        )
+                        assert response.status_code == 200
+                        _()
