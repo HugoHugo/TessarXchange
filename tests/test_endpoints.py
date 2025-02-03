@@ -10623,3 +10623,112 @@ def test_get_parameters_without_params():
             assert response.status_code == 200
             results = response.json()
             assert isinstance(results, list)
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime, timedelta
+import json
+
+
+@pytest.fixture
+def app():
+    return FastAPI()
+
+
+@pytest.mark.asyncio
+async def test_get_risk_assessment正常情况和异常情况的测试(app: FastAPI):
+    # 正常情况
+    request_data = {"date": "2023-01-01", "risk_score": 5}
+    client = TestClient(app)
+    response = await client.get("/risk-assessment", json=request_data)
+    assert response.status_code == 200
+    response_data = await response.json()
+    assert isinstance(response_data, dict)
+    # 考虑日期无效的情况
+    request_data = {"date": "invalid_date", "risk_score": 5}
+    response = await client.get("/risk-assessment", json=request_data)
+    assert response.status_code == 422
+    # 考虑风险评分无效的情况（默认值0）
+    request_data = {"date": "2023-01-01"}
+    response = await client.get("/risk-assessment", json=request_data)
+    assert response.status_code == 422
+    response_data = await response.json()
+    assert isinstance(response_data, dict)
+
+    @pytest.mark.asyncio
+    async def test_limit_risk_exposure正常情况和异常情况的测试(app: FastAPI):
+        # 正常情况：传入一个有效的动作列表
+        actions = ["action1", "action2"]
+        client = TestClient(app)
+        response = await client.put("/limit-risk", json={"actions": actions})
+        assert response.status_code == 200
+        # 错误情况1：非列表类型
+        try:
+            actions = {"invalid": "data"}
+            response = await client.put("/limit-risk", json={"actions": actions})
+            assert response.status_code != 200
+        except TypeError as e:
+            print("TypeError:", e)
+        else:
+            assert False
+            # 错误情况2：空列表（允许）
+            response = await client.put("/limit-risk", json={"actions": []})
+            assert response.status_code == 200
+            try:
+                actions = None
+                response = await client.put("/limit-risk", json={"actions": actions})
+                assert response.status_code != 200
+            except TypeError as e:
+                print("TypeError:", e)
+            else:
+                assert False
+
+                @pytest.mark.asyncio
+                async def test_errors处理异常情况的测试(app: FastAPI):
+                    # 测试/errors路由中的异常处理
+                    client = TestClient(app)
+                    try:
+                        response = await client.get("/errors", json={"invalid": "data"})
+                        assert isinstance(response.json(), dict)
+                    except ValueError as e:
+                        print("ValueError:", e)
+                    else:
+                        assert False
+                        # 测试不同的输入类型
+                        for test_input in [123, None]:
+                            try:
+                                response = await client.get("/errors", json=test_input)
+                                assert isinstance(response.json(), dict)
+                            except TypeError as e:
+                                print("TypeError:", e)
+                            else:
+                                assert False
+
+                                @pytest.mark.asyncio
+                                async def test_log_requests日志处理和验证(app: FastAPI):
+                                    # 测试日志请求的正常情况和异常情况
+                                    client = TestClient(app)
+                                    try:
+                                        response = await client.get(
+                                            "/logging", json={"invalid": "data"}
+                                        )
+                                        assert isinstance(response.json(), dict)
+                                        log_response = await response.json()
+                                        assert (
+                                            "Request received at timestamp"
+                                            in log_response["message"]
+                                        )
+                                    except ValueError as e:
+                                        print("ValueError:", e)
+                                    else:
+                                        assert False
+                                        # 测试不同的输入类型
+                                        for test_input in [123, None]:
+                                            try:
+                                                response = await client.get(
+                                                    "/logging", json=test_input
+                                                )
+                                                assert isinstance(response.json(), dict)
+                                            except TypeError as e:
+                                                print("TypeError:", e)
+                                            else:
+                                                assert False
