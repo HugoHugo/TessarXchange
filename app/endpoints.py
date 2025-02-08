@@ -9997,3 +9997,48 @@ class RequestSignatures(BaseModel):
 
                 async def sign_message(message: str) -> str:
                     return message
+
+
+app = FastAPI()
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        order_book_data = {
+            "timestamp": datetime.now().isoformat(),
+            "bid1_volume": 500,
+            "bid1_price": 100.5,
+            "ask1_volume": 300,
+            "ask1_price": 101.2,
+        }
+        await websocket.send_json(order_book_data)
+
+        @app.get("/sentiment_analysis")
+        async def get_sentiment_analysis(order_book: dict):
+            bid1_volume = order_book.get("bid1_volume", 0)
+            ask1_volume = order_book.get("ask1_volume", 0)
+            volume_imbalance = bid1_volume - ask1_volume
+            if volume_imbalance > 500:
+                sentiment = "Positive"
+            elif volume_imbalance < -300:
+                sentiment = "Negative"
+            else:
+                sentiment = "Neutral"
+                return {"sentiment": sentiment}
+
+            @app.get("/all_market_data")
+            async def get_all_market_data():
+                market_data = {
+                    "timestamp": datetime.now().isoformat(),
+                    "open": 100.2,
+                    "high": 102.5,
+                    "low": 98.7,
+                    "close": 101.4,
+                    "volume": 400,
+                }
+                return market_data
+
+            if __name__ == "__main__":
+                uvicorn.run(app, host="localhost", port=8000)

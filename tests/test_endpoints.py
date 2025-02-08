@@ -19,6 +19,7 @@ from fastapi import FastAPI, UploadFile
 from fastapi import HTTPException
 from fastapi import TestClient
 from fastapi import WebSocket
+from fastapi import status
 from fastapi.test import TestClient
 from fastapi.testclient import TestClient
 from fastapi.testclient import TestWebsocket
@@ -11039,3 +11040,82 @@ async def test_multi_signature_endpoint_valid_signatures():
                         assert response.status_code == 500
                         assert "Error processing signature" in str(response.json())
                         await client.close()
+
+
+@pytest.mark.asyncio
+async def test_get_sentiment_analysis() -> None:
+    client = TestClient(app)
+    positive_order_book = {
+        "timestamp": datetime.now().isoformat(),
+        "bid1_volume": 600,
+        "bid1_price": 100.5,
+        "ask1_volume": 300,
+        "ask1_price": 101.2,
+    }
+    positive_response = await client.get(
+        "/sentiment_analysis", json=positive_order_book
+    )
+    assert positive_response.status_code == status.HTTP_200_OK
+    assert positive_response.json()["sentiment"] == "Positive"
+    negative_order_book = {
+        "timestamp": datetime.now().isoformat(),
+        "bid1_volume": 400,
+        "bid1_price": 100.5,
+        "ask1_volume": 800,
+        "ask1_price": 101.2,
+    }
+    negative_response = await client.get(
+        "/sentiment_analysis", json=negative_order_book
+    )
+    assert negative_response.status_code == status.HTTP_200_OK
+    assert negative_response.json()["sentiment"] == "Negative"
+    neutral_order_book = {
+        "timestamp": datetime.now().isoformat(),
+        "bid1_volume": 500,
+        "bid1_price": 100.5,
+        "ask1_volume": 500,
+        "ask1_price": 101.2,
+    }
+    neutral_response = await client.get("/sentiment_analysis", json=neutral_order_book)
+    assert neutral_response.status_code == status.HTTP_200_OK
+    assert neutral_response.json()["sentiment"] == "Neutral"
+
+    @pytest.mark.asyncio
+    async def test_get_all_market_data() -> None:
+        client = TestClient(app)
+        response = await client.get("/all_market_data")
+        assert response.status_code == status.HTTP_200_OK
+        market_data = response.json()
+        assert type(market_data) is dict
+        assert "timestamp" in market_data
+        assert "open" in market_data
+        assert "high" in market_data
+        assert "low" in market_data
+        assert "close" in market_data
+        assert "volume" in market_data
+
+        @pytest.mark.asyncio
+        async def test_websocket_connection() -> None:
+            client = TestClient(app)
+            websocket = await client.websocket("/ws")
+            await websocket.accept()
+            test_message = {"test": "message"}
+            await websocket.send_json(test_message)
+            received_messages = 0
+            last_message = None
+
+            async def check_message():
+                nonlocal received_messages, last_message
+                while True:
+                    msg = await websocket.receive()
+                    received_messages += 1
+                    assert isinstance(msg, dict)
+                    last_message = msg
+                    asyncio.create_task(check_message())
+                    try:
+                        await websocket.close()
+                    finally:
+                        if hasattr(websocket, "close"):
+                            await websocket.close()
+                            assert received_messages >= 1
+                            assert "test" in last_message
