@@ -160,6 +160,7 @@ from sqlalchemy.orm import Session
 from typing import IO
 from typing import List, Optional
 from typing import Optional
+from typing import Optional, Dict, List
 from typing import Optional, List
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
@@ -11003,3 +11004,38 @@ def app():
                     await asyncio.sleep(5)
                     assert not hasattr(uvicorn, "run")
                     pytest.main(args=sys.argv)
+
+
+@pytest.mark.asyncio
+async def test_multi_signature_endpoint_valid_signatures():
+    request_signatures = RequestSignatures(
+        wallet_address="test_wallet",
+        textContent="Valid message",
+        signatures=["valid1", "valid2"],
+    )
+    async with TestClient(app=app) as client:
+        response = await asyncio.run(client.get("/multi_signature"))
+        assert response.status_code == 200
+        assert response.json() is not None
+
+        @pytest.mark.asyncio
+        async def test_multi_signature_endpoint_insufficient_signatures():
+            request_signatures = RequestSignatures(
+                wallet_address="test_wallet",
+                textContent="Test message",
+                signatures=["insufficient"],
+            )
+            async with TestClient(app=app) as client:
+                response = await asyncio.run(client.get("/multi_signature"))
+                assert response.status_code == 400
+                assert "Insufficient valid signatures" in str(response.json())
+
+                @pytest.mark.asyncio
+                async def test_multi_signature_endpoint_invalid_content_type():
+                    binary_data = b"This is binary data"
+                    async with TestClient(app=app) as client:
+                        response = await asyncio.run(client.get("/multi_signature"))
+                        response.raise_status()
+                        assert response.status_code == 500
+                        assert "Error processing signature" in str(response.json())
+                        await client.close()

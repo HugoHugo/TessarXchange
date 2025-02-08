@@ -118,6 +118,7 @@ from typing import List
 from typing import List, Dict, Union
 from typing import List, Optional
 from typing import Optional
+from typing import Optional, Dict, List
 from typing import Optional, Union
 from typing import Optional, Union, Dict, Any, List
 from typing import UUID
@@ -9954,3 +9955,45 @@ async def websocket_endpoint(websocket):
                 "timestamp": datetime.now().isoformat(),
             }
         )
+
+
+app = FastAPI()
+
+
+class RequestSignatures(BaseModel):
+    wallet_address: str
+    signatures: List[Optional[str]]
+
+    class SignedMessage(BaseModel):
+        signed_message: str
+        content_type: str = "application/json"
+
+        @app.get("/multi_signature")
+        async def multi_signature_endpoint(
+            request_signatures: RequestSignatures,
+        ) -> Optional[SignedMessage]:
+            try:
+                message_text = (
+                    request_signatures.textContent
+                    if hasattr(request_signatures, "textContent")
+                    else ""
+                )
+                for sig in request_signatures.signatures:
+                    if not validate_signature(message_text, sig):
+                        return HTTPException(
+                            status_code=400, detail="Insufficient valid signatures"
+                        )
+                    signed_message = sign_message(message_text)
+                    return SignedMessage(
+                        signed_message=signed_message, content_type="application/json"
+                    )
+            except Exception as e:
+                return HTTPException(
+                    status_code=500, detail=f"Error processing signature: {str(e)}"
+                )
+
+            def validate_signature(text: str, signature: str) -> bool:
+                pass
+
+                async def sign_message(message: str) -> str:
+                    return message
