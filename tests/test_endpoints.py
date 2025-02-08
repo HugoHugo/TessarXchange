@@ -11168,3 +11168,29 @@ def test_root_endpoint(client):
                             assert "message" in result
                             if __name__ == "__main__":
                                 pytest.main()
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_get_distribution(client):
+    response = client.get("/distribution")
+    assert response.status_code == 200
+
+    def test_get_distribution_by_id(client):
+        current_date = datetime.now()
+        distributions = [
+            {
+                "id": "dummy_id",
+                "created_at": current_date.isoformat(),
+                "amount": 1.0,
+                "staking_rewards": 0.0,
+                "total": 1.0,
+                "status": "pending",
+            }
+        ]
+        client.post("/distribution", json=distributions)
+        response = client.get("/distribution?id=123456")
+        assert response.status_code == 200

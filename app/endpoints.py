@@ -10098,3 +10098,59 @@ async def enable_disable(arb_data: dict):
                     "status": "success",
                     "message": "Arbitrage trigger executed successfully",
                 }
+
+
+class Distribution:
+    __tablename__ = "distribution"
+    id = "text"
+    created_at = "datetime"
+    amount = "float"
+    staking_rewards = "float"
+    total = "float"
+    status = "text"
+
+    class Address:
+        __tablename__ = "address"
+        address = "text"
+
+        class DistributionIn:
+            id: str
+            created_at: datetime
+            amount: float
+            staking_rewards: float
+            total: float
+            status: str
+
+            class DistributionOut:
+                id: str
+                created_at: datetime
+                amount: float
+                staking_rewards: float
+                total: float
+                status: str
+                app = FastAPI()
+
+                @app.get("/distribution")
+                def get_distribution(distribution_id: str = None):
+                    if distribution_id:
+                        pass
+                        distributions = []
+                        return {"distributions": distributions}
+
+                    @app.post("/distribution")
+                    def create_distribution(data: DistributionIn):
+                        current_date = get_current_date()
+                        distributions = [
+                            {
+                                "id": str(uuid.uuid4()),
+                                "created_at": current_date,
+                                "amount": data.amount,
+                                "staking_rewards": 0.0,
+                                "total": data.amount,
+                                "status": "pending",
+                            }
+                        ]
+                        return {"distributions": distributions}
+
+                    def get_current_date() -> datetime:
+                        return datetime.now()
