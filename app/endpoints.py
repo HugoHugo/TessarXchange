@@ -9924,3 +9924,33 @@ async def vote(votes_data: dict):
         return {"token": token, "message": "Vote successfully recorded"}
     if __name__ == "__main__":
         pass
+
+
+app = FastAPI()
+
+
+@app.get("/leaderboard")
+def get_leaderboard():
+    return {
+        "traders": [
+            {"name": "John Doe", "points": 5000, "start_time": "2023-10-01"},
+            {"name": "Jane Smith", "points": 4800, "start_time": "2023-09-28"},
+            {"name": "Bob Johnson", "points": 4500, "start_time": "2023-10-02"},
+        ]
+    }
+
+
+@app.websocket("/trades")
+async def websocket_endpoint(websocket):
+    await websocket.accept()
+    while True:
+        await asyncio.sleep(1)
+        await websocket.send_json(
+            {
+                "trader": "John Doe",
+                "action": "buy",
+                "amount": 0.5,
+                "price": 200,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )

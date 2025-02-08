@@ -18,8 +18,11 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi import FastAPI, UploadFile
 from fastapi import HTTPException
 from fastapi import TestClient
+from fastapi import WebSocket
 from fastapi.test import TestClient
 from fastapi.testclient import TestClient
+from fastapi.testclient import TestWebsocket
+from fastapi.wsgi import FastAPIServer
 from fastapi.wsgi import WebSocket
 from fastapi上传文件 import UploadFile as UploadedFile
 from isodatetime import ISODateTime
@@ -181,6 +184,7 @@ import pytesseract
 import pytest
 import re
 import secrets
+import sys
 import tempfile
 import tesseract
 import time
@@ -10954,3 +10958,48 @@ async def client():
                     assert response.status_code == 404
                     if __name__ == "__main__":
                         pytest.main()
+
+
+@pytest.fixture
+def app():
+    server = FastAPIServer(app)
+    yield server.app
+    server.close()
+
+    @pytest.mark.asyncio
+    async def test_get_leaderboard():
+        client = TestClient(app)
+        response = await client.get("/leaderboard")
+        assert response.status_code == 200
+        data = await response.json()
+        assert isinstance(data, list)
+        assert len(data) == 3
+
+        @pytest.mark.asyncio
+        async def test_websocket_trades():
+            client = TestClient(app)
+            websocket = await client.websocket("/trades")
+            await asyncio.sleep(0.1)
+            received = await asyncio.gather(
+                websocket.send_json(
+                    {
+                        "trader": "John Doe",
+                        "action": "buy",
+                        "amount": 0.5,
+                        "price": 200,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+            )
+            received_message = await received[0]
+            assert isinstance(received_message, dict)
+            assert "trader" in received_message
+            assert "action" in received_message
+            if __name__ == "__main__":
+                app = FastAPI()
+
+                @patch.dict("os.environ", {"WERKZEUG_RUN_MAIN": "False"})
+                async def test_run_server_for_5_seconds():
+                    await asyncio.sleep(5)
+                    assert not hasattr(uvicorn, "run")
+                    pytest.main(args=sys.argv)
