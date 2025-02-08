@@ -10042,3 +10042,59 @@ async def websocket_endpoint(websocket: WebSocket):
 
             if __name__ == "__main__":
                 uvicorn.run(app, host="localhost", port=8000)
+
+
+app = FastAPI()
+
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome to Arbitrage Manager API"}
+
+
+@app.post("/arbitrase")
+async def enable_disable(arb_data: dict):
+    if not isinstance(arb_data, dict) or "action" not in arb_data:
+        raise ValueError("Invalid request format")
+        action = arb_data["action"]
+        enabled = False
+        disabled = False
+        if action == "enable":
+            enabled = True
+        elif action == "disable":
+            disabled = True
+            return {
+                "status": "success",
+                "enabled_at": datetime.now().isoformat(),
+                "disabled_at": datetime.now().isoformat() if disabled else None,
+                "message": f"Arbitrage detection {('enabled' if enabled else 'disabled')} successfully",
+            }
+
+        @app.get("/arbitrase")
+        async def get_status():
+            return {
+                "enabled": True,
+                "active_opportunities": ["OPPORTUNITY_1", "OPORTUNITY_2"],
+                "execution_status": "idle",
+            }
+
+        @app.post("/arbitrase/params")
+        async def adjust_params(new_params: dict):
+            if (
+                not isinstance(new_params, dict)
+                or "lower_price_limit" not in new_params
+            ):
+                raise ValueError("Invalid parameter update request")
+                app.params.update(new_params)
+                return {
+                    "status": "success",
+                    "message": "Arbitrage parameters updated successfully",
+                }
+
+            @app.post("/arbitrase/trigger")
+            async def trigger_arbitrage():
+                return {
+                    "action": "triggers",
+                    "status": "success",
+                    "message": "Arbitrage trigger executed successfully",
+                }

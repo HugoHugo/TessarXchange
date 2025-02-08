@@ -11119,3 +11119,52 @@ async def test_get_sentiment_analysis() -> None:
                             await websocket.close()
                             assert received_messages >= 1
                             assert "test" in last_message
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_root_endpoint(client):
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Welcome to Arbitrage Manager API"}
+
+    def test_enable_disable_valid(client):
+        data = {"action": "enable"}
+        response = await client.post("/", json=data)
+        assert response.status_code == 200
+
+        def test_enable_disable_invalid(client):
+            invalid_data = {}
+            with pytest.raises(ValueError) as excinfo:
+                await client.post("/", json=invalid_data)
+                assert str(excinfo.value) == "Invalid request format"
+
+                def test_get_status_endpoint(client):
+                    enabled_at = datetime.now().isoformat()
+                    response = await client.get("/arbitrase")
+                    assert response.status_code == 200
+                    assert isinstance(response.json(), dict)
+                    assert "enabled" in response.json() and response.json()["enabled"]
+                    assert "disabled_at" in response.json() or not enabled
+
+                    def test_adjust_params(client):
+                        params = {"lower_price_limit": 50}
+                        response = await client.post("/arbitrase/params", json=params)
+                        assert response.status_code == 200
+
+                        def test_trigger_arbitrage(client):
+                            enabled_data = {"action": "enable"}
+                            await client.post("/", json=enabled_data)
+                            trigger_response = await client.post("/arbitrase/trigger")
+                            assert trigger_response.status_code == 200
+                            result = await trigger_response.json()
+                            assert isinstance(result, dict)
+                            assert (
+                                "status" in result and result.get("status") == "success"
+                            )
+                            assert "message" in result
+                            if __name__ == "__main__":
+                                pytest.main()
