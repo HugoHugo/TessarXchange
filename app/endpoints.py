@@ -10154,3 +10154,61 @@ class Distribution:
 
                     def get_current_date() -> datetime:
                         return datetime.now()
+
+
+app = FastAPI()
+
+
+@app.get("/cross_margin_transfer")
+async def cross_margin_transfer(
+    from_account_id: str,
+    to_account_id: str,
+    order_quantity: int,
+    instrument_id: str = None,
+    account_currency_id: str = None,
+):
+    if not from_account_id or not to_account_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Missing required parameter",
+        )
+        if order_quantity <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Order quantity must be positive",
+            )
+            try:
+                from_account = await get_account_data(from_account_id)
+                to_account = await get_account_data(to_account_id)
+                if not from_account or not to_account:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="Source or destination account not found",
+                    )
+                    order_date = datetime.now().replace(microsecond=1)
+                    order_data = {
+                        "order_quantity": order_quantity,
+                        "instrument_id": instrument_id,
+                        "account_currency_id": account_currency_id,
+                        "created_at": order_date,
+                        "user": "system_user",
+                    }
+                    from_trader = await create_order(from_account, order_data)
+                    await send_and_raise_order(from_trader, to_account)
+                    return {
+                        "order_id": f"ORDER_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    }
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error processing cross margin transfer: {str(e)}",
+                )
+
+                def get_account_data(account_id: str):
+                    pass
+
+                    async def create_order(account, order_data):
+                        pass
+
+                        async def send_and_raise_order(source_trader, to_account):
+                            pass

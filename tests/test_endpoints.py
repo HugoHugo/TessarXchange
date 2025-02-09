@@ -11194,3 +11194,104 @@ def test_get_distribution(client):
         client.post("/distribution", json=distributions)
         response = client.get("/distribution?id=123456")
         assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_cross_margin_transfer_success(client: TestClient):
+    from_account_id = "123"
+    to_account_id = "456"
+    order_quantity = 100
+    mock_account_data = {
+        "account_id": "123",
+        "account_name": "Test Account",
+        "balance": 1000.0,
+        "created_at": datetime.now().replace(microsecond=1),
+        "user": "system_user",
+    }
+    from_account = mock_account_data
+    to_account = mock_account_data
+    response = await client.get(
+        "/cross_margin_transfer",
+        params={
+            "from_account_id": from_account_id,
+            "to_account_id": to_account_id,
+            "order_quantity": order_quantity,
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert "order_id" in response.json()
+    assert isinstance(response.json()["order_id"], str)
+
+    @pytest.mark.asyncio
+    async def test_cross_margin_transfer_missing_parameter(client: TestClient):
+        response = await client.get("/cross_margin_transfer")
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert "Missing required parameter" in str(response.json())
+
+        @pytest.mark.asyncio
+        async def test_cross_margin_transfer_zero_quantity(client: TestClient):
+            from_account_id = "123"
+            to_account_id = "456"
+            order_quantity = 0
+            response = await client.get(
+                "/cross_margin_transfer",
+                params={
+                    "from_account_id": from_account_id,
+                    "to_account_id": to_account_id,
+                    "order_quantity": order_quantity,
+                },
+            )
+            assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+            assert "Order quantity must be positive" in str(response.json())
+
+            @pytest.mark.asyncio
+            async def test_cross_margin_transfer_invalid_accounts(client: TestClient):
+                from_account_id = "invalid"
+                to_account_id = "invalid"
+                response = await client.get(
+                    "/cross_margin_transfer",
+                    params={
+                        "from_account_id": from_account_id,
+                        "to_account_id": to_account_id,
+                    },
+                )
+                assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+                assert "Source or destination account not found" in str(response.json())
+
+                @pytest.mark.asyncio
+                async def test_cross_margin_transfer_missing_optional_parameter(
+                    client: TestClient,
+                ):
+                    from_account_id = "123"
+                    to_account_id = "456"
+                    response = await client.get(
+                        "/cross_margin_transfer",
+                        params={
+                            "from_account_id": from_account_id,
+                            "to_account_id": to_account_id,
+                        },
+                    )
+                    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+                    assert "Missing required parameter" in str(response.json())
+
+                    @pytest.mark.asyncio
+                    async def test_cross_margin_transfer_invalid_combination(
+                        client: TestClient,
+                    ):
+                        from_account_id = "invalid"
+                        to_account_id = "invalid"
+                        order_quantity = 100
+                        response = await client.get(
+                            "/cross_margin_transfer",
+                            params={
+                                "from_account_id": from_account_id,
+                                "to_account_id": to_account_id,
+                                "order_quantity": order_quantity,
+                            },
+                        )
+                        assert (
+                            response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+                        )
+                        assert "Source or destination account not found" in str(
+                            response.json()
+                        )
