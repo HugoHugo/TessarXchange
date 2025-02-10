@@ -10212,3 +10212,61 @@ async def cross_margin_transfer(
 
                         async def send_and_raise_order(source_trader, to_account):
                             pass
+
+
+app = FastAPI()
+
+
+@app.get("/trading-volume")
+def get_trading_volume(start_time: str, end_time: str, time_frame: str = "1h"):
+    try:
+        start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S").timestamp()
+        end_time = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S").timestamp()
+        if time_frame not in ["1h", "24h"]:
+            raise ValueError("Invalid time frame. Choose '1h' or '24h'.")
+            oracle_data = [
+                {
+                    "timestamp": datetime.fromtimestamp(t).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
+                    "trades": 500,
+                    "buy Volume": 10000.0,
+                    "sell Volume": 8000.0,
+                }
+                for t in range(start_time, end_time + 1)
+            ]
+            oneHourVolume = (
+                sum((entry["trades"] for entry in oracle_data[:1440])) * 1000
+            )
+            twentyFourHourVolume = sum(oracle_data[-2880:]) * 1000
+            return {
+                "lastTradeTime": datetime.fromtimestamp(
+                    oracle_data[-1]["timestamp"]
+                ).strftime("%Y-%m-%d %H:%M:%S"),
+                "trades_1h": oneHourVolume,
+                "trades_24h": twentyFourHourVolume,
+                "highestPrice": (
+                    max((entry["buy Volume"] for entry in oracle_data))[-4:]
+                    if oracle_data
+                    else 0
+                ),
+                "lowestPrice": (
+                    min((entry["sell Volume"] for entry in oracle_data))[-4:]
+                    if oracle_data
+                    else 0
+                ),
+                "averagePrice": (
+                    sum(
+                        (
+                            entry["buy Volume"] + entry["sell Volume"]
+                            for entry in oracle_data
+                        )
+                    )[-4:]
+                    / len(oracle_data)[-4:]
+                    if oracle_data
+                    else 0
+                ),
+                "totalVolume": sum((entry["trades"] * 1000 for entry in oracle_data)),
+            }
+    except Exception as e:
+        return ({"error": str(e)}, 500)

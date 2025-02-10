@@ -11295,3 +11295,49 @@ async def test_cross_margin_transfer_success(client: TestClient):
                         assert "Source or destination account not found" in str(
                             response.json()
                         )
+
+
+app = FastAPI()
+
+
+@pytest.fixture
+def client():
+    client = TestClient(app)
+    return client
+
+
+def test_get_trading_volume_basic(client):
+    start_time = datetime.now() - timedelta(hours=24)
+    end_time = datetime.now()
+    response = client.get(
+        f"/trading-volume?start_time={start_time.strftime('%Y-%m-%d %H:%M:%S')}&end_time={end_time.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+    assert response.status_code == 200
+    response_data = response.json()
+    assert isinstance(response_data, dict)
+    assert "lastTradeTime" in response_data
+    assert "trades_1h" in response_data
+    assert "trades_24h" in response_data
+    assert "highestPrice" in response_data
+    assert "lowestPrice" in response_data
+    assert "averagePrice" in response_data
+    assert "totalVolume" in response_data
+
+    def test_get_trading_volume_invalid_time_frame(client):
+        client.get(
+            "/trading-volume?start_time=current_start&end_time=another_end&time_frame=invalid"
+        )
+        response = client.get(
+            "/trading-volume?start_time=current_start&end_time=another_end&time_frame=invalid"
+        )
+        assert response.status_code == 500
+        response_data = json.loads(response.json())
+        assert isinstance(response_data, dict)
+        assert "error" in response_data
+
+        def test_get_trading_volume_defaultParameters(client):
+            response = client.get("/trading-volume")
+            assert response.status_code == 200
+            response_data = response.json()
+            assert isinstance(response_data, dict)
+            assert "lastTradeTime" in response_data
