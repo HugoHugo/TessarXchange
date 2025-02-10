@@ -2,6 +2,7 @@ from ..database import get_db
 from ..db import Base, get_db
 from ..db import get_db
 from ..models import Order, Trade, User
+from .main import app
 from alembic import context
 from contextlib import suppress
 from datetime import date as dt_date
@@ -11677,15 +11678,11 @@ async def test_add_whitelist(client):
                 assert response.status_code == 200
                 response = await client.delete("/delete_whitelist/0x12345678")
                 assert response.status_code == 401
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime, timedelta
-import pandas as pd
-from .main import app
 
 
 @pytest.fixture
 async def client():
+
     async def _async_client():
         return TestClient(app)
 
@@ -11697,7 +11694,6 @@ def test_get_market_data(client):
     response = await client.get(f"/api/markets/{test_symbol}")
     assert response.status_code == 200
 
-    # You can add assertions about the returned data structure here
     def test_calculate_transaction_costs(client):
         test_symbol = "BTC"
         test_start_date = (datetime.now() - timedelta(days=1)).isoformat()
@@ -11731,3 +11727,53 @@ def test_get_market_data(client):
                             timeout=None,
                         )
                         assert response.status_code == 400
+
+
+app = FastAPI()
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_root_endpoint(client):
+    """Test the root endpoint which returns a welcome message."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Welcome to OTC Desk Quote Management System"}
+
+    def test_generate_quote_endpoint(client):
+        """Test the quote generation endpoint with sample data."""
+        order = {"order_type": "Market", "instrument": "Bitcoin Futures"}
+        trade_date = "2024-01-01"
+        response = client.post(
+            "/api/v1/quote", json={**order, "trade_date": trade_date}
+        )
+        assert response.status_code == 200
+        quote = response.json()
+        assert isinstance(quote["symbol"], str)
+        assert isinstance(quote["instrument"], str)
+        assert isinstance(quote["created_at"], str)
+
+        def test_handle_settlement_endpoint(client):
+            """Test the settlement handling endpoint with sample data."""
+            order_id = "ORDER-123"
+            settlement_data = {
+                "net_settled_amount": 5000.0,
+                "settlement_date": "2024-01-01",
+            }
+            response = client.post(
+                "/api/v1/settlement", json={**order_id, **settlement_data}
+            )
+            assert response.status_code == 200
+            settlement = response.json()
+            assert isinstance(settlement["net_settled_amount"], float)
+            assert "order_id" in settlement
+
+            def test_validate_request_params(client):
+                """Test that endpoint returns validation error when no request parameters are provided."""
+                with pytest.raises(
+                    ValueError, match="Missing required query parameter"
+                ):
+                    client.get("/api/v1/quote")
