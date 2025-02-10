@@ -11829,3 +11829,91 @@ def test_add_circuit_breaker_success(client, circuit_breaker_rule):
             def test_delete_circuit_breaker_success(client, circuit_breaker_rule):
                 response = client.delete(f"/trading-pairs/circuit-breakers/1")
                 assert response.status_code == 204
+
+
+@pytest.fixture
+def client():
+    with patch.dict(
+        os.environ,
+        {
+            "CREDENTIALS_FILE": "test_credentials.json",
+            "RECEPIENT_EMAILS_FILE": "test Recipient emails.csv",
+        },
+    ):
+        app = FastAPI()
+
+        async def mock_storage_update(*args, **kwargs):
+            pass
+            storage_layer.update = staticmethod(mock_storage_update)
+            client = TestClient(app)
+            return client
+
+        @pytest.mark.asyncio
+        async def test_bulk_permission_updates_success(client: TestClient):
+            users = [{"id": f"user_{i}", "email": f"user@{i}.com"} for i in range(5)]
+            permissions = {"perm1": "value1", "perm2": "value2"}
+
+            async def mock_bulk_process():
+                await asyncio.sleep(0)
+                return True
+
+            @app.post("/bulk_permission_updates")
+            async def bulk_permission_updates(request_data: Dict):
+                try:
+                    if "users" not in request_data or "permissions" not in request_data:
+                        raise HTTPException(
+                            status_code=400, detail="Invalid request body"
+                        )
+                        users = request_data["users"]
+                        permissions = request_data["permissions"]
+                        await mock_bulk_process()
+                        return {
+                            "message": "Bulk permission updates completed successfully"
+                        }
+                except Exception as e:
+                    raise HTTPException(status_code=500, detail=str(e))
+                    with client.run_in_thread():
+                        response = await client.get(
+                            "/bulk_permission_updates",
+                            json={"users": users, "permissions": permissions},
+                        )
+                        assert response.status_code == 200
+                        assert response.json() == {
+                            "message": "Bulk permission updates completed successfully"
+                        }
+
+                        @pytest.mark.asyncio
+                        async def test_bulk_permission_updates_error_handling(
+                            client: TestClient,
+                        ):
+
+                            async def mock_bulk_process():
+                                raise Exception("Test error")
+
+                                @app.post("/bulk_permission_updates")
+                                async def bulk_permission_updates(request_data: Dict):
+                                    try:
+                                        if (
+                                            "users" not in request_data
+                                            or "permissions" not in request_data
+                                        ):
+                                            raise HTTPException(
+                                                status_code=400,
+                                                detail="Invalid request body",
+                                            )
+                                            users = request_data["users"]
+                                            permissions = request_data["permissions"]
+                                            await mock_bulk_process()
+                                            return {
+                                                "message": "Bulk permission updates completed successfully"
+                                            }
+                                    except Exception as e:
+                                        raise HTTPException(
+                                            status_code=500, detail=str(e)
+                                        )
+                                        with client.run_in_thread():
+                                            response = await client.get(
+                                                "/bulk_permission_updates",
+                                                json={"users": [], "permissions": []},
+                                            )
+                                            assert response.status_code == 400

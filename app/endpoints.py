@@ -127,6 +127,7 @@ from typing import Dict
 from typing import Dict, Any
 from typing import Dict, Optional
 from typing import List
+from typing import List, Dict
 from typing import List, Dict, Any
 from typing import List, Dict, Union
 from typing import List, Optional
@@ -10779,3 +10780,51 @@ class CircuitBreakerRule(BaseModel):
             "status": "success",
             "message": "Circuit breaker rule deleted successfully",
         }
+
+
+app = FastAPI()
+CREDENTIALS_FILE = os.getenv("CREDENTIALS_FILE", "credentials.json")
+RECEPIENT_EMAILS_FILE = os.getenv("RECEPIENT_EMAILS_FILE", "recipient_emails.csv")
+
+
+def process_user_update(user: dict, permissions: Dict[str, str]) -> None:
+    """Process a single user's permission update request."""
+    await asyncio.sleep(1)
+    current_date = datetime.now().isoformat()
+    updated_user = {
+        "user_id": user["id"],
+        "email": user["email"],
+        "last_updated": current_date,
+        **permissions,
+    }
+    storage_layer.update(user_id=user["id"], data=updated_user)
+
+    async def process_bulk_updates(
+        users: List[dict], permissions: Dict[str, str]
+    ) -> None:
+        """Process bulk permission updates for multiple users."""
+        if not users or not permissions:
+            raise HTTPException(status_code=400, detail="Invalid request")
+            await asyncio.gather(
+                *[
+                    process_user_update(user=user_data, permissions=permissions)
+                    for user_data in users
+                ]
+            )
+
+            @app.post("/bulk_permission_updates")
+            async def bulk_permission_updates(request_data: Dict):
+                """Handle bulk permission updates."""
+                try:
+                    if "users" not in request_data or "permissions" not in request_data:
+                        raise HTTPException(
+                            status_code=400, detail="Invalid request body"
+                        )
+                        users = request_data["users"]
+                        permissions = request_data["permissions"]
+                        await process_bulk_updates(users=users, permissions=permissions)
+                        return {
+                            "message": "Bulk permission updates completed successfully"
+                        }
+                except Exception as e:
+                    raise HTTPException(status_code=500, detail=str(e))
