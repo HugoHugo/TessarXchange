@@ -165,6 +165,7 @@ from typing import List, Optional
 from typing import Optional
 from typing import Optional, Dict, List
 from typing import Optional, List
+from typing import Union
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 from unittest.mock import MagicMock
@@ -11638,3 +11639,41 @@ async def websocket_client():
                                                         )
                                                     finally:
                                                         await websocket_client.close()
+
+
+@pytest.fixture
+async def client():
+    return TestClient(app)
+
+
+@pytest.mark.asyncio
+async def test_add_whitelist(client):
+    response = await client.post("/whitelist", json={"address": "0x12345678"})
+    assert response.status_code == 200
+    response = await client.post("/whitelist")
+    assert response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_check_whitelist(client):
+        response = await client.get("/whitelist/0x12345678", json={"admin_id": 1})
+        assert response.status_code == 200
+        response = await client.get("/whitelist/0x12345678")
+        assert response.status_code == 401
+
+        @pytest.mark.asyncio
+        async def test_update_whitelist(client):
+            response = await client.put(
+                "/update_whitelist/0x12345678", json={"admin_id": 1}
+            )
+            assert response.status_code == 200
+            response = await client.put("/update_whitelist/0x12345678")
+            assert response.status_code == 401
+
+            @pytest.mark.asyncio
+            async def test_delete_whitelist(client):
+                response = await client.delete(
+                    "/delete_whitelist/0x12345678", json={"admin_id": 1}
+                )
+                assert response.status_code == 200
+                response = await client.delete("/delete_whitelist/0x12345678")
+                assert response.status_code == 401

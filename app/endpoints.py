@@ -133,6 +133,7 @@ from typing import Optional, Dict, List
 from typing import Optional, Union
 from typing import Optional, Union, Dict, Any, List
 from typing import UUID
+from typing import Union
 from uuid import UUID
 from uuid import uuid4
 from websockets import Server, connect
@@ -10536,3 +10537,115 @@ async def on_connect(websocket, path):
                             thread.start()
                         except Exception as e:
                             print(f"Error initializing WebSocket server: {e}")
+
+
+app = FastAPI()
+
+
+@Depends
+def get_admin_id(token: str):
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": ["Bearer"]},
+        )
+
+        @app.post("/whitelist")
+        async def add_whitelist(
+            address: str, *, current_user_admin_id: Union[None, int] = None
+        ):
+            try:
+                if not address or len(address) < 0:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Invalid address format",
+                    )
+                    await some_time.sleep(1)
+                    return {
+                        "status": "success",
+                        "message": f"Added whitelist: {address}",
+                    }
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                )
+
+                @app.get("/whitelist/{address}", response_model=None)
+                async def check_whitelist(
+                    address: str, *, admin_id: Union[int, None] = None
+                ):
+                    if not admin_id:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Not authorized to view this endpoint",
+                            headers={"WWW-Authenticate": ["Bearer"]},
+                        )
+                        try:
+                            if not address or len(address) < 0:
+                                raise ValueError
+                                await some_time.sleep(1)
+                                result = {
+                                    "status": "success",
+                                    "data": {"whitelist": address},
+                                }
+                                return result
+                        except Exception as e:
+                            raise HTTPException(
+                                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail=str(e),
+                            )
+
+                            @app.put("/update_whitelist/{address}")
+                            async def update_whitelist(
+                                address: str, *, admin_id: Union[int, None] = None
+                            ):
+                                if not admin_id:
+                                    raise HTTPException(
+                                        status_code=status.HTTP_401_UNAUTHORIZED,
+                                        detail="Not authorized to modify this endpoint",
+                                        headers={"WWW-Authenticate": ["Bearer"]},
+                                    )
+                                    try:
+                                        if not address or len(address) < 0:
+                                            raise ValueError
+                                            await some_time.sleep(1)
+                                            return {
+                                                "status": "success",
+                                                "message": f"Updated whitelist: {address}",
+                                            }
+                                    except Exception as e:
+                                        raise HTTPException(
+                                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                            detail=str(e),
+                                        )
+
+                                        @app.delete("/delete_whitelist/{address}")
+                                        async def delete_whitelist(
+                                            address: str,
+                                            *,
+                                            admin_id: Union[int, None] = None,
+                                        ):
+                                            if not admin_id or admin_id is None:
+                                                raise HTTPException(
+                                                    status_code=status.HTTP_401_UNAUTHORIZED,
+                                                    detail="Not authorized to perform this action",
+                                                    headers={
+                                                        "WWW-Authenticate": ["Bearer"]
+                                                    },
+                                                )
+                                                try:
+                                                    if not address or len(address) < 0:
+                                                        raise ValueError
+                                                        await some_time.sleep(1)
+                                                        return {
+                                                            "status": "success",
+                                                            "message": f"Whitelist deleted: {address}",
+                                                        }
+                                                except Exception as e:
+                                                    raise HTTPException(
+                                                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                                        detail=str(e),
+                                                    )
+                                                    if __name__ == "__main__":
+                                                        pass
