@@ -11917,3 +11917,30 @@ def client():
                                                 json={"users": [], "permissions": []},
                                             )
                                             assert response.status_code == 400
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime
+from main import app
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as client:
+        yield client
+
+        def test_get_trading_sessions(client):
+            response = client.get("/trading_sessions")
+            assert response.status_code == 200
+
+            def test_get_session_indicators(client):
+                response = client.get("/session_indicators")
+                assert response.status_code == 200
+
+                def test_classify_trading_pattern(client):
+                    # Simulate session data (you may need to mock actual data loading)
+                    criteria = {"feature1": 1, "feature2": 2, "next": 3}
+                    response = client.get(
+                        "/classify/trading-pattern",
+                        params={"trade_session_id": "TEST", "criteria": criteria},
+                    )
+                    assert response.status_code == 200

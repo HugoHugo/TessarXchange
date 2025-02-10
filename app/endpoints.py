@@ -10828,3 +10828,88 @@ def process_user_update(user: dict, permissions: Dict[str, str]) -> None:
                         }
                 except Exception as e:
                     raise HTTPException(status_code=500, detail=str(e))
+from fastapi import FastAPI
+import os
+from datetime import datetime
+from sqlalchemy.orm import Session
+import pandas as pd
+import joblib
+import xgboost as xgb
+
+# Initialize FastAPI app
+app = FastAPI()
+# Setup database session
+SessionLocal = os.getenv("DATABASE_URL").split(":")[0]
+engine = SessionLocal()
+
+
+# SQLAlchemy models
+class TradingSessionBase:
+    __tablename__ = "trading_sessions"
+    id = os.getenv("DB_ID")
+    trade_id = os.getenv("DB_TRADE_ID")
+    session_start = os.getenv("DB_SESSION_START")
+    session_end = os.getenv("DB_SESSION_END")
+    created_at = os.getenv("DB_CREATED_AT")
+    updated_at = os.getenv("DB_UPDATED_AT")
+
+    class SessionIndicatorBase:
+        __tablename__ = "session_indicators"
+        id = os.getenv("DB_SESSION_IND_ID")
+        session_id = os.getenv("DB_SESSION_ID")
+        indicator_type = os.getenv("DB_INDICATOR_TYPE")
+        value = os.getenv("DB_INDICATOR_VALUE")
+
+        @app.get("/trading_sessions")
+        async def get_trading_sessions(session: Session):
+            query = session.query(TradingSessionBase)
+            result = await query.filter(TradingSessionBase.active == True).all()
+            return {"trading_sessions": [dict(r) for r in result]}
+
+        @app.get("/session_indicators")
+        async def get_session_indicators(session: Session, session_id: str):
+            query = session.query(SessionIndicatorBase)
+            result = await query.filter(
+                SessionIndicatorBase.session_id == session_id
+            ).all()
+            return {"session_indicators": [dict(r) for r in result]}
+
+        @app.get("/classify/trading-pattern")
+        async def classify_trading_pattern(trade_session_id: str, criteria: dict):
+            # Load pre-trained XGBoost model
+            model_path = os.path.join(
+                os.path.dirname(__file__), "models", "wash_trade_classifier_xgb.joblib"
+            )
+            model = joblib.load(model_path)
+            # Get trading session data
+            session = get_trading_sessions_with_id(trade_session_id)
+            if not session:
+                return {"error": "Session not found"}
+            # Get indicator data for the session
+            indicators = get_session_indicators(session.id)
+            if not indicators or len(indicators) < 3:
+                return {"error": "Not enough indicators available"}
+            # Combine features into a DataFrame
+            df = pd.DataFrame(
+                [
+                    {
+                        "feature1": criteria.get("feature1", 0),
+                        "feature2": criteria.get("feature2", 0),
+                        "indicator1": next - indicator["value"],
+                        "indicator2": next - indicator["value"],
+                    }
+                ]
+            )
+            # Make prediction
+            prediction = model.predict(df)
+            result = {"prediction": bool(prediction[0])}
+            return result
+
+        def get_trading_sessions_with_id(session_id: str):
+            query = session.query(TradingSessionBase)
+            result = await query.filter(
+                TradingSessionBase.trade_id == session_id
+            ).first()
+            if not result:
+                raise ValueError(f"Trade ID {session_id} not found")
+                return result
