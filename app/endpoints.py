@@ -10730,3 +10730,52 @@ async def handle_settlement(order_id: str, settlement_data: dict):
         "status": "Settled",
     }
     return settlement
+
+
+app = FastAPI()
+
+
+class CircuitBreakerRule(BaseModel):
+    pair: str
+    trigger_type: str
+    price: float
+    time_in_force: str
+    active_time: int | None
+    stop_loss: float | None
+    take_profit: float | None
+    status: str
+
+    @app.post("/trading-pairs/circuit-breakers")
+    def add_circuit_breaker(rule: CircuitBreakerRule):
+        return {
+            "status": "success",
+            "message": "Circuit breaker rule added successfully",
+            **rule.dict(),
+        }
+
+    @app.get(
+        "/trading-pairs/circuit-breakers",
+        response_model=List[CircuitBreakerRule],
+        pagination_config={},
+    )
+    def get_circuit_breakers(page: int = 1, per_page: int = 10):
+        return {
+            "status": "success",
+            "message": "Circuit breaker rules retrieved successfully",
+            **get_circuit_breakers(),
+        }
+
+    @app.put("/trading-pairs/circuit-breakers/{id}")
+    def update_circuit_breaker(id: str, rule: CircuitBreakerRule):
+        return {
+            "status": "success",
+            "message": "Circuit breaker rule updated successfully",
+            **rule.dict(),
+        }
+
+    @app.delete("/trading-pairs/circuit-breakers/{id}")
+    def delete_circuit_breaker(id: str):
+        return {
+            "status": "success",
+            "message": "Circuit breaker rule deleted successfully",
+        }

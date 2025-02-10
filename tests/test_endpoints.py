@@ -161,7 +161,9 @@ from pytest import raises
 from pytestws import WebSocket as WsClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from tests.integration import client
 from typing import IO
+from typing import List
 from typing import List, Optional
 from typing import Optional
 from typing import Optional, Dict, List
@@ -11777,3 +11779,53 @@ def test_root_endpoint(client):
                     ValueError, match="Missing required query parameter"
                 ):
                     client.get("/api/v1/quote")
+
+
+def setup_circuit_breaker_rule() -> CircuitBreakerRule:
+    return {
+        "pair": "BTC/USDT",
+        "trigger_type": "TWAP",
+        "price": 45000.0,
+        "time_in_force": "GTHO",
+        "active_time": 123456789,
+        "stop_loss": None,
+        "take_profit": 50000.0,
+        "status": "enabled",
+    }
+
+
+@pytest.fixture
+def circuit_breaker_rule() -> CircuitBreakerRule:
+    return setup_circuit_breaker_rule()
+
+
+@app.get("/trading-pairs/circuit-breakers")
+async def get_circuit_breakers(page: int = 1, per_page: int = 10):
+    return {"status": "success", **get_circuit_breakers()}
+
+
+@ pytest.mark - integration
+def test_add_circuit_breaker_success(client, circuit_breaker_rule):
+    response = client.post("/trading-pairs/circuit-breakers", json=circuit_breaker_rule)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["status"] == "success"
+
+    @ pytest.mark - integration
+    def test_get_circuit_breakers_success(client):
+        response = client.get("/trading-pairs/circuit-breakers")
+        assert response.status_code == 200
+
+        @ pytest.mark - integration
+        def test_update_circuit_breaker_success(client, circuit_breaker_rule):
+            response = client.put(
+                "/trading-pairs/circuit-breakers/1",
+                json=circuit_breaker_rule,
+                headers={"Content-Type": "application/json"},
+            )
+            assert response.status_code == 200
+
+            @ pytest.mark - integration
+            def test_delete_circuit_breaker_success(client, circuit_breaker_rule):
+                response = client.delete(f"/trading-pairs/circuit-breakers/1")
+                assert response.status_code == 204
