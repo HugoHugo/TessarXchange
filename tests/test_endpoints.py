@@ -1,4 +1,5 @@
 from ..database import get_db
+from ..db import Base, get_db
 from ..db import get_db
 from ..models import Order, Trade, User
 from alembic import context
@@ -135,6 +136,7 @@ from main import app, get_wallet_address
 from main import app, migrate_pool
 from main import app, rebalance_pool, rebalance_endpoint
 from main import app, start_liquidation_auction
+from main import app, state_router
 from main import app, stress_test_portfolio
 from main import app, verify_identity
 from main import app, wallet
@@ -11396,3 +11398,130 @@ async def test_get_pair_parameters_success(client):
                 db.remove()
                 response = await client.get("/1/parameters/key999")
                 assert response.status_code == 400
+
+
+@pytest.fixture
+def db_session():
+    db = SessionLocal()
+    yield db
+    db.close()
+
+    @pytest.fixture
+    def transaction_id():
+        return "test-trans-id"
+
+    @pytest.fixture
+    def order_data():
+        return {
+            "user": "test-user",
+            "transaction_id": transaction_id,
+            "order_status": "pending",
+            "date_time": datetime.now(),
+            "quantity": 10,
+            "unit_price": 5.0,
+            "total_amount": 50.0,
+        }
+
+    @pytest.mark.asyncio
+    async def test_order_state_success():
+
+        async def mock_get_db(db):
+            try:
+                yield db
+            finally:
+                db.close()
+                client = TestClient(app, get_db=mock_get_db)
+                Base.Order.query.filter_by(transaction_id="test-trans-id").first()
+                response = await client.post("/order_state", json=order_data)
+                assert response.status_code == 200
+
+                @pytest.mark.asyncio
+                async def test_order_state_duplicateTransaction():
+
+                    async def mock_get_db(db):
+                        try:
+                            yield db
+                        finally:
+                            db.close()
+                            client = TestClient(app, get_db=mock_get_db)
+                            Base.Order.query.filter_by(
+                                transaction_id="test-trans-id"
+                            ).first()
+                            response = await client.post(
+                                "/order_state", json=order_data
+                            )
+                            assert "Order already exists" in str(response.json())
+
+                            @pytest.mark.asyncio
+                            async def test_order_state_invalidData():
+
+                                async def mock_get_db(db):
+                                    try:
+                                        yield db
+                                    finally:
+                                        db.close()
+                                        client = TestClient(app, get_db=mock_get_db)
+                                        response = await client.post(
+                                            "/order_state",
+                                            json={
+                                                "user": "test-user",
+                                                "date_time": datetime.now(),
+                                            },
+                                        )
+                                        assert response.status_code == 500
+
+                                        @pytest.mark.asyncio
+                                        async def test_order_state_rollback():
+
+                                            async def mock_get_db(db):
+                                                try:
+                                                    yield db
+                                                finally:
+                                                    db.close()
+                                                    client = TestClient(
+                                                        app, get_db=mock_get_db
+                                                    )
+                                                    response = await client.post(
+                                                        "/order_state",
+                                                        json={
+                                                            "user": "test-user",
+                                                            "invalid_data": 42,
+                                                        },
+                                                    )
+                                                    assert response.status_code == 500
+
+                                                    @pytest.mark.asyncio
+                                                    async def test_scheduled_maintenance_mode():
+
+                                                        async def mock_get_db(db):
+                                                            try:
+                                                                yield db
+                                                            finally:
+                                                                db.close()
+                                                                client = TestClient(
+                                                                    app,
+                                                                    get_db=mock_get_db,
+                                                                )
+                                                                order = Base.Order.query.create(
+                                                                    transaction_id="test-trans-id",
+                                                                    user="test-user",
+                                                                    order_status="maintenance",
+                                                                    date_time=datetime.now(),
+                                                                )
+                                                                assert (
+                                                                    order.order_status
+                                                                    == "maintenance"
+                                                                )
+                                                                await client.post(
+                                                                    "/clear-scheduled-maintenance",
+                                                                    json={
+                                                                        "order_id": "test-trans-id"
+                                                                    },
+                                                                )
+                                                                assert (
+                                                                    Base.Order.query.get(
+                                                                        "test-trans-id"
+                                                                    )
+                                                                    is None
+                                                                )
+                                                                order.delete()

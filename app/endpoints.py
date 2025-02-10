@@ -10332,3 +10332,48 @@ async def get_db():
                             allow_methods=["*"],
                             allow_headers=["*"],
                         )
+
+
+app = FastAPI()
+state_router = APIRouter()
+
+
+@state_router.post("/order_state")
+async def handle_order_state(
+    transaction_id: str, user: str, data: dict, db: Session = Depends(get_db)
+):
+    try:
+        if Base.Order.query.filter_by(transaction_id=transaction_id).first():
+            raise HTTPException(
+                status_code=422, detail="Order already exists with this transaction ID"
+            )
+            new_order = Base.Order(transaction_id=transaction_id, user=user, **data)
+            db.add(new_order)
+            db.commit()
+            db.refresh(new_order)
+            return {
+                "status": "success",
+                "message": "Order submitted successfully",
+                "data": {
+                    "transaction_id": transaction_id,
+                    "user": user,
+                    "order_status": "pending",
+                    "date_time": new_order.date_time,
+                    "quantity": data.get("quantity") or 1,
+                    "unit_price": data.get("unit_price"),
+                    "total_amount": data.get("total_amount") or 0,
+                    "order_created_at": new_order.order_created_at,
+                },
+            }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
+
+        @app.get("/api/v1/orders/{order_id}")
+        def get_order(order_id: str):
+            order = Base.Order.query.get(order_id)
+            if not order:
+                raise HTTPException(status_code=404, detail="Order not found")
+                return {"order": order}
