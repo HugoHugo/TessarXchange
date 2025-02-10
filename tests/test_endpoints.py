@@ -11677,3 +11677,57 @@ async def test_add_whitelist(client):
                 assert response.status_code == 200
                 response = await client.delete("/delete_whitelist/0x12345678")
                 assert response.status_code == 401
+import pytest
+from fastapi.testclient import TestClient
+from datetime import datetime, timedelta
+import pandas as pd
+from .main import app
+
+
+@pytest.fixture
+async def client():
+    async def _async_client():
+        return TestClient(app)
+
+    return _async_client
+
+
+def test_get_market_data(client):
+    test_symbol = "BTC"
+    response = await client.get(f"/api/markets/{test_symbol}")
+    assert response.status_code == 200
+
+    # You can add assertions about the returned data structure here
+    def test_calculate_transaction_costs(client):
+        test_symbol = "BTC"
+        test_start_date = (datetime.now() - timedelta(days=1)).isoformat()
+        test_end_date = (datetime.now() - timedelta(days=7)).isoformat()
+        response = await client.get(
+            f"/api/calculate-transactions/{test_symbol}/{test_start_date}-{test_end_date}",
+            timeout=None,
+        )
+        assert response.status_code == 200
+
+        def test_get_risk_metrics(client):
+            test_request = RiskMetricRequest(symbol="BTC", period="1D")
+            response = await client.get(
+                "/api/risk-metrics", dependencies={"request": test_request}
+            )
+            assert response.status_code == 200
+
+            async def test_real_time_monitoring(client):
+                test_symbol = "BTC"
+                try:
+                    await client.get(f"/api/real-time/{test_symbol}")
+                    assert True
+                finally:
+                    pass
+
+                    def test_invalid_date_range(client):
+                        test_symbol = "BTC"
+                        invalid_start = "2024-12-32"
+                        response = await client.get(
+                            f"/api/calculate-transactions/{test_symbol}/{invalid_start}-",
+                            timeout=None,
+                        )
+                        assert response.status_code == 400
