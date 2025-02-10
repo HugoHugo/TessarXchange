@@ -11525,3 +11525,46 @@ def db_session():
                                                                     is None
                                                                 )
                                                                 order.delete()
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_generate_fee_statement(client):
+    test_data = {
+        "client_id": 123,
+        "order_id": "ORDER_001",
+        "start_date": datetime.now().date(),
+        "end_date": (datetime.now() + datetime.timedelta(days=7)).date(),
+    }
+    response = client.get(
+        "/fee-statements/{}".format(test_data["client_id"]),
+        params=test_data,
+        query_params={"order_id": test_data["order_id"]},
+    )
+    assert response.status_code == 200
+    assert "fee_statement_response" in response.json()
+    assert isinstance(
+        response.json()["fee_statement_response"]["combined_transactions"], str
+    )
+
+    def test_generate_detailed_fee_statement(client):
+        test_data = {
+            "client_id": 123,
+            "order_id": "ORDER_001",
+            "start_date": datetime.now().date(),
+            "end_date": (datetime.now() + datetime.timedelta(days=7)).date(),
+        }
+        response = client.get(
+            "/fee-statements/{}/{}".format(
+                test_data["client_id"], test_data["order_id"]
+            ),
+            params=test_data,
+        )
+        assert response.status_code == 200
+        assert "fee_statement_response" in response.json()
+        assert isinstance(
+            response.json()["fee_statement_response"]["combined_transactions"], str
+        )

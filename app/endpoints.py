@@ -3,6 +3,13 @@ from ..db import Base
 from ..db import Base, get_db
 from ..models import Order, Trade, User
 from ..models import ParametersModel
+from ..models.models import (
+    FeeStatementRequest,
+    FeeStatementResponse,
+    ClientOrderDetail,
+    OrderFeeDetail,
+    TransactionFeeDetail,
+)
 from ..models.user import User
 from aiomysql.pool import create_pool as create_mysql_pool
 from alembic import context
@@ -118,6 +125,7 @@ from typing import Dict
 from typing import Dict, Any
 from typing import Dict, Optional
 from typing import List
+from typing import List, Dict, Any
 from typing import List, Dict, Union
 from typing import List, Optional
 from typing import Optional
@@ -10377,3 +10385,111 @@ async def handle_order_state(
             if not order:
                 raise HTTPException(status_code=404, detail="Order not found")
                 return {"order": order}
+
+
+app = FastAPI()
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+        @app.get("/fee-statements/{client_id}/{order_id}")
+        async def generate_fee_statement(
+            client_id: int, order_id: int, db: Session = Depends(get_db)
+        ) -> FeeStatementResponse:
+            client = db.query(Client).filter(Client.client_id == client_id).first()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+                order = (
+                    db.query(OrderDetail)
+                    .filter(OrderDetail.order_id == order_id)
+                    .first()
+                )
+                if not order:
+                    raise HTTPException(status_code=404, detail="Order not found")
+                    gross = order.total_gross_amount
+                    net = order.total_net_amount
+                    service_fee = round((gross - net) * 0.03)
+                    advisory_fee = round(gross * 0.015)
+                    transactions = []
+                    for fee in [
+                        (gross, "Gross Fee", order.total_gross_amount),
+                        (net, "Net Fee", order.total_net_amount),
+                        (service_fee, "Service Fee", service_fee),
+                        (advisory_fee, "Advisory Fee", advisory_fee),
+                    ]:
+                        transactions.append(
+                            {"step": fee[2], "amount": fee[0], "description": fee[1]}
+                        )
+                        combined_transactions = "\n".join(
+                            [
+                                f"{tx['step']}: {tx['amount']} ({tx['description']})"
+                                for tx in transactions
+                            ]
+                        )
+                        return {
+                            "total_gross": gross,
+                            "total_net": net,
+                            "fee_statement_response": {
+                                "combined_transactions": combined_transactions
+                            },
+                        }
+
+                    @app.get("/fee-statements/{client_id}/{order_id}/detailed")
+                    async def generate_detailed_fee_statement(
+                        client_id: int, order_id: int, db: Session = Depends(get_db)
+                    ) -> FeeStatementResponse:
+                        order_detail = (
+                            db.query(OrderFeeDetail)
+                            .filter(OrderFeeDetail.order_id == order_id)
+                            .first()
+                        )
+                        if not order_detail:
+                            raise HTTPException(
+                                status_code=404, detail="Order detail not found"
+                            )
+                            gross_detailed = order_detailgross_detaile_amount
+                            net_detailed = order_detailnet_detaile_amount
+                            service_fee_detailed = round(
+                                (gross_detailed - net_detailed) * 0.03
+                            )
+                            advisory_fee_detailed = round(gross_detailed * 0.015)
+                            detailed_transactions = []
+                            for fee in [
+                                (gross_detailed, "Gross Detailed Fee", gross_detailed),
+                                (net_detailed, "Net Detailed Fee", net_detailed),
+                                (
+                                    service_fee_detailed,
+                                    "Service Fee Detailed",
+                                    service_fee_detailed,
+                                ),
+                                (
+                                    advisory_fee_detailed,
+                                    "Advisory Fee Detailed",
+                                    advisory_fee_detailed,
+                                ),
+                            ]:
+                                detailed_transactions.append(
+                                    {
+                                        "step": fee[2],
+                                        "amount": fee[0],
+                                        "description": fee[1],
+                                    }
+                                )
+                                combined_detailed = "\n".join(
+                                    [
+                                        f"{tx['step']}: {tx['amount']} ({tx['description']})"
+                                        for tx in detailed_transactions
+                                    ]
+                                )
+                                return {
+                                    "total_gross": gross_detailed,
+                                    "total_net": net_detailed,
+                                    "fee_statement_response": {
+                                        "combined_transactions": combined_detailed
+                                    },
+                                }
