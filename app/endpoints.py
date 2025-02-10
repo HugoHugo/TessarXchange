@@ -1,6 +1,8 @@
 from ..database import get_db
+from ..db import Base
 from ..db import Base, get_db
 from ..models import Order, Trade, User
+from ..models import ParametersModel
 from ..models.user import User
 from aiomysql.pool import create_pool as create_mysql_pool
 from alembic import context
@@ -113,6 +115,7 @@ from tradingview_ta import indicators
 from typing import Any
 from typing import Callable, Any
 from typing import Dict
+from typing import Dict, Any
 from typing import Dict, Optional
 from typing import List
 from typing import List, Dict, Union
@@ -10270,3 +10273,62 @@ def get_trading_volume(start_time: str, end_time: str, time_frame: str = "1h"):
             }
     except Exception as e:
         return ({"error": str(e)}, 500)
+
+
+app = FastAPI()
+
+
+async def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+        @app.get("/{pair}/parameters")
+        def get_pair_parameters(pairs: Dict[int, Any], db: Session = Depends(get_db)):
+            pair = pairs.get("id")
+            if not pair:
+                raise HTTPException(status_code=400, detail="Invalid request body")
+                params = (
+                    db.query(ParametersModel)
+                    .filter(ParametersModel.pair_id == pair)
+                    .first()
+                )
+                if not params:
+                    raise HTTPException(
+                        status_code=404, detail=f"Pair parameters not found"
+                    )
+                    return {
+                        "parameters": params.parameters.copy(),
+                        "last_modified": params.last_modified,
+                        "created_at": params.created_at,
+                    }
+
+                @app.get("/{pair}/parameters/{key}")
+                def get_parameter(
+                    pairs: Dict[int, Any], key: str, db: Session = Depends(get_db)
+                ):
+                    pair = pairs.get("id")
+                    if not pair:
+                        raise HTTPException(
+                            status_code=400, detail="Invalid request body"
+                        )
+                        params = (
+                            db.query(ParametersModel)
+                            .filter(ParametersModel.pair_id == pair)
+                            .first()
+                        )
+                        if not params:
+                            raise HTTPException(
+                                status_code=404,
+                                detail=f"Parameter {key} not found for pair {pair}",
+                            )
+                            return {"value": getattr(params.parameters, key)}
+                        app.add_middleware(
+                            CORSMiddleware,
+                            allow_origins=["*"],
+                            allow_credentials=True,
+                            allow_methods=["*"],
+                            allow_headers=["*"],
+                        )

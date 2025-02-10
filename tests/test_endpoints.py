@@ -11341,3 +11341,58 @@ def test_get_trading_volume_basic(client):
             response_data = response.json()
             assert isinstance(response_data, dict)
             assert "lastTradeTime" in response_data
+
+
+@pytest.fixture
+def client():
+    client = TestClient(app)
+    return client
+
+
+@pytest.mark.asyncio
+async def test_get_pair_parameters_success(client):
+    params = {
+        "id": 1,
+        "parameters": {"key1": "val1", "key2": "val2"},
+        "last_modified": datetime.now().isoformat(),
+        "created_at": datetime.now().isoformat(),
+    }
+    db = SessionLocal()
+    db.add(params)
+    db.commit()
+    response = await client.get("/1/parameters")
+    assert response.status_code == 200
+    result = await response.json()
+    assert "parameters" in result
+    assert "last_modified" in result
+    assert "created_at" in result
+
+    @pytest.mark.asyncio
+    async def test_get_parameter_success(client):
+        params = {
+            "id": 1,
+            "parameters": {"key1": "val1", "key2": "val2"},
+            "last_modified": datetime.now().isoformat(),
+            "created_at": datetime.now().isoformat(),
+        }
+        db = SessionLocal()
+        db.add(params)
+        db.commit()
+        response = await client.get("/1/parameters/key1")
+        assert response.status_code == 200
+        result = await response.json()
+        assert "value" in result
+
+        @pytest.mark.asyncio
+        async def test_get_pair_parameters_404(client):
+            db = SessionLocal()
+            db.remove()
+            response = await client.get("/999/parameters")
+            assert response.status_code == 404
+
+            @pytest.mark.asyncio
+            async def test_get_parameter_400(client):
+                db = SessionLocal()
+                db.remove()
+                response = await client.get("/1/parameters/key999")
+                assert response.status_code == 400
