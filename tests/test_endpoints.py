@@ -11568,3 +11568,73 @@ def test_generate_fee_statement(client):
         assert isinstance(
             response.json()["fee_statement_response"]["combined_transactions"], str
         )
+
+
+@pytest.fixture
+async def websocket_client():
+
+    async def connect_websocket():
+        client = await TestWebsocket.get_websocket("/ws/margin")
+        try:
+            yield client
+        finally:
+            await client.close()
+            asyncio.run(connect_websocket())
+
+            @pytest.mark.asyncio
+            async def testBasicWebSocketConnect(websocket_client):
+                async with websocket_client as client:
+                    response = await client.get_websocket()
+                    assert isinstance(response, websockets.WebSocketResponse)
+                    assert response.status == 200
+
+                    @pytest.mark.asyncio
+                    async def testHealthDataStreaming(websocket_client):
+
+                        async def send_data():
+                            for i in range(5):
+                                current_margin = 100.0 + i * 25.0
+                                await asyncio.sleep(0.1)
+                                await websocket_client.send(f"test_data_{i}")
+                                send_data()
+                                async with websocket_client as client:
+                                    messages_received = (
+                                        len(await client.get_messages()) > 0
+                                    )
+                                    assert messages_received
+
+                                    @pytest.mark.asyncio
+                                    async def testWebSocketConnectionClosed(
+                                        websocket_client,
+                                    ):
+                                        try:
+                                            await websocket_client.get_websocket()
+                                        finally:
+                                            async with websocket_client as client:
+                                                close_status = (
+                                                    await client.get_websocket().closed
+                                                )
+                                                assert close_status
+
+                                                @pytest.mark.asyncio
+                                                async def testMarginDataUpdate(
+                                                    websocket_client,
+                                                ):
+                                                    try:
+                                                        response = await websocket_client.get(
+                                                            "http://localhost:8000/margin",
+                                                            method=websockets.WebSocketMethod.POST,
+                                                            json={
+                                                                "message": "test_message"
+                                                            },
+                                                        )
+                                                        assert isinstance(
+                                                            response,
+                                                            websockets.WebSocketResponse,
+                                                        )
+                                                        assert (
+                                                            len(await response.text())
+                                                            > 0
+                                                        )
+                                                    finally:
+                                                        await websocket_client.close()

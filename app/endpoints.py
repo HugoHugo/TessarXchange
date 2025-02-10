@@ -135,6 +135,7 @@ from typing import Optional, Union, Dict, Any, List
 from typing import UUID
 from uuid import UUID
 from uuid import uuid4
+from websockets import Server, connect
 import asyncio
 import base64
 import csv
@@ -163,6 +164,7 @@ import stratum
 import string
 import stryker
 import tesseract
+import threading
 import time
 import ujson
 import uuid
@@ -10493,3 +10495,44 @@ def get_db():
                                         "combined_transactions": combined_detailed
                                     },
                                 }
+
+
+app = FastAPI()
+
+
+async def on_connect(websocket, path):
+    print(f"WebSocket connection established: {path}")
+    s = Server(websocket)
+    await s.connect(path)
+    await s.on("close", lambda: close_handler(s)).add()
+    global margin_data
+    margin_data = []
+
+    async def on_message(websocket, message):
+        global margin_data
+        now = datetime.datetime.now().timestamp()
+        current_margin = 100.0 + 25.0 * (now / 100)
+        margin_data.append({"timestamp": now, "margin": current_margin})
+        print(f"Received new margin health data: {margin_data}")
+
+        async def close_handler(s):
+            s.close()
+            print("WebSocket connection closed by client")
+
+            @app.websocket("/ws/margin")
+            async def websocket_endpoint(websocket):
+                await on_connect(websocket)
+
+                async def initialize_websocket_server():
+                    asyncio.run_coroutine_threadsafe(
+                        on_connect(None, "/ws/margin"), asyncio.new_event_loop()
+                    )
+                    if __name__ == "__main__":
+                        try:
+                            loop = asyncio.get_event_loop()
+                            loop.add_callback(initialize_websocket_server)
+                            thread = threading.Thread(target=asyncio.run, args=(app,))
+                            thread.daemon = True
+                            thread.start()
+                        except Exception as e:
+                            print(f"Error initializing WebSocket server: {e}")
