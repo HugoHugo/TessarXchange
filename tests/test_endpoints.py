@@ -3,6 +3,7 @@ from ..db import Base, get_db
 from ..db import get_db
 from ..models import Order, Trade, User
 from .main import app
+from .models import StakingPoolConfig
 from alembic import context
 from contextlib import suppress
 from datetime import date as dt_date
@@ -161,6 +162,7 @@ from pytest import raises
 from pytestws import WebSocket as WsClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from staking_pool_db import SessionLocal
 from tests.integration import client
 from typing import IO
 from typing import List
@@ -11917,10 +11919,6 @@ def client():
                                                 json={"users": [], "permissions": []},
                                             )
                                             assert response.status_code == 400
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime
-from main import app
 
 
 @pytest.fixture
@@ -11937,10 +11935,94 @@ def client():
                 assert response.status_code == 200
 
                 def test_classify_trading_pattern(client):
-                    # Simulate session data (you may need to mock actual data loading)
                     criteria = {"feature1": 1, "feature2": 2, "next": 3}
                     response = client.get(
                         "/classify/trading-pattern",
                         params={"trade_session_id": "TEST", "criteria": criteria},
                     )
                     assert response.status_code == 200
+
+
+@pytest.fixture
+async def client():
+    async with TestClient(getattr(__main__, "app", None)) as c:
+        yield c
+
+        @pytest.mark.asyncio
+        async def test_create_stake_pool(client):
+            config = StakingPoolConfig(
+                name="Test Pool",
+                balance=100000,
+                stake_amount=50000,
+                threshold=0.5,
+                reward6h="STAK",
+            )
+            response = await client.get("/stake/pool", config=config)
+            assert response.status_code == 200
+            assert response.json() == {"message": "Stake pool created successfully"}
+
+            @pytest.mark.asyncio
+            async def test_update_stake_pool(client):
+                db = SessionLocal()
+                db_obj = db.query(StakingPoolConfig).filter_by(id=1).first()
+                if db_obj:
+                    updated_config = StakingPoolConfig(
+                        name=db_obj.name,
+                        balance=db_obj.balance,
+                        stake_amount=db_obj.stake_amount,
+                        threshold=db_obj.threshold,
+                        reward6h=db_obj.reward6h,
+                    )
+                    updated_config.name = "Updated Pool"
+                    updated_config.reward6h = "REWARD"
+                    response = await client.put("/stake/pool/1", config=updated_config)
+                    assert response.status_code == 200
+                    assert response.json() == {
+                        "message": "Stake pool updated successfully"
+                    }
+                    db.close()
+
+                    @pytest.mark.asyncio
+                    async def test_get_stake_pool(client):
+                        config = StakingPoolConfig(
+                            name="Test Pool",
+                            balance=100000,
+                            stake_amount=50000,
+                            threshold=0.5,
+                            reward6h="STAK",
+                        )
+                        response = await client.get(f"/stake/pool/{config.id}")
+                        assert response.status_code == 200
+                        assert response.json() == {
+                            "message": "Stake pool retrieved successfully"
+                        }
+
+                        @pytest.mark.asyncio
+                        async def test_list_stake_pools(client):
+                            db = SessionLocal()
+                            db_obj1 = (
+                                db.query(StakingPoolConfig).filter_by(id=1).first()
+                            )
+                            db_obj2 = (
+                                db.query(StakingPoolConfig).filter_by(id=2).first()
+                            )
+                            if db_obj1 and db_obj2:
+                                response = await client.get("/stake/pools")
+                                assert response.status_code == 200
+                                assert len(response.json()) == 2
+                                db.close()
+
+                                @pytest.mark.asyncio
+                                async def test_delete_stake_pool(client):
+                                    config = StakingPoolConfig(
+                                        name="Test Pool",
+                                        balance=100000,
+                                        stake_amount=50000,
+                                        threshold=0.5,
+                                        reward6h="STAK",
+                                    )
+                                    response = await client.delete(
+                                        f"/stake/pool/{config.id}"
+                                    )
+                                    assert response.status_code == 200
+                                    assert "Message" in response.json()

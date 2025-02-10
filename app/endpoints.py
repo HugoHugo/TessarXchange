@@ -13,6 +13,7 @@ from ..models.models import (
 from ..models.user import User
 from .db import SessionLocal, Base
 from .models import Position, Order, RiskMetric, MarketData, TradeTransaction
+from .models import StakingPoolConfig, PoolRewardDistribution
 from aiomysql.pool import create_pool as create_mysql_pool
 from alembic import context
 from alembic.config import Config
@@ -117,6 +118,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import reflection
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
+from staking_pool_db import SessionLocal
 from starlette.middleware.base import BaseHTTPMiddleware
 from string import ascii_letters, digits
 from time import sleep
@@ -137,6 +139,7 @@ from typing import Optional, Union
 from typing import Optional, Union, Dict, Any, List
 from typing import UUID
 from typing import Union
+from typing import Union, Optional
 from uuid import UUID
 from uuid import uuid4
 from websockets import Server, connect
@@ -147,6 +150,7 @@ import datetime
 import enum
 import hashlib
 import hmac
+import joblib
 import json
 import jwt
 import logging
@@ -174,6 +178,7 @@ import ujson
 import uuid
 import uvicore.app.UvicornApp as UvicornApp
 import uvicorn
+import xgboost as xgb
 import yfinance as yf
 
 
@@ -10828,22 +10833,13 @@ def process_user_update(user: dict, permissions: Dict[str, str]) -> None:
                         }
                 except Exception as e:
                     raise HTTPException(status_code=500, detail=str(e))
-from fastapi import FastAPI
-import os
-from datetime import datetime
-from sqlalchemy.orm import Session
-import pandas as pd
-import joblib
-import xgboost as xgb
 
-# Initialize FastAPI app
+
 app = FastAPI()
-# Setup database session
 SessionLocal = os.getenv("DATABASE_URL").split(":")[0]
 engine = SessionLocal()
 
 
-# SQLAlchemy models
 class TradingSessionBase:
     __tablename__ = "trading_sessions"
     id = os.getenv("DB_ID")
@@ -10876,20 +10872,16 @@ class TradingSessionBase:
 
         @app.get("/classify/trading-pattern")
         async def classify_trading_pattern(trade_session_id: str, criteria: dict):
-            # Load pre-trained XGBoost model
             model_path = os.path.join(
                 os.path.dirname(__file__), "models", "wash_trade_classifier_xgb.joblib"
             )
             model = joblib.load(model_path)
-            # Get trading session data
             session = get_trading_sessions_with_id(trade_session_id)
             if not session:
                 return {"error": "Session not found"}
-            # Get indicator data for the session
             indicators = get_session_indicators(session.id)
             if not indicators or len(indicators) < 3:
                 return {"error": "Not enough indicators available"}
-            # Combine features into a DataFrame
             df = pd.DataFrame(
                 [
                     {
@@ -10900,7 +10892,6 @@ class TradingSessionBase:
                     }
                 ]
             )
-            # Make prediction
             prediction = model.predict(df)
             result = {"prediction": bool(prediction[0])}
             return result
@@ -10913,3 +10904,81 @@ class TradingSessionBase:
             if not result:
                 raise ValueError(f"Trade ID {session_id} not found")
                 return result
+
+
+router = APIRouter()
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+        @router.post("/stake/pool/{id}")
+        async def create_stake_pool(
+            config: StakingPoolConfig, id: Union[int, None] = None, db=Depends(get_db)
+        ):
+            if id is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="ID must be omitted when creating a new stake pool",
+                )
+                return db.create(config)
+
+            @router.put("/stake/pool/{id}")
+            async def update_stake_pool(
+                config: StakingPoolConfig, id: int, db=Depends(get_db)
+            ):
+                db_obj = db.query(StakingPoolConfig).filter_by(id=id).first()
+                if not db_obj:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Stake pool not found",
+                    )
+                    for field in [
+                        "name",
+                        "balance",
+                        "stake_amount",
+                        "threshold",
+                        "reward6h",
+                    ]:
+                        if hasattr(config, field) and getattr(config, field) != getattr(
+                            db_obj, field
+                        ):
+                            setattr(db_obj, field, getattr(config, field))
+                            db.commit()
+                            return db_obj
+
+                        @router.get("/stake/pool/{id}")
+                        async def get_stake_pool(id: int, db=Depends(get_db)):
+                            db_obj = (
+                                db.query(StakingPoolConfig).filter_by(id=id).first()
+                            )
+                            if not db_obj:
+                                raise HTTPException(
+                                    status_code=status.HTTP_404_NOT_FOUND,
+                                    detail="Stake pool not found",
+                                )
+                                return db_obj
+
+                            @router.get("/stake/pools")
+                            async def list_stake_pools(db=Depends(get_db)):
+                                db_list = db.query(StakingPoolConfig).all()
+                                return db_list
+
+                            @router.delete("/stake/pool/{id}")
+                            async def delete_stake_pool(id: int, db=Depends(get_db)):
+                                db_obj = (
+                                    db.query(StakingPoolConfig).filter_by(id=id).first()
+                                )
+                                if not db_obj:
+                                    raise HTTPException(
+                                        status_code=status.HTTP_404_NOT_FOUND,
+                                        detail="Stake pool not found",
+                                    )
+                                    db.delete(db_obj)
+                                    return {
+                                        "message": "Stake pool deleted successfully"
+                                    }
