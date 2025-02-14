@@ -42,6 +42,7 @@ from fastapi import Depends, FastAPI
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi import FastAPI
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi import FastAPI, Depends, status
 from fastapi import FastAPI, File, UploadFile
 from fastapi import FastAPI, HTTPException
@@ -135,6 +136,7 @@ from typing import List, Dict, Any
 from typing import List, Dict, Union
 from typing import List, Optional
 from typing import Optional
+from typing import Optional, Dict
 from typing import Optional, Dict, List
 from typing import Optional, Union
 from typing import Optional, Union, Dict, Any, List
@@ -11086,3 +11088,94 @@ class TradingPair:
                                         "result": "success",
                                         "candidates": response_data,
                                     }
+
+
+app = FastAPI()
+redis_client = Redis(keyspace="card_details")
+rate_limit_key = "card_details:rate_limit"
+
+
+@app.get("/initiate-payment/{currency}", response_model={"status": str})
+async def initiate_payment(
+    currency: str,
+    amount: int,
+    card_number: str,
+    customer_id: int,
+    transactional_data: Optional[Dict] = None,
+):
+    """Initiate a payment with the provided details"""
+    if not currency or not card_number or (not customer_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required parameters",
+        )
+        try:
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            if not transactional_data:
+                await depends_on_card_details(card_number, customer_id)
+                return {
+                    "status": "success",
+                    "amount": amount,
+                    "currency": currency,
+                    "customer_id": customer_id,
+                    "transactional_data": transactional_data,
+                }
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Payment initiation failed: {str(e)}",
+            )
+
+            @app.get(
+                "/process-callback/{transaction_id}", response_model={"status": str}
+            )
+            async def process_callback(
+                transaction_id: str, amount: int, payment_method: str
+            ):
+                """Process a successful callback from the payment gateway"""
+                try:
+                    current_date = datetime.now().strftime("%Y-%m-%d")
+                    if not transaction_id or not payment_method:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Missing required parameters",
+                        )
+                        redis_client.sadd(
+                            rate_limit_key,
+                            {"card_number": card_number, "customer_id": customer_id},
+                        )
+                        await create_transactionCommit(
+                            transaction_id, amount, payment_method
+                        )
+                        return {
+                            "status": "success",
+                            "amount": amount,
+                            "transaction_id": transaction_id,
+                            "payment_method": payment_method,
+                        }
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Callback processing failed: {str(e)}",
+                    )
+
+                    def depends_on_card_details(card_number: str, customer_id: int):
+                        """Limit rate of card number requests"""
+                        redis_client.pde(
+                            rate_limit_key,
+                            {"card_number": card_number, "customer_id": customer_id},
+                            now=datetime.now(),
+                        )
+
+                        async def create_transactionCommit(
+                            transaction_id: str, amount: int, payment_method: str
+                        ):
+                            pass
+
+                            @app.on_event("startup")
+                            async def startup_event():
+                                """Connect Redis and initialize counters"""
+                                global redis_client
+                                redis_client = Redis.from_url(
+                                    "redis://localhost:6379/1"
+                                )

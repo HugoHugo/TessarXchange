@@ -21,6 +21,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi import FastAPI, HTTPException, status
 from fastapi import FastAPI, UploadFile
 from fastapi import HTTPException
+from fastapi import Request
 from fastapi import TestClient
 from fastapi import WebSocket
 from fastapi import status
@@ -169,6 +170,7 @@ from typing import IO
 from typing import List
 from typing import List, Optional
 from typing import Optional
+from typing import Optional, Dict
 from typing import Optional, Dict, List
 from typing import Optional, List
 from typing import Union
@@ -194,6 +196,7 @@ import pandas as pd
 import pytesseract
 import pytest
 import re
+import redis
 import secrets
 import sys
 import tempfile
@@ -12100,3 +12103,119 @@ def test_get_trading_pairs_endpoint(client):
                             def test_all_endpoints(client, pytestmark):
                                 """Run all tests"""
                                 pass
+
+
+@pytest.fixture
+def app():
+    return FastAPI()
+
+
+@pytest.fixture
+async def client(app):
+
+    async def test_client(request: Request):
+        async with TestClient(app) as c:
+            await c.run(request)
+            return c
+        return test_client
+
+    @pytest.mark.asyncio
+    async def test_initiate_payment_success(client):
+        currency = "USD"
+        amount = 100
+        card_number = "453218790"
+        customer_id = 123
+        transactional_data = {"payment_method": "credit_card", "trans_date": "2024-01"}
+        response = await client.get(
+            f"/initiate-payment/{currency}",
+            params={
+                "amount": amount,
+                "card_number": card_number,
+                "customer_id": customer_id,
+            },
+        )
+        assert response.status_code == 200
+        assert response.json() == {
+            "status": "success",
+            "amount": amount,
+            "currency": currency,
+            "customer_id": customer_id,
+            "transactional_data": transactional_data,
+        }
+
+        @pytest.mark.asyncio
+        async def test_initiate_payment_missing_parameter(client):
+            currency = ""
+            response = await client.get(
+                "/initiate-payment/USD",
+                params={"amount": 100, "card_number": "453218790", "customer_id": 123},
+            )
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+            @pytest.mark.asyncio
+            async def test_process_callback_success(client):
+                transaction_id = "123"
+                amount = 100
+                payment_method = "credit_card"
+                try:
+                    response = await client.get(
+                        f"/process-callback/{transaction_id}",
+                        params={"amount": amount, "payment_method": payment_method},
+                    )
+                    assert response.status_code == status.HTTP_200_OK
+                    assert "success" in response.json()["status"]
+                except Exception as e:
+                    pytest.fail(f"Callback processing failed: {str(e)}")
+
+                    @pytest.mark.asyncio
+                    async def test_process_callback_missing_parameter(client):
+                        transaction_id = ""
+                        response = await client.get(
+                            "/process-callback/123",
+                            params={"amount": 100, "payment_method": "credit_card"},
+                        )
+                        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+                        @pytest.mark.asyncio
+                        async def test_process_callback_exception_handling(client):
+
+                            @app.on_event("startup")
+                            async def startup_event():
+                                pass
+                                try:
+                                    await client.get(
+                                        "/process-callback/123",
+                                        params={
+                                            "amount": 100,
+                                            "payment_method": "invalid_method",
+                                        },
+                                    )
+                                except Exception as e:
+                                    assert str(e).startswith(
+                                        "Callback processing failed"
+                                    )
+                                else:
+                                    pytest.fail("Exception was not raised")
+
+                                    @pytest.mark.asyncio
+                                    async def test_process_callback_transaction_commit(
+                                        client,
+                                    ):
+                                        transaction_id = "123"
+                                        amount = 100
+                                        payment_method = "credit_card"
+                                        try:
+                                            await client.get(
+                                                f"/process-callback/{transaction_id}",
+                                                params={
+                                                    "amount": amount,
+                                                    "payment_method": payment_method,
+                                                },
+                                            )
+                                            await create_transactionCommit(
+                                                transaction_id, amount, payment_method
+                                            )
+                                        except Exception as e:
+                                            assert str(e).startswith(
+                                                "Exception in creating transaction"
+                                            )
