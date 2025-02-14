@@ -51,6 +51,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi import FastAPI, Path
 from fastapi import FastAPI, Path, Query
 from fastapi import FastAPI, Query
+from fastapi import FastAPI, Request
 from fastapi import FastAPI, Session, Depends, HTTPException
 from fastapi import FastAPI, Session, Query
 from fastapi import FastAPI, WebSocket
@@ -10981,4 +10982,107 @@ def get_db():
                                     db.delete(db_obj)
                                     return {
                                         "message": "Stake pool deleted successfully"
+                                    }
+
+
+class TradingPair:
+
+    def __init__(
+        self,
+        pair: str,
+        buy_price: float,
+        sell_price: float,
+        volume_24h_buy: float,
+        volume_24h_sell: float,
+        last_trade_date: datetime,
+    ):
+        self.pair = pair
+        self.buy_price = buy_price
+        self.sell_price = sell_price
+        self.volume_24h_buy = volume_24h_buy
+        self.volume_24h_sell = volume_24h_sell
+        self.last_trade_date = last_trade_date
+
+        def filter_trading_pairs(
+            trading_pairs: List[TradingPair],
+            min_price: float = None,
+            max_price: float = None,
+            min_volume: float = None,
+            num_days_held: int = None,
+        ) -> Dict:
+            candidates = []
+            if not trading_pairs or (min_price is not None and min_volume is not None):
+                return {"candidates": []}
+            for pair in trading_pairs:
+                eligible = True
+                if min_price is not None and pair.buy_price < min_price:
+                    eligible = False
+                elif max_price is not None and pair.sell_price > max_price:
+                    eligible = False
+                    if min_volume is not None and (
+                        pair.volume_24h_buy < min_volume
+                        or pair.volume_24h_sell < min_volume
+                    ):
+                        eligible = False
+                        if num_days_held is not None:
+                            held_duration = (
+                                pair.last_trade_date.date() - datetime.now().date()
+                            ).days
+                            if held_duration < num_days_held:
+                                eligible = False
+                                if eligible:
+                                    candidates.append(
+                                        {
+                                            "pair": pair.pair,
+                                            "buy_price": pair.buy_price,
+                                            "sell_price": pair.sell_price,
+                                            "volume_24h_buy": pair.volume_24h_buy,
+                                            "volume_24h_sell": pair.volume_24h_sell,
+                                            "last_trade_date": pair.last_trade_date.isoformat(),
+                                            "action": (
+                                                "DELIST"
+                                                if num_days_held is not None
+                                                else "HOLD"
+                                            ),
+                                        }
+                                    )
+                                    return {"candidates": candidates}
+                                app = FastAPI()
+
+                                @app.get("/trading-pairs")
+                                async def get_trading_pairs(request: Request):
+                                    trading_pairs = [
+                                        TradingPair(
+                                            "BTCUSDT",
+                                            40000.0,
+                                            45000.0,
+                                            1000.0,
+                                            2000.0,
+                                            datetime(2023, 1, 1),
+                                        ),
+                                        TradingPair(
+                                            "ETHUSDT",
+                                            2000.0,
+                                            2500.0,
+                                            500.0,
+                                            700.0,
+                                            datetime(2023, 3, 1),
+                                        ),
+                                        TradingPair(
+                                            "SOLUSDT",
+                                            90000.0,
+                                            100000.0,
+                                            1500.0,
+                                            2500.0,
+                                            datetime(2023, 6, 1),
+                                        ),
+                                    ]
+                                    response_data = filter_trading_pairs(
+                                        trading_pairs,
+                                        min_price=45000.0,
+                                        max_volume_24h_sell=700.0,
+                                    )
+                                    return {
+                                        "result": "success",
+                                        "candidates": response_data,
                                     }

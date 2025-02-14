@@ -6,6 +6,7 @@ from .main import app
 from .models import StakingPoolConfig
 from alembic import context
 from contextlib import suppress
+from datetime import date
 from datetime import date as dt_date
 from datetime import date as dt_date, timedelta
 from datetime import datetime
@@ -12026,3 +12027,76 @@ async def client():
                                     )
                                     assert response.status_code == 200
                                     assert "Message" in response.json()
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_get_trading_pairs_endpoint(client):
+    """Test the basic endpoint response"""
+    response = client.get("/trading-pairs")
+    assert response.status_code == 200
+    assert "result" in response.json() and "candidates" in response.json()
+
+    def test_get_trading_pairs_no_filters(client):
+        """Test endpoint with no filters applied"""
+        response = client.get("/trading-pairs")
+        candidates = response.json()["candidates"]
+        assert len(candidates) == 3
+
+        def test_get_trading_pairs_min_price_filter(client):
+            """Test filtering by minimum price"""
+            response = client.get("/trading-pairs", params={"min_price": 45000.0})
+            candidates = response.json()["candidates"]
+            assert len(candidates) == 1
+
+            def test_get_trading_pairs_max_volume_filter(client):
+                """Test filtering by maximum volume"""
+                response = client.get(
+                    "/trading-pairs", params={"max_volume_24h_sell": 700.0}
+                )
+                candidates = response.json()["candidates"]
+                assert len(candidates) == 1
+
+                def test_get_trading_pairs_num_days_held_filter(client):
+                    """Test filtering by holding duration"""
+                    response = client.get(
+                        "/trading-pairs", params={"num_days_held": 365}
+                    )
+                    candidates = response.json()["candidates"]
+                    assert len(candidates) == 1
+
+                    def test_get_trading_pairs_combined_filters(client):
+                        """Test combined filters of min price, max volume and num days held"""
+                        response = client.get(
+                            "/trading-pairs",
+                            params={
+                                "min_price": 45000.0,
+                                "max_volume_24h_sell": 700.0,
+                                "num_days_held": 365,
+                            },
+                        )
+                        candidates = response.json()["candidates"]
+                        assert len(candidates) == 1
+
+                        def test_get_trading_pairs_empty_result(client):
+                            """Test if endpoint returns empty result when no filters match"""
+                            response = client.get("/trading-pairs")
+                            response_data = response.json()
+                            assert "candidates" in response_data
+                            assert len(response_data["candidates"]) == 0
+
+                            @pytest.mark.runpytest(
+                                test_get_trading_pairs_endpoint,
+                                test_get_trading_pairs_no_filters,
+                                test_get_trading_pairs_min_price_filter,
+                                test_get_trading_pairs_max_volume_filter,
+                                test_get_trading_pairs_num_days_held_filter,
+                                test_get_trading_pairs_combined_filters,
+                                test_get_trading_pairs_empty_result,
+                            )
+                            def test_all_endpoints(client, pytestmark):
+                                """Run all tests"""
+                                pass
